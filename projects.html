@@ -3,16 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>关于我</title>
+    <title>项目 - QISH</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div class="mouse-glow" id="glow"></div>
     <nav>
-        <a href="index.html">首页</a> |
-        <a href="about.html">关于我</a> |
+        <a href="index.html">首页</a>
+        <a href="about.html">关于我</a>
         <a href="projects.html">项目</a>
     </nav>
-    <h1>关于我</h1>
-    <p>这里写你的自我介绍。</p>
+
+    <div class="container">
+        <h1>我的项目</h1>
+        
+        <div class="card">
+            <h2>个人网站</h2>
+            <p>这是我自己从零开始创建的第一个网站，使用 HTML + CSS，托管在 GitHub Pages 上。</p>
+        </div>
+
+        <div class="card">
+            <h2>更多项目即将到来</h2>
+            <p>后续会在这里展示更多我做的东西。</p>
+        </div>
+    </div>
+
+    <footer>
+        © 2026 QISH · 
+    </footer>
+   <script>
+    const glow = document.getElementById('glow');
+    let mouseX = 0;
+    let mouseY = 0;
+    let currentX = 0;
+    let currentY = 0;
+
+    // 记录鼠标位置
+    document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+    });
+
+    // 平滑跟随（拖尾效果）
+    function animate() {
+        // 0.12 是跟随速度，数字越小拖尾越明显、越顺滑
+        currentX += (mouseX - currentX) * 0.12;
+        currentY += (mouseY - currentY) * 0.12;
+
+        glow.style.left = currentX + 'px';
+        glow.style.top = currentY + 'px';
+
+        requestAnimationFrame(animate);
+    }
+
+    animate();
+</script>
 </body>
 </html>
