@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>成员相册</title>
+    <style>
+:root {
+    --gradient-start: #acbafc;
+    --gradient-mid: #b58cde;
+    --gradient-end: #f0aef7;
+    --glass-bg: rgba(255, 255, 255, 0.18);
+    --glass-bg-strong: rgba(255, 255, 255, 0.28);
+    --glass-border: rgba(255, 255, 255, 0.35);
+    --text-main: #ffffff;
+    --text-sub: rgba(255, 255, 255, 0.85);
+    --shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--text-main);
+    font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+    background:
+        radial-gradient(circle at 10% 20%, rgba(102, 126, 234, 0.9), transparent 50%),
+        radial-gradient(circle at 90% 10%, rgba(118, 75, 162, 0.9), transparent 50%),
+        radial-gradient(circle at 50% 90%, rgba(240, 147, 251, 0.9), transparent 50%),
+        linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+    background-attachment: fixed;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.08), transparent 35%);
+    transition: background 0.12s ease-out;
+    z-index: 0;
+}
+
+.trail-light {
+    position: fixed;
+    width: 180px;
+    height: 180px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.14), transparent 70%);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.6s ease, transform 0.08s ease;
+    opacity: 0;
+    z-index: 1;
+}
+
+.page-wrapper {
+    position: relative;
+    z-index: 2;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 24px 20px 48px;
+}
+
+.back-wrap {
+    margin-bottom: 24px;
+}
+
+.btn-back {
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    color: var(--text-main);
+    cursor: pointer;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: var(--shadow);
+    transition: 0.3s ease;
+    font-size: 15px;
+}
+
+.btn-back:hover {
+    transform: translateY(-2px);
+    background: var(--glass-bg-strong);
+    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2);
+}
+
+.page-title {
+    text-align: center;
+    font-size: 34px;
+    font-weight: 800;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--glass-border);
+    margin-bottom: 28px;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.35);
+}
+
+.upload-box {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 28px;
+    margin-bottom: 36px;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow: var(--shadow);
+}
+
+.upload-box h3 {
+    margin-top: 0;
+    margin-bottom: 18px;
+    font-size: 20px;
+    color: var(--text-main);
+}
+
+#photoInput {
+    display: none;
+}
+
+.file-btn,
+.up-btn {
+    padding: 12px 26px;
+    border: none;
+    border-radius: 999px;
+    color: white;
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 600;
+    transition: 0.3s ease;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.15);
+}
+
+.file-btn {
+    background: linear-gradient(135deg, #5b7cd8, #6a85d8);
+    margin-right: 12px;
+}
+
+.file-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(91, 124, 216, 0.45);
+}
+
+.up-btn {
+    background: linear-gradient(135deg, #36b37e, #42c9a3);
+}
+
+.up-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(54, 179, 126, 0.45);
+}
+
+.tip-file {
+    margin-top: 14px;
+    font-size: 14px;
+    color: var(--text-sub);
+}
+
+.msg-tip {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #ffd6d6;
+}
+
+.album-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 24px;
+}
+
+.photo-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    overflow: hidden;
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    box-shadow: var(--shadow);
+    transition: 0.4s ease;
+}
+
+.photo-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
+}
+
+.img-wrap {
+    width: 100%;
+    aspect-ratio: 1/1;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.photo-card:hover .img-wrap img {
+    transform: scale(1.08);
+}
+
+.card-info {
+    padding: 12px 14px;
+    font-size: 13px;
+    color: var(--text-sub);
+}
+
+.card-name {
+    font-weight: bold;
+    color: var(--text-main);
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+.del-btn {
+    margin-top: 10px;
+    background: linear-gradient(135deg, #e53e3e, #ff6b6b);
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: 0.3s ease;
+}
+
+.del-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(229, 62, 62, 0.45);
+}
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    padding: 24px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.modal-overlay.active {
+    display: flex;
+}
+
+.modal-img {
+    max-width: 92vw;
+    max-height: 88vh;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+.close-modal {
+    position: absolute;
+    top: 20px;
+    right: 24px;
+    color: #fff;
+    font-size: 36px;
+    cursor: pointer;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.4);
+    transition: 0.3s ease;
+}
+
+.close-modal:hover {
+    transform: scale(1.15);
+}
+
+.empty-tip {
+    padding: 48px;
+    text-align: center;
+    color: var(--text-sub);
+    font-size: 15px;
+}
+
+@media (max-width: 640px) {
+    .page-title {
+        font-size: 24px;
+    }
+
+    .album-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 16px;
+    }
+
+    .file-btn,
+    .up-btn {
+        width: 100%;
+        margin-right: 0;
+        margin-bottom: 12px;
+    }
+}
+</style>
+</head>
+<body>
+    <div class="trail-light" id="trailLight"></div>
+
+    <div class="page-wrapper">
+        <div class="back-wrap">
+            <button class="btn-back" onclick="location.href='./index.html'">← 返回主页</button>
+        </div>
+
+        <div class="page-title">成员相册</div>
+
+        <div class="upload-box">
+            <h3>上传照片（登录成员可用）</h3>
+            <input type="file" id="photoInput" accept="image/*">
+            <button class="file-btn" id="selectBtn">选择图片文件</button>
+            <button class="up-btn" id="uploadBtn">上传图片</button>
+            <div class="tip-file" id="fileNameTip"></div>
+            <div class="msg-tip" id="msgBox"></div>
+        </div>
+
+        <div class="album-grid" id="albumContainer"></div>
+    </div>
+
+    <div class="modal-overlay" id="photoModal">
+        <span class="close-modal" id="closeModal">×</span>
+        <img class="modal-img" id="modalImage" src="">
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ===================== 【务必修改这里】 =====================
+const SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
+const ADMIN_UIDS = ["8dbea2a6-e81e-4958-8c7a-3cbb47b2eb7d"];
+const BUCKET_NAME = "album_bucket";
+// ==========================================================
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const albumContainer = document.getElementById("albumContainer");
+const photoInput = document.getElementById("photoInput");
+const selectBtn = document.getElementById("selectBtn");
+const uploadBtn = document.getElementById("uploadBtn");
+const fileNameTip = document.getElementById("fileNameTip");
+const msgBox = document.getElementById("msgBox");
+const photoModal = document.getElementById("photoModal");
+const modalImage = document.getElementById("modalImage");
+const closeModal = document.getElementById("closeModal");
+
+selectBtn.onclick = ()=> photoInput.click();
+
+photoInput.onchange = ()=>{
+    if(photoInput.files[0]){
+        fileNameTip.innerText = "已选文件："+photoInput.files[0].name;
+    }else{
+        fileNameTip.innerText = "";
+    }
+};
+
+closeModal.onclick = ()=> photoModal.classList.remove("active");
+photoModal.onclick = (e)=>{
+    if(e.target === photoModal) photoModal.classList.remove("active");
+};
+
+function formatDate(str){
+    const d = new Date(str);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+async function deletePhoto(recordId, photoUrl, ownerUserId){
+    const {data:{user}} = await sb.auth.getUser();
+    if(!user){
+        alert("请登录");
+        return;
+    }
+    const isAdmin = ADMIN_UIDS.includes(user.id);
+    if(!isAdmin && user.id !== ownerUserId){
+        alert("没有权限删除");
+        return;
+    }
+
+    if(!confirm("确定删除这张照片？删除后无法恢复！")) return;
+
+    let filePath = null;
+    console.log("===删除调试===");
+    console.log("photoUrl:", photoUrl);
+    console.log("当前登录user.id:", user.id);
+    console.log("图片ownerUserId:", ownerUserId);
+    console.log("isAdmin:",isAdmin);
+
+    if(photoUrl){
+        const reg = /\/storage\/v1\/object\/public\/album_bucket\/(.*)$/;
+        const match = photoUrl.match(reg);
+        if(match && match[1]){
+            filePath = decodeURIComponent(match[1]);
+        }
+    }
+
+    if(!filePath){
+        alert("无法解析图片路径，终止删除");
+        console.error("filePath解析失败！photoUrl=",photoUrl);
+        return;
+    }
+    console.log("解析得到filePath:", filePath);
+
+    try{
+        const {error:storageErr} = await sb.storage.from(BUCKET_NAME).remove([filePath]);
+        console.log("storage删除 error:", storageErr);
+
+        const {error:dbErr} = await sb.from("public_album").delete().eq("id", recordId);
+        console.log("数据库删除 error:", dbErr);
+
+        if(dbErr){
+            alert("删除数据库记录失败："+dbErr.message);
+            return;
+        }
+        msgBox.innerText="✅照片已删除";
+        loadAlbum();
+    }catch(e){
+        console.error("删除捕获异常",e);
+        msgBox.innerText="删除异常";
+    }
+}
+
+async function loadAlbum(){
+    msgBox.innerText="";
+    const {data:{user}} = await sb.auth.getUser();
+    const isAdmin = user ? ADMIN_UIDS.includes(user.id) : false;
+
+    const {data,error}=await sb
+        .from("public_album")
+        .select("*")
+        .order("upload_at",{ascending:false});
+
+    if(error){
+        msgBox.innerText="读取相册失败："+error.message;
+        return;
+    }
+    albumContainer.innerHTML="";
+    if(!data || data.length===0){
+        albumContainer.innerHTML = `<div style="padding:40px;text-align:center;color:#666;">相册暂无图片，登录后可以上传照片</div>`;
+        return;
+    }
+
+    data.forEach(item=>{
+        const div = document.createElement("div");
+        div.className="photo-card";
+        let delHtml = "";
+        if(user && (user.id === item.user_id || isAdmin)){
+            delHtml = `<button class="del-btn" data-rid="${item.id}" data-purl="${item.photo_url}" data-owner="${item.user_id}">删除照片</button>`;
+        }
+        div.innerHTML=`
+            <div class="img-wrap">
+                <img src="${item.photo_url}" loading="lazy">
+            </div>
+            <div class="card-info">
+                <div class="card-name">${item.nickname||"匿名用户"}</div>
+                <div>${formatDate(item.upload_at)}</div>
+                ${delHtml}
+            </div>
+        `;
+        div.querySelector(".img-wrap").onclick = ()=>{
+            modalImage.src = item.photo_url;
+            photoModal.classList.add("active");
+        };
+        const delBtn = div.querySelector(".del-btn");
+        if(delBtn){
+            delBtn.onclick = async (ev)=>{
+                ev.stopPropagation();
+                const rid = delBtn.dataset.rid;
+                const purl = delBtn.dataset.purl;
+                const oid = delBtn.dataset.owner;
+                await deletePhoto(rid, purl, oid);
+            };
+        }
+        albumContainer.appendChild(div);
+    });
+}
+
+uploadBtn.onclick = async ()=>{
+    msgBox.innerText="";
+    const {data:{user}} = await sb.auth.getUser();
+    if(!user){
+        msgBox.innerText="请先登录账号";
+        return;
+    }
+    const file = photoInput.files[0];
+    if(!file){
+        msgBox.innerText="请选择一张图片";
+        return;
+    }
+
+    let nickName = "匿名用户";
+    const {data:userInfo} = await sb.from("profiles").select("nickname").eq("id",user.id).single();
+    if(userInfo?.nickname) nickName = userInfo.nickname;
+
+    const filePath = `${user.id}/${Date.now()}.${file.name.split(".").pop()}`;
+    const {error:upErr} = await sb.storage.from(BUCKET_NAME).upload(filePath, file, {cacheControl:"3600",upsert:false});
+    if(upErr){
+        msgBox.innerText="上传失败："+upErr.message;
+        return;
+    }
+    const {data:urlObj} = sb.storage.from(BUCKET_NAME).getPublicUrl(filePath);
+    const photoUrl = urlObj.publicUrl;
+
+    const {error:insertErr} = await sb.from("public_album").insert({
+        user_id:user.id,
+        photo_url:photoUrl,
+        nickname:nickName,
+        upload_at:new Date().toISOString()
+    });
+    if(insertErr){
+        msgBox.innerText="保存相册记录失败："+insertErr.message;
+        return;
+    }
+    msgBox.innerText="✅上传成功";
+    photoInput.value = "";
+    fileNameTip.innerText = "";
+    loadAlbum();
+};
+// 鼠标移动拖尾光效
+const trailLight = document.getElementById("trailLight");
+let mouseX = window.innerWidth / 2;
+let mouseY = window.innerHeight / 2;
+let trailX = mouseX;
+let trailY = mouseY;
+
+window.addEventListener("mousemove", (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+
+    document.body.style.setProperty("--mouse-x", mouseX + "px");
+    document.body.style.setProperty("--mouse-y", mouseY + "px");
+
+    trailLight.style.left = mouseX + "px";
+    trailLight.style.top = mouseY + "px";
+    trailLight.style.opacity = "1";
+});
+
+window.addEventListener("mouseout", () => {
+    trailLight.style.opacity = "0";
+});
+
+function animateTrail() {
+    trailX += (mouseX - trailX) * 0.08;
+    trailY += (mouseY - trailY) * 0.08;
+    trailLight.style.transform = `translate(-50%, -50%) translate(${(trailX - mouseX) * 0.05}px, ${(trailY - mouseY) * 0.05}px)`;
+    requestAnimationFrame(animateTrail);
+}
+animateTrail();
+window.onload = loadAlbum;
+</script>
+</body>
+</html>

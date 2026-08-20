@@ -173,6 +173,7 @@
             <a href="projects.html">我的项目</a>
             <a href="userlist.html">用户列表</a>
             <a href="profile.html">个人资料</a>
+            <a href="album.html">相册</a>
             <a href="auth.html">登录/注册</a>
         </div>
     </div>
@@ -194,6 +195,7 @@
         <a href="projects.html">项目</a>
         <a href="userlist.html">用户列表</a>
         <a href="profile.html">个人资料</a>
+        <a href="./album.html">相册</a>
         <span id="auth-nav">
             <a href="auth.html">登录/注册</a>
         </span>
@@ -328,6 +330,7 @@ async function updateAuthNav() {
             <a href="projects.html">我的项目</a>
             <a href="userlist.html">用户列表</a>
             <a href="profile.html">个人资料</a>
+            <a href="album.html">相册</a>
         `;
     } else {
         currentUser = null;
@@ -342,6 +345,7 @@ async function updateAuthNav() {
             <a href="projects.html">我的项目</a>
             <a href="userlist.html">用户列表</a>
             <a href="profile.html">个人资料</a>
+            <a href="album.html">相册</a>
             <a href="auth.html">登录/注册</a>
         `;
         window.location.href = "auth.html";
@@ -423,15 +427,18 @@ resetBtn.onclick = async function () {
     msgBox.innerText = "";
     await loadMyProfile();
 };
-(async function init() {
-    await updateAuthNav();
-    if (currentUser) {
-        await loadMyProfile();
-    }
-})();
-supabase.auth.onAuthStateChange(() => {
-    init();
-});
+// sb 是supabase客户端
+async function saveNickname(newNick){
+  const {data:{user}} = await sb.auth.getUser();
+  const {error} = await sb.from("profiles")
+    .update({nickname: newNick})
+    .eq("id", user.id);
+  if(error){
+    console.error("修改昵称失败",error);
+  }else{
+    alert("昵称修改成功");
+  }
+}
 </script>
 </body>
 </html>
