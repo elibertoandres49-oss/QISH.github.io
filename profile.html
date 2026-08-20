@@ -427,18 +427,15 @@ resetBtn.onclick = async function () {
     msgBox.innerText = "";
     await loadMyProfile();
 };
-// sb 是supabase客户端
-async function saveNickname(newNick){
-  const {data:{user}} = await sb.auth.getUser();
-  const {error} = await sb.from("profiles")
-    .update({nickname: newNick})
-    .eq("id", user.id);
-  if(error){
-    console.error("修改昵称失败",error);
-  }else{
-    alert("昵称修改成功");
-  }
-}
+(async function init() {
+    await updateAuthNav();
+    if (currentUser) {
+        await loadMyProfile();
+    }
+})();
+supabase.auth.onAuthStateChange(() => {
+    init();
+});
 </script>
 </body>
 </html>
