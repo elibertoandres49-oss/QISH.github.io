@@ -3,55 +3,202 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QISH 的个人网站</title>
+    <title>首页 - QISH</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
+    <script>
+        const SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
+        let supabase;
+        if(window.supabase){
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+    </script>
 </head>
+
+<div class="side-panel" id="sidePanel">
+    <div class="side-panel-content">
+        <button class="close-btn" id="closePanel">×</button>
+        <img src="avatar.jpg" alt="头像" class="panel-avatar" id="panelAvatar">
+        <h2 id="panelUsername">QISH</h2>
+        <p class="panel-desc">这里可以写一段简短的自我介绍。</p>
+        <div class="panel-links" id="panelLinksBox">
+            <a href="index.html">首页</a>
+            <a href="about.html">关于我</a>
+            <a href="projects.html">我的项目</a>
+            <a href="userlist.html">用户列表</a>
+            <a href="profile.html">个人资料</a>
+            <a href="auth.html">登录/注册</a>
+        </div>
+    </div>
+</div>
+
+<div class="right-image" id="rightImage">
+    <img src="right-photo.jpg" alt="展示图片">
+</div>
+
+<div class="overlay" id="overlay"></div>
+
 <body>
-    <div class="mouse-glow" id="glow"></div>
-    <nav>
+<div class="mouse-glow" id="glow"></div>
+
+<nav>
+    <div class="nav-avatar-area">
+        <img src="avatar.jpg" alt="头像" class="nav-avatar" id="navAvatar">
+        <span class="nav-nickname" id="navNickname" style="display: none;"></span>
+    </div>
+    <div class="nav-links">
         <a href="index.html">首页</a>
         <a href="about.html">关于我</a>
         <a href="projects.html">项目</a>
-    </nav>
-
-    <div class="container">
-        <h1>你好，我是 QISH</h1>
-        <p>欢迎来到我的个人网站</p>
-        <p></p>
-        
-        <h2>123</h2>
-        <p>qwe</p>
+        <a href="userlist.html">用户列表</a>
+        <a href="profile.html">个人资料</a>
+        <span id="auth-nav">
+            <a href="auth.html">登录/注册</a>
+        </span>
     </div>
+</nav>
 
-    <footer>
-        © 2026 QISH · 
-    </footer>
-    <script>
-    const glow = document.getElementById('glow');
-    let mouseX = 0;
-    let mouseY = 0;
-    let currentX = 0;
-    let currentY = 0;
+<div class="container">
+    <h1>欢迎来到 QISH</h1>
+    <p>这是个人网站首页。</p>
+</div>
 
-    // 记录鼠标位置
-    document.addEventListener('mousemove', (e) => {
-        mouseX = e.clientX;
-        mouseY = e.clientY;
-    });
+<footer>© 2026 QISH · </footer>
 
-    // 平滑跟随（拖尾效果）
-    function animate() {
-        // 0.12 是跟随速度，数字越小拖尾越明显、越顺滑
-        currentX += (mouseX - currentX) * 0.12;
-        currentY += (mouseY - currentY) * 0.12;
+<script>
+const glow = document.getElementById('glow');
+const sidePanel = document.getElementById('sidePanel');
+const overlay = document.getElementById('overlay');
+const closeBtn = document.getElementById('closePanel');
+const navAvatar = document.getElementById('navAvatar');
+const navNickname = document.getElementById('navNickname');
+const panelAvatar = document.getElementById("panelAvatar");
+const panelUsername = document.getElementById("panelUsername");
 
-        glow.style.left = currentX + 'px';
-        glow.style.top = currentY + 'px';
+const defaultAvatar = "avatar.jpg";
+let currentUser = null;
 
-        requestAnimationFrame(animate);
+let mouseX = 0, mouseY = 0;
+let currentX = 0, currentY = 0;
+let velX = 0, velY = 0;
+
+document.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+});
+
+function animate() {
+    const dx = mouseX - currentX;
+    const dy = mouseY - currentY;
+    velX += dx * 0.12;
+    velY += dy * 0.12;
+    velX *= 0.78;
+    velY *= 0.78;
+    currentX += velX;
+    currentY += velY;
+    const speed = Math.sqrt(velX * velX + velY * velY);
+    const stretch = Math.min(speed * 0.08, 1.8);
+    const angle = Math.atan2(velY, velX) * (180 / Math.PI);
+    glow.style.left = currentX + 'px';
+    glow.style.top = currentY + 'px';
+    glow.style.transform = `translate(-50%, -50%) rotate(${angle}deg) scaleX(${1 + stretch}) scaleY(${1 - stretch * 0.3})`;
+    glow.style.borderRadius = stretch > 0.3 ? '40%' : '50%';
+    requestAnimationFrame(animate);
+}
+animate();
+
+navAvatar.addEventListener('click', () => {
+    sidePanel.classList.add('active');
+    overlay.classList.add('active');
+    document.getElementById('rightImage').classList.add('active');
+});
+
+function closePanel() {
+    sidePanel.classList.remove('active');
+    overlay.classList.remove('active');
+    document.getElementById('rightImage').classList.remove('active');
+}
+closeBtn.addEventListener('click', closePanel);
+overlay.addEventListener('click', closePanel);
+
+async function updateAuthNav() {
+    const { data } = await supabase.auth.getSession();
+    const session = data.session;
+    const authNav = document.getElementById('auth-nav');
+    const panelLinksBox = document.getElementById('panelLinksBox');
+
+    if (session) {
+        currentUser = session.user;
+        const userEmail = currentUser.email;
+
+        const { data: profile } = await supabase
+            .from("public_user_list")
+            .select("avatar_url, nickname")
+            .eq("user_id", currentUser.id)
+            .single();
+
+        if (profile && profile.avatar_url) {
+            navAvatar.src = profile.avatar_url;
+            panelAvatar.src = profile.avatar_url;
+        } else {
+            navAvatar.src = defaultAvatar;
+            panelAvatar.src = defaultAvatar;
+        }
+
+        const showNick = (profile && profile.nickname) ? profile.nickname : "匿名用户";
+        navNickname.textContent = showNick;
+        navNickname.style.display = "block";
+        panelUsername.innerText = showNick;
+
+        authNav.innerHTML = `
+            <span style="padding:8px 10px;color:#1e293b;font-weight:500;">${userEmail}</span>
+            <button id="logoutBtn" style="
+                background:rgba(255,255,255,0.3);
+                border:none;
+                border-radius:8px;
+                padding:8px 14px;
+                cursor:pointer;
+                font-size:16px;
+            ">退出登录</button>
+        `;
+        document.getElementById('logoutBtn').addEventListener('click', async ()=>{
+            await supabase.auth.signOut();
+            window.location.href = "auth.html";
+        });
+
+        panelLinksBox.innerHTML = `
+            <a href="index.html">首页</a>
+            <a href="about.html">关于我</a>
+            <a href="projects.html">我的项目</a>
+            <a href="userlist.html">用户列表</a>
+            <a href="profile.html">个人资料</a>
+        `;
+    } else {
+        currentUser = null;
+        navAvatar.src = defaultAvatar;
+        panelAvatar.src = defaultAvatar;
+        navNickname.style.display = "none";
+        panelUsername.innerText = "QISH";
+        authNav.innerHTML = `<a href="auth.html">登录/注册</a>`;
+        panelLinksBox.innerHTML = `
+            <a href="index.html">首页</a>
+            <a href="about.html">关于我</a>
+            <a href="projects.html">我的项目</a>
+            <a href="userlist.html">用户列表</a>
+            <a href="profile.html">个人资料</a>
+            <a href="auth.html">登录/注册</a>
+        `;
     }
+}
 
-    animate();
+(async function init(){
+    await updateAuthNav();
+})();
+
+supabase.auth.onAuthStateChange(()=>{
+    init();
+});
 </script>
 </body>
 </html>

@@ -23,55 +23,102 @@ body {
     100% { background-position: 0% 50%; }
 }
 
-/* 鼠标跟随加深的光晕（带拖尾） */
+/* 鼠标拖尾 - 弹性拉伸 + 磨砂玻璃 */
 .mouse-glow {
     position: fixed;
-    width: 180px;               /* 调小了 */
-    height: 180px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(255, 179, 244, 0.578) 0%, transparent 70%);
+    
+    /* 磨砂玻璃效果 */
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    
+    /* 原来的渐变叠加（可选，增加一点颜色） */
+    background-image: radial-gradient(
+        circle,
+        rgba(240, 147, 251, 0.25) 0%,
+        rgba(142, 197, 252, 0.18) 45%,
+        rgba(224, 195, 252, 0.1) 70%,
+        transparent 100%
+    );
+    
     pointer-events: none;
     transform: translate(-50%, -50%);
-    z-index: 1;
-    transition: width 0.15s, height 0.15s;
-    will-change: left, top;
+    z-index: 0.5;
+    will-change: transform, left, top;
+    transition: border-radius 0.25s ease;
 }
-
-/* 导航栏 */
+/* 导航栏 - 玻璃磨砂 + 左上角头像 */
 nav {
-    background-color: rgba(44, 62, 80, 0.85);
-    backdrop-filter: blur(8px);
-    padding: 15px 0;
-    text-align: center;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 12px 30px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     position: sticky;
     top: 0;
     z-index: 100;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* 左上角圆形头像 */
+.nav-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease;
+}
+
+.nav-avatar:hover {
+    transform: scale(1.1);
+}
+
+/* 导航链接区域 */
+.nav-links {
+    display: flex;
+    gap: 10px;
 }
 
 nav a {
-    color: white;
+    color: #1e293b;
     text-decoration: none;
-    margin: 0 18px;
     font-size: 16px;
-    padding: 8px 14px;
-    border-radius: 6px;
-    transition: all 0.3s;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
 }
 
 nav a:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.3);
 }
-
-/* 内容区域 */
+/* 内容区域 - 玻璃磨砂效果 */
 .container {
     max-width: 900px;
     margin: 50px auto;
-    padding: 30px;
-    background: rgba(255, 255, 255, 0.75);
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    padding: 35px 40px;
+    background: rgba(255, 255, 255, 0.25);          /* 半透明，透出背景渐变 */
+    backdrop-filter: blur(18px);                     /* 磨砂模糊 */
+    -webkit-backdrop-filter: blur(18px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.35);     /* 淡淡的亮边 */
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);       /* 柔和阴影 */
     position: relative;
     z-index: 10;
+     transition: transform 0.25s ease;
+}
+.container:hover {
+    transform: translateY(-6px) scale(1.02);
 }
 
 h1 {
@@ -104,7 +151,7 @@ p {
 }
 
 .card:hover {
-    transform: translateY(-6px);
+    transform: translateY(-6px) scale(1.03);
 }
 
 /* 页脚 */
@@ -116,4 +163,192 @@ footer {
     margin-top: 40px;
     position: relative;
     z-index: 10;
+}
+/* 点击波纹动画 */
+.click-ripple {
+    position: fixed;
+    border-radius: 50%;
+    background: rgba(78, 48, 82, 0.5);
+    transform: translate(-50%, -50%) scale(0);
+    pointer-events: none;
+    z-index: 2;
+    animation: ripple 0.5s ease-out forwards;
+}
+
+@keyframes ripple {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0.5;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1.0);
+        opacity: 0;
+    }
+}
+/* 遮罩层 */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.35s ease;
+    z-index: 200;
+}
+
+.overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* 左侧弹窗 */
+.side-panel {
+    position: fixed;
+    top: 0;
+    left: -380px;                  /* 初始隐藏在左侧 */
+    width: 340px;                  /* 接近手机宽度 */
+    height: 100vh;
+    z-index: 300;
+    transition: left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.side-panel.active {
+    left: 0;
+}
+
+/* 弹窗内容 - 磨砂玻璃 */
+.side-panel-content {
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-right: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 8px 0 40px rgba(0, 0, 0, 0.12);
+    padding: 40px 28px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #1e293b;
+}
+
+/* 关闭按钮 */
+.close-btn {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    font-size: 22px;
+    color: #1e293b;
+    cursor: pointer;
+    transition: all 0.25s;
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.5);
+    transform: rotate(90deg);
+}
+
+/* 弹窗里的头像 */
+.panel-avatar {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(255, 255, 255, 0.7);
+    margin: 30px 0 20px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.side-panel-content h2 {
+    font-size: 1.6em;
+    margin-bottom: 12px;
+    border: none;
+}
+
+.panel-desc {
+    text-align: center;
+    font-size: 15px;
+    line-height: 1.6;
+    color: #475569;
+    margin-bottom: 30px;
+}
+
+/* 弹窗内链接 */
+.panel-links {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+}
+
+.panel-links a {
+    display: block;
+    text-align: center;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.35);
+    border-radius: 12px;
+    color: #1e293b;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.25s;
+}
+
+.panel-links a:hover {
+    background: rgba(255, 255, 255, 0.55);
+    transform: translateY(-2px);
+}
+/* 右侧弹出的圆角图片 */
+.right-image {
+    position: fixed;
+    top: 50%;
+    right: -420px;                  /* 初始隐藏在右侧 */
+    transform: translateY(-50%);
+    width: 380px;
+    height: 480px;
+    z-index: 250;
+    transition: right 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.right-image.active {
+    right: 40px;                    /* 弹出后的位置 */
+}
+
+.right-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.nav-avatar-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.nav-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    cursor: pointer;
+    border: 2px solid rgba(255, 255, 255, 0.45);
+}
+.nav-nickname {
+    font-size: 15px;
+    color: #1e293b;
+    background: rgba(255, 255, 255, 0.45);
+    padding: 5px 12px;
+    border-radius: 12px;
+    font-weight: 500;
 }

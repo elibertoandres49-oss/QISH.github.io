@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录注册 - QISH</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Supabase CDN 引入 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
+    <script>
+        // =========替换为你自己的信息=========
+        const SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
+        // ===================================
+        let supabase;
+        if(window.supabase){
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log("supabase初始化成功", supabase);
+        }else{
+            console.error("Supabase CDN加载失败！");
+        }
+    </script>
+    <style>
+        /* 登录页面局部美化，磨砂玻璃 */
+        .auth-card{
+            background: rgba(255, 255, 255, 0.20);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+            border:1px solid rgba(255,255,255,0.35);
+            border-radius:24px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+            padding:40px;
+            max-width:420px;
+            margin:0 auto;
+            transition: transform 0.25s ease;
+        }
+        .auth-card:hover{
+            transform: translateY(-4px);
+        }
+        .auth-card h1{
+            border-bottom:none;
+            text-align:center;
+            font-size:1.8em;
+            margin-bottom:24px;
+            color:#2c3e50;
+        }
+        .auth-input{
+            width:100%;
+            box-sizing:border-box;
+            padding:14px 16px;
+            margin-top:8px;
+            margin-bottom:18px;
+            border-radius:12px;
+            border:1px solid rgba(255,255,255,0.4);
+            background:rgba(255,255,255,0.25);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            font-size:16px;
+            color:#222;
+        }
+        .auth-input::placeholder{
+            color:#555;
+        }
+        .auth-input:focus{
+            outline:none;
+            border-color:#9b59b6;
+            box-shadow:0 0 0 3px rgba(155, 89, 182, 0.15);
+        }
+        .auth-label{
+            font-weight:500;
+            color:#2c3e50;
+        }
+        .auth-submit{
+            width:100%;
+            padding:14px;
+            border-radius:12px;
+            border:none;
+            background: linear-gradient(135deg,#9b59b6,#8ec5fc);
+            color:#fff;
+            font-size:16px;
+            font-weight:500;
+            cursor:pointer;
+            transition:all 0.3s ease;
+        }
+        .auth-submit:hover{
+            opacity:0.92;
+            transform: translateY(-2px);
+            box-shadow:0 6px 20px rgba(155, 89, 182,0.3);
+        }
+        .auth-toggle-wrap{
+            text-align:center;
+            margin-top:24px;
+        }
+        .auth-toggle{
+            background:none;
+            border:none;
+            color:#7b4397;
+            font-size:15px;
+            cursor:pointer;
+        }
+        .auth-toggle:hover{
+            text-decoration:underline;
+        }
+        .back-home{
+            display:block;
+            text-align:center;
+            margin-top:16px;
+            color:#333;
+            text-decoration:none;
+            font-size:14px;
+        }
+        .back-home:hover{
+            text-decoration:underline;
+        }
+        #message{
+            text-align:center;
+            margin-bottom:16px;
+            font-weight:500;
+        }
+    </style>
+</head>
+<div class="side-panel" id="sidePanel">
+    <div class="side-panel-content">
+        <button class="close-btn" id="closePanel">×</button>
+        <img src="avatar.jpg" alt="头像" class="panel-avatar">
+        <h2>QISH</h2>
+        <p class="panel-desc">这里可以写一段简短的自我介绍。</p>
+        <div class="panel-links">
+            <a href="index.html">首页</a>
+            <a href="about.html">关于我</a>
+            <a href="projects.html">我的项目</a>
+            <a href="auth.html">登录/注册</a>
+        </div>
+    </div>
+</div>
+<div class="right-image" id="rightImage">
+    <img src="right-photo.jpg" alt="展示图片">
+</div>
+<div class="overlay" id="overlay"></div>
+<body>
+<div class="mouse-glow" id="glow"></div>
+<nav>
+    <img src="avatar.jpg" alt="头像" class="nav-avatar">
+    <div class="nav-links">
+        <a href="index.html">首页</a>
+        <a href="about.html">关于我</a>
+        <a href="projects.html">项目</a>
+        <a href="auth.html">登录/注册</a>
+    </div>
+</nav>
+
+<div class="container" style="background:transparent; backdrop-filter:none; border:none; box-shadow:none;">
+    <div class="auth-card">
+        <h1 id="form-title">登录</h1>
+        <div id="message"></div>
+        <form id="auth-form">
+            <label class="auth-label">邮箱</label>
+            <input class="auth-input" type="email" id="email" required placeholder="请输入邮箱">
+
+            <label class="auth-label">密码（至少6位）</label>
+            <input class="auth-input" type="password" id="password" minlength="6" required placeholder="请输入密码">
+
+            <button class="auth-submit" type="submit" id="submit-btn">登录</button>
+        </form>
+        <div class="auth-toggle-wrap">
+            <span id="toggle-text">没有账号？</span>
+            <button class="auth-toggle" id="toggle-mode">去注册</button>
+        </div>
+        <a class="back-home" href="index.html">← 返回首页</a>
+    </div>
+</div>
+<footer>© 2026 QISH · </footer>
+
+<script>
+const glow = document.getElementById('glow');
+const sidePanel = document.getElementById('sidePanel');
+const overlay = document.getElementById('overlay');
+const closeBtn = document.getElementById('closePanel');
+const avatar = document.querySelector('.nav-avatar');
+let mouseX = 0, mouseY = 0;
+let currentX = 0, currentY = 0;
+let velX = 0, velY = 0;
+
+document.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+});
+function animate() {
+    const dx = mouseX - currentX;
+    const dy = mouseY - currentY;
+    velX += dx * 0.12;
+    velY += dy * 0.12;
+    velX *= 0.78;
+    velY *= 0.78;
+    currentX += velX;
+    currentY += velY;
+    const speed = Math.sqrt(velX * velX + velY * velY);
+    const stretch = Math.min(speed * 0.08, 1.8);
+    const angle = Math.atan2(velY, velX) * (180 / Math.PI);
+    glow.style.left = currentX + 'px';
+    glow.style.top = currentY + 'px';
+    glow.style.transform = `translate(-50%, -50%) rotate(${angle}deg) scaleX(${1 + stretch}) scaleY(${1 - stretch * 0.3})`;
+    glow.style.borderRadius = stretch > 0.3 ? '40%' : '50%';
+    requestAnimationFrame(animate);
+}
+animate();
+
+document.addEventListener('click', (e) => {
+    if (e.target.closest('.nav-avatar') || e.target.closest('.side-panel') || e.target.closest('.close-btn')) return;
+    const ripple = document.createElement('div');
+    ripple.className = 'click-ripple';
+    ripple.style.left = e.clientX + 'px';
+    ripple.style.top = e.clientY + 'px';
+    ripple.style.width = '80px';
+    ripple.style.height = '80px';
+    document.body.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 700);
+});
+
+avatar.addEventListener('click', () => {
+    sidePanel.classList.add('active');
+    overlay.classList.add('active');
+    document.getElementById('rightImage').classList.add('active');
+});
+function closePanel() {
+    sidePanel.classList.remove('active');
+    overlay.classList.remove('active');
+    document.getElementById('rightImage').classList.remove('active');
+}
+closeBtn.addEventListener('click', closePanel);
+overlay.addEventListener('click', closePanel);
+
+// ==========Supabase登录注册逻辑==========
+let isLoginMode = true;
+const formTitle = document.getElementById('form-title');
+const submitBtn = document.getElementById('submit-btn');
+const toggleText = document.getElementById('toggle-text');
+const toggleBtn = document.getElementById('toggle-mode');
+const authForm = document.getElementById('auth-form');
+const msgBox = document.getElementById('message');
+
+toggleBtn.addEventListener('click', ()=>{
+    isLoginMode = !isLoginMode;
+    if(isLoginMode){
+        formTitle.innerText = "登录";
+        submitBtn.innerText = "登录";
+        toggleText.innerText = "没有账号？";
+        toggleBtn.innerText = "去注册";
+    }else{
+        formTitle.innerText = "注册账号";
+        submitBtn.innerText = "注册";
+        toggleText.innerText = "已有账号？";
+        toggleBtn.innerText = "去登录";
+    }
+    msgBox.innerText = '';
+});
+
+authForm.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    msgBox.innerText = '';
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+
+    let res;
+    if(isLoginMode){
+        res = await supabase.auth.signInWithPassword({email,password});
+    }else{
+        res = await supabase.auth.signUp({
+            email,
+            password,
+            options:{
+                emailRedirectTo:"http://127.0.0.1:5500/auth.html"
+            }
+        });
+    }
+
+    if(res.error){
+        msgBox.style.color="red";
+        msgBox.innerText = res.error.message;
+    }else{
+        msgBox.style.color='green';
+        if(isLoginMode){
+            msgBox.innerText = "登录成功！跳转首页";
+            setTimeout(()=>{ window.location.href="index.html"; },1200);
+        }else{
+            msgBox.innerText = "注册成功，请去邮箱确认邮件（查看垃圾箱）";
+        }
+    }
+})
+
+(async function checkSession(){
+    const {data} = await supabase.auth.getSession();
+    if(data.session){
+        window.location.href="index.html";
+    }
+})();
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的项目 - QISH</title>
+    <title>用户列表 - QISH</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
     <script>
@@ -14,6 +14,104 @@
             supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         }
     </script>
+    <style>
+        .userlist-wrap {
+            max-width: 460px;
+            margin: 40px auto;
+        }
+
+        .userlist-card {
+            background: rgba(255, 255, 255, 0.20);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            border-radius: 24px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
+            padding: 32px;
+            transition: transform 0.25s ease;
+        }
+
+        .userlist-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .userlist-card h1 {
+            border-bottom: none;
+            text-align: center;
+            font-size: 1.8em;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+
+        .userlist-desc {
+            text-align: center;
+            color: #555;
+            margin-bottom: 24px;
+            font-size: 15px;
+        }
+
+        .user-list-box {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .user-item {
+            background: rgba(255, 255, 255, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 16px;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: 0.2s ease;
+        }
+
+        .user-item:hover {
+            background: rgba(255, 255, 255, 0.35);
+            transform: translateY(-2px);
+        }
+
+        .user-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255, 255, 255, 0.45);
+            flex-shrink: 0;
+        }
+
+        .user-name {
+            font-size: 16px;
+            font-weight: 500;
+            color: #2c3e50;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .empty-tip {
+            text-align: center;
+            color: #555;
+            padding: 20px 0;
+            font-size: 15px;
+        }
+
+        @media (max-width: 640px) {
+            .userlist-card {
+                padding: 24px;
+            }
+
+            .user-avatar {
+                width: 44px;
+                height: 44px;
+            }
+
+            .user-name {
+                font-size: 15px;
+            }
+        }
+    </style>
 </head>
 
 <div class="side-panel" id="sidePanel">
@@ -28,7 +126,6 @@
             <a href="projects.html">我的项目</a>
             <a href="userlist.html">用户列表</a>
             <a href="profile.html">个人资料</a>
-            <a href="auth.html">登录/注册</a>
         </div>
     </div>
 </div>
@@ -59,9 +156,15 @@
     </div>
 </nav>
 
-<div class="container">
-    <h1>我的项目</h1>
-    <p>项目内容写在这里。</p>
+<div class="container" style="background: transparent; backdrop-filter: none; border: none; box-shadow: none;">
+    <div class="userlist-wrap">
+        <div class="userlist-card">
+            <h1>用户列表</h1>
+            <p class="userlist-desc">查看所有注册用户</p>
+
+            <div id="userListBox" class="user-list-box"></div>
+        </div>
+    </div>
 </div>
 
 <footer>© 2026 QISH · </footer>
@@ -75,6 +178,7 @@ const navAvatar = document.getElementById('navAvatar');
 const navNickname = document.getElementById('navNickname');
 const panelAvatar = document.getElementById("panelAvatar");
 const panelUsername = document.getElementById("panelUsername");
+const userListBox = document.getElementById("userListBox");
 
 const defaultAvatar = "avatar.jpg";
 let currentUser = null;
@@ -151,6 +255,7 @@ async function updateAuthNav() {
         navNickname.style.display = "block";
         panelUsername.innerText = showNick;
 
+        // 登录成功：导航栏只显示邮箱+退出登录，删掉登录注册
         authNav.innerHTML = `
             <span style="padding:8px 10px;color:#1e293b;font-weight:500;">${userEmail}</span>
             <button id="logoutBtn" style="
@@ -162,11 +267,13 @@ async function updateAuthNav() {
                 font-size:16px;
             ">退出登录</button>
         `;
-        document.getElementById('logoutBtn').addEventListener('click', async ()=>{
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
             await supabase.auth.signOut();
             window.location.href = "auth.html";
         });
 
+        // 登录成功：侧边面板链接移除登录注册
         panelLinksBox.innerHTML = `
             <a href="index.html">首页</a>
             <a href="about.html">关于我</a>
@@ -174,12 +281,14 @@ async function updateAuthNav() {
             <a href="userlist.html">用户列表</a>
             <a href="profile.html">个人资料</a>
         `;
+
     } else {
         currentUser = null;
         navAvatar.src = defaultAvatar;
         panelAvatar.src = defaultAvatar;
         navNickname.style.display = "none";
         panelUsername.innerText = "QISH";
+        // 未登录状态保留登录注册
         authNav.innerHTML = `<a href="auth.html">登录/注册</a>`;
         panelLinksBox.innerHTML = `
             <a href="index.html">首页</a>
@@ -192,13 +301,52 @@ async function updateAuthNav() {
     }
 }
 
-(async function init(){
+async function loadUserList() {
+    userListBox.innerHTML = "";
+
+    const { data, error } = await supabase
+        .from("public_user_list")
+        .select("user_id, nickname, avatar_url")
+        .order("created_at", { ascending: true });
+
+    if (error) {
+        userListBox.innerHTML = `<p class="empty-tip">加载用户失败：${error.message}</p>`;
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        userListBox.innerHTML = `<p class="empty-tip">暂无注册用户</p>`;
+        return;
+    }
+
+    for (const row of data) {
+        const userItem = document.createElement("div");
+        userItem.className = "user-item";
+
+        const avatar = document.createElement("img");
+        avatar.className = "user-avatar";
+        avatar.src = row.avatar_url || defaultAvatar;
+        avatar.alt = row.nickname || "用户头像";
+
+        const name = document.createElement("span");
+        name.className = "user-name";
+        name.innerText = row.nickname || "匿名用户";
+
+        userItem.appendChild(avatar);
+        userItem.appendChild(name);
+        userListBox.appendChild(userItem);
+    }
+}
+
+(async function init() {
     await updateAuthNav();
+    await loadUserList();
 })();
 
-supabase.auth.onAuthStateChange(()=>{
+supabase.auth.onAuthStateChange(() => {
     init();
 });
 </script>
+
 </body>
 </html>

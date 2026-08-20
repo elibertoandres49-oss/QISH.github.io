@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人资料 - QISH</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
+    <script>
+        const SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
+        let supabase;
+        if(window.supabase){
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+    </script>
+    <style>
+        .nav-avatar-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .nav-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+            border: 2px solid rgba(255, 255, 255, 0.45);
+        }
+        .nav-nickname {
+            font-size: 15px;
+            color: #1e293b;
+            background: rgba(255, 255, 255, 0.45);
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+        /* 个人资料页面整体美化 */
+        .profile-wrap {
+            max-width: 460px;
+            margin: 40px auto;
+        }
+        .profile-card {
+            background: rgba(255, 255, 255, 0.20);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            border-radius: 24px;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
+            padding: 40px;
+            transition: transform 0.25s ease;
+        }
+        .profile-card:hover {
+            transform: translateY(-4px);
+        }
+        .profile-card h1 {
+            border-bottom: none;
+            text-align: center;
+            font-size: 1.8em;
+            margin-bottom: 8px;
+            color: #2c3e50;
+        }
+        .profile-desc {
+            text-align: center;
+            color: #555;
+            margin-bottom: 24px;
+            font-size: 15px;
+        }
+        .profile-avatar-preview {
+            width: 130px;
+            height: 130px;
+            border-radius: 50%;
+            object-fit: cover;
+            display: block;
+            margin: 0 auto 24px;
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 0 18px rgba(0, 0, 0, 0.08);
+        }
+        .form-item {
+            margin-bottom: 18px;
+        }
+        .form-item label {
+            display: block;
+            font-weight: 500;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+        .form-item input[type="text"],
+        .form-item input[type="file"] {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 14px 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            font-size: 16px;
+            color: #222;
+        }
+        .form-item input:focus {
+            outline: none;
+            border-color: #9b59b6;
+            box-shadow: 0 0 0 3px rgba(155, 89, 182, 0.15);
+        }
+        .form-item input::placeholder {
+            color: #555;
+        }
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .btn-primary {
+            flex: 1;
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, #9b59b6, #8ec5fc);
+            color: #fff;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            opacity: 0.92;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(155, 89, 182, 0.3);
+        }
+        .btn-secondary {
+            flex: 1;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.12);
+            background: rgba(255, 255, 255, 0.4);
+            color: #333;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.6);
+            transform: translateY(-2px);
+        }
+        .msg-box {
+            text-align: center;
+            margin-top: 16px;
+            font-weight: 500;
+            min-height: 22px;
+        }
+        @media (max-width: 640px) {
+            .profile-card {
+                padding: 24px;
+            }
+            .btn-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<div class="side-panel" id="sidePanel">
+    <div class="side-panel-content">
+        <button class="close-btn" id="closePanel">×</button>
+        <img src="avatar.jpg" alt="头像" class="panel-avatar" id="panelAvatar">
+        <h2 id="panelUsername">QISH</h2>
+        <p class="panel-desc">这里可以写一段简短的自我介绍。</p>
+        <div class="panel-links" id="panelLinksBox">
+            <a href="index.html">首页</a>
+            <a href="about.html">关于我</a>
+            <a href="projects.html">我的项目</a>
+            <a href="userlist.html">用户列表</a>
+            <a href="profile.html">个人资料</a>
+            <a href="auth.html">登录/注册</a>
+        </div>
+    </div>
+</div>
+<div class="right-image" id="rightImage">
+    <img src="right-photo.jpg" alt="展示图片">
+</div>
+<div class="overlay" id="overlay"></div>
+<body>
+<div class="mouse-glow" id="glow"></div>
+<nav>
+    <div class="nav-avatar-area">
+        <img src="avatar.jpg" alt="头像" class="nav-avatar" id="navAvatar">
+        <span class="nav-nickname" id="navNickname" style="display: none;"></span>
+    </div>
+    <div class="nav-links">
+        <a href="index.html">首页</a>
+        <a href="about.html">关于我</a>
+        <a href="projects.html">项目</a>
+        <a href="userlist.html">用户列表</a>
+        <a href="profile.html">个人资料</a>
+        <span id="auth-nav">
+            <a href="auth.html">登录/注册</a>
+        </span>
+    </div>
+</nav>
+<div class="container" style="background: transparent; backdrop-filter: none; border: none; box-shadow: none;">
+    <div class="profile-wrap">
+        <div class="profile-card">
+            <h1>个人资料</h1>
+            <p class="profile-desc">修改你的昵称与头像</p>
+            <img id="avatarPreview" src="avatar.jpg" alt="头像预览" class="profile-avatar-preview">
+            <div class="form-item">
+                <label>上传头像</label>
+                <input type="file" id="avatarFile" accept="image/*">
+            </div>
+            <div class="form-item">
+                <label>昵称</label>
+                <input type="text" id="nicknameInput" placeholder="设置你的昵称">
+            </div>
+            <div class="btn-group">
+                <button id="saveBtn" class="btn-primary">保存修改</button>
+                <button id="resetBtn" class="btn-secondary">重置</button>
+            </div>
+            <div class="msg-box" id="msgBox"></div>
+        </div>
+    </div>
+</div>
+<footer>© 2026 QISH · </footer>
+<script>
+const glow = document.getElementById('glow');
+const sidePanel = document.getElementById('sidePanel');
+const overlay = document.getElementById('overlay');
+const closeBtn = document.getElementById('closePanel');
+const navAvatar = document.getElementById('navAvatar');
+const navNickname = document.getElementById('navNickname');
+const panelAvatar = document.getElementById("panelAvatar");
+const panelUsername = document.getElementById("panelUsername");
+const defaultAvatar = "avatar.jpg";
+const avatarPreview = document.getElementById("avatarPreview");
+const avatarFile = document.getElementById("avatarFile");
+const nicknameInput = document.getElementById("nicknameInput");
+const saveBtn = document.getElementById("saveBtn");
+const resetBtn = document.getElementById("resetBtn");
+const msgBox = document.getElementById("msgBox");
+let currentUser = null;
+let mouseX = 0, mouseY = 0;
+let currentX = 0, currentY = 0;
+let velX = 0, velY = 0;
+document.addEventListener('mousemove', (e) => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+});
+function animate() {
+    const dx = mouseX - currentX;
+    const dy = mouseY - currentY;
+    velX += dx * 0.12;
+    velY += dy * 0.12;
+    velX *= 0.78;
+    velY *= 0.78;
+    currentX += velX;
+    currentY += velY;
+    const speed = Math.sqrt(velX * velX + velY * velY);
+    const stretch = Math.min(speed * 0.08, 1.8);
+    const angle = Math.atan2(velY, velX) * (180 / Math.PI);
+    glow.style.left = currentX + 'px';
+    glow.style.top = currentY + 'px';
+    glow.style.transform = `translate(-50%, -50%) rotate(${angle}deg) scaleX(${1 + stretch}) scaleY(${1 - stretch * 0.3})`;
+    glow.style.borderRadius = stretch > 0.3 ? '40%' : '50%';
+    requestAnimationFrame(animate);
+}
+animate();
+navAvatar.addEventListener('click', () => {
+    sidePanel.classList.add('active');
+    overlay.classList.add('active');
+    document.getElementById('rightImage').classList.add('active');
+});
+function closePanel() {
+    sidePanel.classList.remove('active');
+    overlay.classList.remove('active');
+    document.getElementById('rightImage').classList.remove('active');
+}
+closeBtn.addEventListener('click', closePanel);
+overlay.addEventListener('click', closePanel);
+async function updateAuthNav() {
+    const { data } = await supabase.auth.getSession();
+    const session = data.session;
+    const authNav = document.getElementById('auth-nav');
+    const panelLinksBox = document.getElementById('panelLinksBox');
+    if (session) {
+        currentUser = session.user;
+        const userEmail = currentUser.email;
+        const { data: profile } = await supabase
+            .from("public_user_list")
+            .select("avatar_url, nickname")
+            .eq("user_id", currentUser.id)
+            .single();
+        if (profile && profile.avatar_url) {
+            const ts = Date.now();
+            navAvatar.src = profile.avatar_url + '?' + ts;
+            panelAvatar.src = profile.avatar_url + '?' + ts;
+        } else {
+            navAvatar.src = defaultAvatar;
+            panelAvatar.src = defaultAvatar;
+        }
+        if (profile && profile.nickname) {
+            navNickname.textContent = profile.nickname;
+            navNickname.style.display = "block";
+            panelUsername.innerText = profile.nickname;
+        } else {
+            navNickname.textContent = "未设置昵称";
+            navNickname.style.display = "block";
+            panelUsername.innerText = "匿名用户";
+        }
+        authNav.innerHTML = `
+            <span style="padding:8px 10px;color:#1e293b;font-weight:500;">${userEmail}</span>
+            <button id="logoutBtn" style="
+                background:rgba(255,255,255,0.3);
+                border:none;
+                border-radius:8px;
+                padding:8px 14px;
+                cursor:pointer;
+                font-size:16px;
+            ">退出登录</button>
+        `;
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await supabase.auth.signOut();
+            window.location.href = "auth.html";
+        });
+        panelLinksBox.innerHTML = `
+            <a href="index.html">首页</a>
+            <a href="about.html">关于我</a>
+            <a href="projects.html">我的项目</a>
+            <a href="userlist.html">用户列表</a>
+            <a href="profile.html">个人资料</a>
+        `;
+    } else {
+        currentUser = null;
+        navAvatar.src = defaultAvatar;
+        panelAvatar.src = defaultAvatar;
+        navNickname.style.display = "none";
+        panelUsername.innerText = "QISH";
+        authNav.innerHTML = `<a href="auth.html">登录/注册</a>`;
+        panelLinksBox.innerHTML = `
+            <a href="index.html">首页</a>
+            <a href="about.html">关于我</a>
+            <a href="projects.html">我的项目</a>
+            <a href="userlist.html">用户列表</a>
+            <a href="profile.html">个人资料</a>
+            <a href="auth.html">登录/注册</a>
+        `;
+        window.location.href = "auth.html";
+    }
+}
+window.updateAuthNav = updateAuthNav;
+async function loadMyProfile() {
+    if (!currentUser) return;
+    const { data, error } = await supabase
+        .from("public_user_list")
+        .select("nickname, avatar_url")
+        .eq("user_id", currentUser.id)
+        .single();
+    if (!error && data) {
+        nicknameInput.value = data.nickname || "";
+        if (data.avatar_url) {
+            avatarPreview.src = data.avatar_url + '?' + Date.now();
+        } else {
+            avatarPreview.src = defaultAvatar;
+        }
+    }
+}
+avatarFile.onchange = function (e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = ev => {
+            avatarPreview.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+};
+saveBtn.onclick = async function () {
+    msgBox.innerText = "";
+    if (!currentUser) {
+        msgBox.innerText = "请先登录";
+        msgBox.style.color = "red";
+        return;
+    }
+    let avatarUrl = null;
+    const file = avatarFile.files[0];
+    if (file) {
+        const fileExt = file.name.split('.').pop();
+        const filePath = `avatars/${currentUser.id}.${fileExt}`;
+        const { error: uploadErr } = await supabase.storage.from("avatar_bucket").upload(filePath, file, {
+            cacheControl: "3600",
+            upsert: true
+        });
+        if (uploadErr) {
+            msgBox.innerText = "头像上传失败：" + uploadErr.message;
+            msgBox.style.color = "red";
+            return;
+        }
+        const { data: publicUrlData } = supabase.storage.from("avatar_bucket").getPublicUrl(filePath);
+        avatarUrl = publicUrlData.publicUrl;
+    }
+    const updateObj = {
+        nickname: nicknameInput.value.trim()
+    };
+    if (avatarUrl) {
+        updateObj.avatar_url = avatarUrl;
+    }
+    const { error } = await supabase
+        .from("public_user_list")
+        .update(updateObj)
+        .eq("user_id", currentUser.id);
+    if (error) {
+        msgBox.innerText = "保存失败：" + error.message;
+        msgBox.style.color = "red";
+    } else {
+        msgBox.innerText = "✅资料保存成功！";
+        msgBox.style.color = "green";
+        await loadMyProfile();
+        await updateAuthNav();
+    }
+};
+resetBtn.onclick = async function () {
+    avatarFile.value = "";
+    msgBox.innerText = "";
+    await loadMyProfile();
+};
+(async function init() {
+    await updateAuthNav();
+    if (currentUser) {
+        await loadMyProfile();
+    }
+})();
+supabase.auth.onAuthStateChange(() => {
+    init();
+});
+</script>
+</body>
+</html>
