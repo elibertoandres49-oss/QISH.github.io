@@ -176,6 +176,57 @@
             opacity: 0.9;
             transform: translateY(-1px);
         }
+
+        .msg-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+        .msg-act-btn {
+            padding: 3px 10px;
+            border: none;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            background: rgba(255,255,255,0.5);
+            color: #475569;
+        }
+        .msg-act-btn:hover {
+            transform: translateY(-1px);
+        }
+        .msg-act-btn.recall {
+            color: #7c3aed;
+            background: rgba(155,89,182,0.15);
+        }
+        .msg-act-btn.recall:hover {
+            background: rgba(155,89,182,0.28);
+        }
+        .msg-act-btn.del {
+            color: #dc2626;
+            background: rgba(220,38,38,0.12);
+        }
+        .msg-act-btn.del:hover {
+            background: rgba(220,38,38,0.22);
+        }
+        .msg-item.removing {
+            opacity: 0;
+            transform: scale(0.92);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+            max-height: 0;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+        .msg-recalled-tip {
+            text-align: center;
+            font-size: 12px;
+            color: #94a3b8;
+            padding: 6px 0;
+        }
+
         /* 输入区 */
         .chat-input-area {
             display: flex;
@@ -360,7 +411,7 @@
 
 <div class="chat-page">
     <div class="chat-header">
-        <h1>聊天室</h1>
+        <h1>💬 成员聊天室</h1>
         <p class="chat-sub">登录后可发送文字、图片和文件 · 支持实时同步</p>
     </div>
 
@@ -397,7 +448,9 @@ const panelAvatar = document.getElementById("panelAvatar");
 const panelUsername = document.getElementById("panelUsername");
 
 const defaultAvatar = "avatar.jpg";
-const CHAT_BUCKET = "chat_bucket";   // 请在 Supabase Storage 创建同名 bucket
+const CHAT_BUCKET = "chat_bucket";
+const ADMIN_UIDS = ["8dbea2a6-e81e-4958-8c7a-3cbb47b2eb7d"];
+const RECALL_LIMIT_MS = 2 * 60 * 1000; // 撤回时限 2 分钟
 const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
 
 let currentUser = null;
@@ -623,6 +676,21 @@ function appendMessage(item, isMine) {
         bodyHtml = `<div class="msg-content">${escapeHtml(item.content)}</div>`;
     }
 
+    const canManage = currentUser && (isMine || ADMIN_UIDS.includes(currentUser.id));
+    const createdAt = item.created_at ? new Date(item.created_at).getTime() : 0;
+    const canRecall = isMine && createdAt && (Date.now() - createdAt <= RECALL_LIMIT_MS);
+    let actionsHtml = "";
+    if (canManage) {
+        actionsHtml = `<div class="msg-actions">`;
+        if (canRecall) {
+            actionsHtml += `<button type="button" class="msg-act-btn recall" data-action="recall" data-id="${item.id}">撤回</button>`;
+        }
+        actionsHtml += `<button type="button" class="msg-act-btn del" data-action="delete" data-id="${item.id}">删除</button></div>`;
+    }
+
+    div.dataset.userId = item.user_id || "";
+    div.dataset.createdAt = item.created_at || "";
+
     div.innerHTML = `
         <img class="msg-avatar" src="${avatarSrc}" alt="头像" onerror="this.src='${defaultAvatar}'">
         <div class="msg-bubble">
@@ -631,6 +699,7 @@ function appendMessage(item, isMine) {
                 <span>${formatTime(item.created_at)}</span>
             </div>
             ${bodyHtml}
+            ${actionsHtml}
         </div>
     `;
     div.querySelectorAll(".msg-audio-btn.add").forEach((btn) => {
@@ -657,8 +726,96 @@ function appendMessage(item, isMine) {
             }
         };
     });
+    div.querySelectorAll(".msg-act-btn").forEach((btn) => {
+        btn.onclick = async (ev) => {
+            ev.stopPropagation();
+            const id = btn.dataset.id;
+            const action = btn.dataset.action;
+            if (action === "recall") {
+                await recallMessage(id);
+            } else if (action === "delete") {
+                await deleteMessage(id);
+            }
+        };
+    });
     area.appendChild(div);
     area.scrollTop = area.scrollHeight;
+}
+
+function removeMessageFromDOM(id, tipText) {
+    const el = document.querySelector(`.msg-item[data-id="${id}"]`);
+    if (!el) return;
+    el.classList.add("removing");
+    setTimeout(() => {
+        el.remove();
+        if (tipText) {
+            const area = document.getElementById("messagesArea");
+            const tip = document.createElement("div");
+            tip.className = "msg-recalled-tip";
+            tip.textContent = tipText;
+            area.appendChild(tip);
+            setTimeout(() => tip.remove(), 4000);
+        }
+        if (!areaHasMessages()) {
+            const area = document.getElementById("messagesArea");
+            if (area && !area.querySelector(".msg-item")) {
+                area.innerHTML = `<div class="empty-chat" id="emptyTip">还没有消息，来发第一条吧～</div>`;
+            }
+        }
+    }, 250);
+}
+
+function areaHasMessages() {
+    return !!document.querySelector("#messagesArea .msg-item");
+}
+
+async function recallMessage(id) {
+    if (!currentUser) {
+        alert("请先登录");
+        return;
+    }
+    const el = document.querySelector(`.msg-item[data-id="${id}"]`);
+    if (!el) return;
+    const created = el.dataset.createdAt ? new Date(el.dataset.createdAt).getTime() : 0;
+    if (created && Date.now() - created > RECALL_LIMIT_MS) {
+        alert("已超过 2 分钟，无法撤回，请使用删除");
+        return;
+    }
+    if (el.dataset.userId && el.dataset.userId !== currentUser.id) {
+        alert("只能撤回自己的消息");
+        return;
+    }
+    if (!confirm("确定撤回这条消息？")) return;
+
+    const { error } = await supabase.from("public_messages").delete().eq("id", id);
+    if (error) {
+        alert("撤回失败：" + error.message + "\n请确认已在 Supabase 为 public_messages 配置 DELETE 策略");
+        return;
+    }
+    removeMessageFromDOM(id, "你撤回了一条消息");
+}
+
+async function deleteMessage(id) {
+    if (!currentUser) {
+        alert("请先登录");
+        return;
+    }
+    const el = document.querySelector(`.msg-item[data-id="${id}"]`);
+    if (!el) return;
+    const ownerId = el.dataset.userId;
+    const isAdmin = ADMIN_UIDS.includes(currentUser.id);
+    if (ownerId !== currentUser.id && !isAdmin) {
+        alert("没有权限删除");
+        return;
+    }
+    if (!confirm("确定删除这条消息？删除后无法恢复")) return;
+
+    const { error } = await supabase.from("public_messages").delete().eq("id", id);
+    if (error) {
+        alert("删除失败：" + error.message + "\n请确认已在 Supabase 为 public_messages 配置 DELETE 策略");
+        return;
+    }
+    removeMessageFromDOM(id, isAdmin && ownerId !== currentUser.id ? "已删除一条消息" : null);
 }
 
 function openImgModal(url) {
@@ -713,6 +870,18 @@ function subscribeRealtime() {
             if (document.querySelector(`[data-id="${item.id}"]`)) return;
             const isMine = currentUser && item.user_id === currentUser.id;
             appendMessage(item, isMine);
+        })
+        .on('postgres_changes', {
+            event: 'DELETE',
+            schema: 'public',
+            table: 'public_messages'
+        }, (payload) => {
+            const old = payload.old;
+            if (!old || !old.id) return;
+            // 别人撤回/删除时同步移除
+            if (document.querySelector(`.msg-item[data-id="${old.id}"]`)) {
+                removeMessageFromDOM(old.id, null);
+            }
         })
         .subscribe();
 }
