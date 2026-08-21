@@ -1205,3 +1205,137 @@ footer {
         padding: 20px 16px;
     }
 }
+
+
+/* 侧栏邮箱 */
+.panel-email {
+    margin: 4px 0 10px;
+    font-size: 12px;
+    color: var(--text-sub, #64748b);
+    word-break: break-all;
+    opacity: 0.9;
+    line-height: 1.35;
+    max-width: 100%;
+    padding: 0 4px;
+}
+.nav-logout-btn {
+    background: rgba(255, 255, 255, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 999px;
+    padding: 7px 14px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-main, #1e293b);
+    white-space: nowrap;
+    transition: background 0.2s ease;
+}
+.nav-logout-btn:hover {
+    background: rgba(255, 255, 255, 0.55);
+}
+[data-theme="dark"] .nav-logout-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* 移动端整体优化 */
+@media (max-width: 768px) {
+    nav {
+        padding: 8px 10px;
+        gap: 6px;
+        flex-wrap: nowrap;
+        align-items: center;
+    }
+    .nav-avatar-area {
+        flex-shrink: 0;
+        gap: 8px;
+    }
+    .nav-avatar {
+        width: 36px;
+        height: 36px;
+    }
+    .nav-nickname {
+        font-size: 13px;
+        padding: 4px 8px;
+        max-width: 72px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .nav-links {
+        flex: 1;
+        display: flex;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 2px;
+        justify-content: flex-start;
+        scrollbar-width: none;
+        padding-bottom: 2px;
+    }
+    .nav-links::-webkit-scrollbar {
+        display: none;
+    }
+    nav a {
+        font-size: 12px;
+        padding: 6px 8px;
+        flex-shrink: 0;
+    }
+    #auth-nav {
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+    }
+    .nav-logout-btn {
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+    .container {
+        margin: 16px 12px 80px;
+        padding: 18px 16px;
+        border-radius: 16px;
+    }
+    h1 {
+        font-size: 1.45em;
+    }
+    p {
+        font-size: 15px;
+    }
+    .chat-enter-btn {
+        padding: 12px 24px;
+        font-size: 15px;
+    }
+    .home-announce-card {
+        padding: 14px 14px;
+        gap: 10px;
+    }
+    .home-announce-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+    .side-panel {
+        width: min(300px, 86vw);
+    }
+    .side-panel-content {
+        padding: 24px 18px;
+    }
+    .panel-avatar {
+        width: 72px;
+        height: 72px;
+    }
+    footer {
+        padding: 16px 0 90px;
+        font-size: 12px;
+    }
+    /* 音乐与主题按钮避让 */
+    .theme-switcher {
+        left: 10px;
+        bottom: 14px;
+    }
+    .qm-player {
+        right: 10px;
+        bottom: 14px;
+    }
+}

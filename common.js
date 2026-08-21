@@ -213,13 +213,12 @@
         navNickname.style.display = "block";
       }
       if (panelUsername) panelUsername.innerText = nickname;
+      ensurePanelEmail(user.email || "");
 
       if (authNav) {
+        // 导航栏只放退出，邮箱放到侧栏，移动端更干净
         authNav.innerHTML = `
-          <span style="padding:8px 10px;color:#1e293b;font-weight:500;">${user.email || ""}</span>
-          <button id="logoutBtn" type="button" style="
-            background:rgba(255,255,255,0.3);border:none;border-radius:8px;
-            padding:8px 14px;cursor:pointer;font-size:16px;">退出登录</button>
+          <button id="logoutBtn" type="button" class="nav-logout-btn">退出登录</button>
         `;
         const btn = document.getElementById("logoutBtn");
         if (btn) {
@@ -242,6 +241,7 @@
       if (panelAvatar) panelAvatar.src = DEFAULT_AVATAR;
       if (navNickname) navNickname.style.display = "none";
       if (panelUsername) panelUsername.innerText = "QISH";
+      ensurePanelEmail("");
       if (authNav) authNav.innerHTML = `<a href="auth.html">登录/注册</a>`;
       if (panelLinksBox) panelLinksBox.innerHTML = linksGuest;
       highlightCurrentNav();
@@ -249,6 +249,31 @@
       return { user: null };
     }
   }
+
+  function ensurePanelEmail(email) {
+    const panelContent = document.querySelector(".side-panel-content");
+    if (!panelContent) return;
+    let el = document.getElementById("panelEmail");
+    if (!el) {
+      el = document.createElement("p");
+      el.id = "panelEmail";
+      el.className = "panel-email";
+      const uname = document.getElementById("panelUsername");
+      if (uname && uname.parentNode) {
+        uname.insertAdjacentElement("afterend", el);
+      } else {
+        panelContent.insertBefore(el, panelContent.querySelector(".panel-desc") || panelContent.querySelector(".panel-links"));
+      }
+    }
+    if (email) {
+      el.textContent = email;
+      el.style.display = "";
+    } else {
+      el.textContent = "";
+      el.style.display = "none";
+    }
+  }
+
 
 
   // ========== 音乐播放器 ==========

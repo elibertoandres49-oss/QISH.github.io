@@ -94,6 +94,23 @@
             overflow: hidden;
             text-overflow: ellipsis;
         }
+        .user-meta {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .user-bio {
+            font-size: 13px;
+            color: #64748b;
+            line-height: 1.35;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            word-break: break-word;
+        }
 
         .empty-tip {
             text-align: center;
@@ -265,17 +282,15 @@ async function updateAuthNav() {
         panelUsername.innerText = showNick;
 
         // 登录成功：导航栏只显示邮箱+退出登录，删掉登录注册
-        authNav.innerHTML = `
-            <span style="padding:8px 10px;color:#1e293b;font-weight:500;">${userEmail}</span>
-            <button id="logoutBtn" style="
-                background:rgba(255,255,255,0.3);
-                border:none;
-                border-radius:8px;
-                padding:8px 14px;
-                cursor:pointer;
-                font-size:16px;
-            ">退出登录</button>
-        `;
+        let panelEmail = document.getElementById("panelEmail");
+        if (!panelEmail && panelUsername) {
+            panelEmail = document.createElement("p");
+            panelEmail.id = "panelEmail";
+            panelEmail.className = "panel-email";
+            panelUsername.insertAdjacentElement("afterend", panelEmail);
+        }
+        if (panelEmail) { panelEmail.textContent = userEmail || ""; panelEmail.style.display = userEmail ? "" : "none"; }
+        authNav.innerHTML = `<button id="logoutBtn" type="button" class="nav-logout-btn">退出登录</button>`;
 
         document.getElementById('logoutBtn').addEventListener('click', async () => {
             await supabase.auth.signOut();
@@ -319,7 +334,7 @@ async function loadUserList() {
 
     const { data, error } = await supabase
         .from("public_user_list")
-        .select("user_id, nickname, avatar_url")
+        .select("user_id, nickname, avatar_url, bio")
         .order("created_at", { ascending: true });
 
     if (error) {
@@ -335,18 +350,25 @@ async function loadUserList() {
     for (const row of data) {
         const userItem = document.createElement("div");
         userItem.className = "user-item";
-
         const avatar = document.createElement("img");
         avatar.className = "user-avatar";
-        avatar.src = row.avatar_url || defaultAvatar;
+        avatar.src = row.avatar_url || "avatar.jpg";
         avatar.alt = row.nickname || "用户头像";
-
-        const name = document.createElement("span");
+        avatar.onerror = function () { this.src = "avatar.jpg"; };
+        const meta = document.createElement("div");
+        meta.className = "user-meta";
+        const name = document.createElement("div");
         name.className = "user-name";
         name.innerText = row.nickname || "匿名用户";
-
+        meta.appendChild(name);
+        if (row.bio) {
+            const bio = document.createElement("div");
+            bio.className = "user-bio";
+            bio.innerText = row.bio;
+            meta.appendChild(bio);
+        }
         userItem.appendChild(avatar);
-        userItem.appendChild(name);
+        userItem.appendChild(meta);
         userListBox.appendChild(userItem);
     }
 }
