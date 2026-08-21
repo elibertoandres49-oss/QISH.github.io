@@ -5,15 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>我的项目 - QISH</title>
     <script>
-(function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="color")?t:"color");}catch(e){document.documentElement.setAttribute("data-theme","color");}})();
-</script>
+    (function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="color")?t:"color");}catch(e){document.documentElement.setAttribute("data-theme","color");}})();
+    </script>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
     <script>
-        const SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        window.supabaseClient = supabase;
+        window.SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
+        window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
+        window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true,
+                storage: window.localStorage,
+                storageKey: "qish-auth-v1"
+            }
+        });
+        var supabase = window.supabaseClient;
     </script>
     <script src="common.js" defer></script>
 </head>
@@ -37,9 +45,6 @@
     </div>
 </div>
 
-<div class="right-image" id="rightImage">
-    <img src="right-photo.jpg" alt="展示图片">
-</div>
 <div class="overlay" id="overlay"></div>
 <div class="mouse-glow" id="glow"></div>
 
@@ -70,11 +75,20 @@
 <footer>© 2026 QISH · </footer>
 
 <script>
-document.addEventListener("DOMContentLoaded", async () => {
-    if (!window.QISH) return;
-    await QISH.updateAuthNav({ supabase });
-    supabase.auth.onAuthStateChange(() => {
-        QISH.updateAuthNav({ supabase });
+document.addEventListener("DOMContentLoaded", async function () {
+    var client = window.supabaseClient;
+    var t0 = Date.now();
+    while (!window.QISH && Date.now() - t0 < 5000) {
+        await new Promise(function (r) { setTimeout(r, 30); });
+    }
+    if (!window.QISH || !client) {
+        console.warn("项目页：QISH 或 supabase 未就绪");
+        return;
+    }
+    await QISH.updateAuthNav({ supabase: client });
+    client.auth.onAuthStateChange(function (event) {
+        if (event === "INITIAL_SESSION") return;
+        QISH.updateAuthNav({ supabase: client });
     });
 });
 </script>

@@ -372,7 +372,7 @@ body::before {
         <img class="modal-img" id="modalImage" src="">
     </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
 <script src="common.js" defer></script>
 <script>
 // ===================== 【务必修改这里】 =====================
@@ -382,7 +382,16 @@ const ADMIN_UIDS = ["8dbea2a6-e81e-4958-8c7a-3cbb47b2eb7d"];
 const BUCKET_NAME = "album_bucket";
 // ==========================================================
 
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storage: window.localStorage,
+        storageKey: "qish-auth-v1"
+    }
+});
+window.supabaseClient = sb;
 
 const albumContainer = document.getElementById("albumContainer");
 const photoInput = document.getElementById("photoInput");
@@ -596,6 +605,20 @@ function animateTrail() {
 }
 animateTrail();
 window.onload = loadAlbum;
+</script>
+<script>
+(function albumAuthInit() {
+  function run() {
+    const client = window.supabaseClient || (typeof sb !== "undefined" ? sb : null);
+    if (!window.QISH || !client) return;
+    QISH.updateAuthNav({ supabase: client });
+    client.auth.onAuthStateChange(() => {
+      QISH.updateAuthNav({ supabase: client });
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", run);
+  else setTimeout(run, 0);
+})();
 </script>
 </body>
 </html>

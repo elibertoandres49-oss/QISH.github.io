@@ -167,8 +167,13 @@
    * @returns {Promise<{user, profile, nickname, avatar}>}
    */
   async function updateAuthNav(opts) {
-    const sb = opts.supabase || window.supabaseClient || window.supabase;
-    if (!sb || !sb.auth) return { user: null };
+    opts = opts || {};
+    // 只用真正的 client，绝不用 SDK 命名空间 window.supabase
+    let sb = opts.supabase || window.supabaseClient || window.__qish_sb;
+    if (!sb || typeof sb.auth !== "object" || typeof sb.auth.getSession !== "function") {
+      console.warn("[QISH] Supabase client 无效", sb);
+      return { user: null };
+    }
 
     const navAvatar = document.getElementById("navAvatar");
     const navNickname = document.getElementById("navNickname");
@@ -177,8 +182,23 @@
     const authNav = document.getElementById("auth-nav");
     const panelLinksBox = document.getElementById("panelLinksBox");
 
-    const { data } = await sb.auth.getSession();
-    const session = data.session;
+    let session = null;
+    try {
+      const { data, error } = await sb.auth.getSession();
+      if (error) console.warn("[QISH] getSession error", error);
+      session = data && data.session;
+    } catch (e) {
+      console.warn("[QISH] getSession exception", e);
+    }
+    // 兜底：有时 getSession 为空但 token 仍在
+    if (!session) {
+      try {
+        const { data: udata } = await sb.auth.getUser();
+        if (udata && udata.user) {
+          session = { user: udata.user };
+        }
+      } catch (_) {}
+    }
 
     const linksLoggedIn = `
       <a href="index.html">首页</a>
@@ -1107,6 +1127,8 @@ html[data-theme="dark"] body.album-page{filter:none}
 html[data-theme="dark"] .theme-switcher-panel{background:#1e2430;border-color:rgba(255,255,255,0.1)}
 html[data-theme="dark"] .theme-opt{color:#e2e8f0}
 html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
+.nav-logout-btn{background:linear-gradient(135deg,#9b59b6,#8ec5fc);border:none;border-radius:999px;padding:7px 14px;cursor:pointer;font-size:14px;font-weight:600;color:#fff!important;white-space:nowrap;box-shadow:0 4px 12px rgba(155,89,182,.3)}
+.panel-email{margin:4px 0 10px;font-size:12px;color:rgba(255,255,255,.85);word-break:break-all;line-height:1.35}
 `;
       document.head.appendChild(st);
     }
@@ -1202,7 +1224,7 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
     if (page === "album.html") document.body.classList.add("album-page");
     // supabase 可能尚未就绪，延迟一帧
     setTimeout(() => {
-      const sb = window.supabaseClient || window.supabase;
+      const sb = window.supabaseClient || window.__qish_sb || null;
       initMusicPlayer({ isChatPage: chat, supabase: sb });
     }, 50);
     try { initAnnounce(); } catch (e) { console.warn(e); }

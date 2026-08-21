@@ -10,10 +10,18 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
     <script>
-        const SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        window.supabaseClient = supabase;
+        window.SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
+        window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
+        window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true,
+                storage: window.localStorage,
+                storageKey: "qish-auth-v1"
+            }
+        });
+        const supabase = window.supabaseClient;
     </script>
     <script src="common.js" defer></script>
     <style>
@@ -212,21 +220,35 @@ authForm.addEventListener('submit', async (e)=>{
     }else{
         msgBox.style.color='green';
         if(isLoginMode){
-            msgBox.innerText = "登录成功！跳转首页";
-            setTimeout(()=>{ window.location.href="index.html"; },800);
+            msgBox.innerText = "登录成功！正在跳转…";
+            // 确保 session 已写入 localStorage 再跳转
+            try {
+                await supabase.auth.getSession();
+            } catch (e) {}
+            setTimeout(function () {
+                window.location.replace("index.html");
+            }, 400);
         }else{
-            msgBox.innerText = "注册成功，请去邮箱确认邮件（查看垃圾箱）";
+            if (res.data && res.data.session) {
+                msgBox.innerText = "注册成功，已自动登录，正在跳转…";
+                setTimeout(function () { window.location.replace("index.html"); }, 600);
+            } else {
+                msgBox.innerText = "注册成功，请去邮箱确认邮件（查看垃圾箱）";
+            }
         }
     }
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
-    if (window.QISH) {
-        await QISH.updateAuthNav({ supabase });
+    const client = window.supabaseClient || supabase;
+    if (window.QISH && client) {
+        await QISH.updateAuthNav({ supabase: client });
     }
-    const {data} = await supabase.auth.getSession();
-    if(data.session){
-        window.location.href="index.html";
+    if (client) {
+        const { data } = await client.auth.getSession();
+        if (data.session) {
+            window.location.replace("index.html");
+        }
     }
 });
 </script>

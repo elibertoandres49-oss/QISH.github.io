@@ -11,12 +11,20 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
     <script src="common.js" defer></script>
     <script>
-        const SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
-        let supabase;
-        if(window.supabase){
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        window.supabaseClient = supabase;
+        window.SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
+        window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
+        let supabase = null;
+        if (window.supabase && window.supabase.createClient) {
+            window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+                auth: {
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: true,
+                    storage: window.localStorage,
+                    storageKey: "qish-auth-v1"
+                }
+            });
+            supabase = window.supabaseClient;
         }
     </script>
     <style>
@@ -253,121 +261,50 @@ const saveBtn = document.getElementById("saveBtn");
 const resetBtn = document.getElementById("resetBtn");
 const msgBox = document.getElementById("msgBox");
 let currentUser = null;
-let mouseX = 0, mouseY = 0;
-let currentX = 0, currentY = 0;
-let velX = 0, velY = 0;
-document.addEventListener('mousemove', (e) => {
-    mouseX = e.clientX;
-    mouseY = e.clientY;
-});
-function animate() {
-    const dx = mouseX - currentX;
-    const dy = mouseY - currentY;
-    velX += dx * 0.12;
-    velY += dy * 0.12;
-    velX *= 0.78;
-    velY *= 0.78;
-    currentX += velX;
-    currentY += velY;
-    const speed = Math.sqrt(velX * velX + velY * velY);
-    const stretch = Math.min(speed * 0.08, 1.8);
-    const angle = Math.atan2(velY, velX) * (180 / Math.PI);
-    glow.style.left = currentX + 'px';
-    glow.style.top = currentY + 'px';
-    glow.style.transform = `translate(-50%, -50%) rotate(${angle}deg) scaleX(${1 + stretch}) scaleY(${1 - stretch * 0.3})`;
-    glow.style.borderRadius = stretch > 0.3 ? '40%' : '50%';
-    requestAnimationFrame(animate);
-}
-animate();
-navAvatar.addEventListener('click', () => {
-    sidePanel.classList.add('active');
-    overlay.classList.add('active');
-    document.getElementById('rightImage').classList.add('active');
-});
-function closePanel() {
-    sidePanel.classList.remove('active');
-    overlay.classList.remove('active');
-    document.getElementById('rightImage').classList.remove('active');
-}
-closeBtn.addEventListener('click', closePanel);
-overlay.addEventListener('click', closePanel);
-async function updateAuthNav() {
-    const { data } = await supabase.auth.getSession();
-    const session = data.session;
-    const authNav = document.getElementById('auth-nav');
-    const panelLinksBox = document.getElementById('panelLinksBox');
-    if (session) {
-        currentUser = session.user;
-        const userEmail = currentUser.email;
-        const { data: profile } = await supabase
-            .from("public_user_list")
-            .select("avatar_url, nickname, bio")
-            .eq("user_id", currentUser.id)
-            .single();
-        if (profile && profile.avatar_url) {
-            const ts = Date.now();
-            navAvatar.src = profile.avatar_url + '?' + ts;
-            panelAvatar.src = profile.avatar_url + '?' + ts;
-        } else {
-            navAvatar.src = defaultAvatar;
-            panelAvatar.src = defaultAvatar;
-        }
-        if (profile && profile.nickname) {
-            navNickname.textContent = profile.nickname;
-            navNickname.style.display = "block";
-            panelUsername.innerText = profile.nickname;
-        } else {
-            navNickname.textContent = "未设置昵称";
-            navNickname.style.display = "block";
-            panelUsername.innerText = "匿名用户";
-        }
-        // 邮箱显示在侧栏头像下方
-        let panelEmail = document.getElementById("panelEmail");
-        if (!panelEmail && panelUsername) {
-            panelEmail = document.createElement("p");
-            panelEmail.id = "panelEmail";
-            panelEmail.className = "panel-email";
-            panelUsername.insertAdjacentElement("afterend", panelEmail);
-        }
-        if (panelEmail) {
-            panelEmail.textContent = userEmail || "";
-            panelEmail.style.display = userEmail ? "" : "none";
-        }
-        authNav.innerHTML = `<button id="logoutBtn" type="button" class="nav-logout-btn">退出登录</button>`;
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
-            await supabase.auth.signOut();
-            window.location.href = "auth.html";
-        });
-        panelLinksBox.innerHTML = `
-            <a href="index.html">首页</a>
-            <a href="about.html">关于我</a>
-            <a href="projects.html">我的项目</a>
-            <a href="userlist.html">用户列表</a>
-            <a href="profile.html">个人资料</a>
-            <a href="album.html">相册</a>
-            <a href="chat.html">聊天室</a>
-        `;
-    } else {
-        currentUser = null;
-        navAvatar.src = defaultAvatar;
-        panelAvatar.src = defaultAvatar;
-        navNickname.style.display = "none";
-        panelUsername.innerText = "QISH";
-        authNav.innerHTML = `<a href="auth.html">登录/注册</a>`;
-        panelLinksBox.innerHTML = `
-            <a href="index.html">首页</a>
-            <a href="about.html">关于我</a>
-            <a href="projects.html">我的项目</a>
-            <a href="userlist.html">用户列表</a>
-            <a href="profile.html">个人资料</a>
-            <a href="album.html">相册</a>
-            <a href="chat.html">聊天室</a>
-            <a href="auth.html">登录/注册</a>
-        `;
-        window.location.href = "auth.html";
+// 鼠标光效与侧栏由 common.js 统一处理
+
+async function waitForQISH(ms) {
+    ms = ms || 5000;
+    const t0 = Date.now();
+    while (!window.QISH || !QISH.updateAuthNav) {
+        if (Date.now() - t0 > ms) break;
+        await new Promise(function (r) { setTimeout(r, 30); });
     }
+    return window.QISH;
+}
+async function updateAuthNav() {
+    await waitForQISH();
+    const client = window.supabaseClient || supabase;
+    if (!window.QISH || !QISH.updateAuthNav) {
+        console.warn("QISH 未加载，无法同步登录状态");
+        return;
+    }
+    if (!client) {
+        console.warn("Supabase 未初始化");
+        return;
+    }
+    const r = await QISH.updateAuthNav({ supabase: client });
+    if (r && r.user) {
+        currentUser = r.user;
+        return;
+    }
+    // 再确认一次 session，避免误判
+    try {
+        const { data } = await client.auth.getSession();
+        if (data && data.session && data.session.user) {
+            currentUser = data.session.user;
+            await QISH.updateAuthNav({ supabase: client });
+            return;
+        }
+    } catch (e) {
+        console.warn(e);
+    }
+    currentUser = null;
+    window.location.replace("auth.html");
 }
 window.updateAuthNav = updateAuthNav;
+
+
 async function loadMyProfile() {
     if (!currentUser) return;
     const { data, error } = await supabase
@@ -459,14 +396,23 @@ resetBtn.onclick = async function () {
     await loadMyProfile();
 };
 (async function init() {
+    await waitForQISH();
+    const client = window.supabaseClient || supabase;
+    if (!client) {
+        console.warn("profile: no supabase client");
+        return;
+    }
     await updateAuthNav();
     if (currentUser) {
         await loadMyProfile();
     }
+    client.auth.onAuthStateChange(async function (event) {
+        if (event === "INITIAL_SESSION") return;
+        await waitForQISH();
+        await updateAuthNav();
+        if (currentUser) await loadMyProfile();
+    });
 })();
-supabase.auth.onAuthStateChange(() => {
-    init();
-});
 </script>
 </body>
 </html>

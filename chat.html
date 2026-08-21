@@ -10,12 +10,20 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
     <script>
-        const SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
-        let supabase;
-        if(window.supabase){
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        window.supabaseClient = supabase;
+        window.SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
+        window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
+        let supabase = null;
+        if (window.supabase && window.supabase.createClient) {
+            window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+                auth: {
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: true,
+                    storage: window.localStorage,
+                    storageKey: "qish-auth-v1"
+                }
+            });
+            supabase = window.supabaseClient;
         }
     </script>
     <script src="common.js" defer></script>
@@ -504,92 +512,46 @@ function closePanel() {
 closeBtn.addEventListener('click', closePanel);
 overlay.addEventListener('click', closePanel);
 
+
+async function waitForQISH(ms) {
+    ms = ms || 4000;
+    const t0 = Date.now();
+    while (!window.QISH || !QISH.updateAuthNav) {
+        if (Date.now() - t0 > ms) break;
+        await new Promise(function (r) { setTimeout(r, 30); });
+    }
+    return window.QISH;
+}
+
 async function updateAuthNav() {
-    const { data } = await supabase.auth.getSession();
-    const session = data.session;
-    const authNav = document.getElementById('auth-nav');
-    const panelLinksBox = document.getElementById('panelLinksBox');
     const msgInput = document.getElementById('msgInput');
     const sendBtn = document.getElementById('sendBtn');
     const attachBtn = document.getElementById('attachBtn');
+    const statusTip = document.getElementById('statusTip');
 
-    if (session) {
-        currentUser = session.user;
-        const userEmail = currentUser.email;
-
-        const { data: profile } = await supabase
-            .from("public_user_list")
-            .select("avatar_url, nickname")
-            .eq("user_id", currentUser.id)
-            .single();
-
-        if (profile && profile.avatar_url) {
-            navAvatar.src = profile.avatar_url;
-            panelAvatar.src = profile.avatar_url;
-            myAvatar = profile.avatar_url;
-        } else {
-            navAvatar.src = defaultAvatar;
-            panelAvatar.src = defaultAvatar;
-            myAvatar = defaultAvatar;
-        }
-
-        const showNick = (profile && profile.nickname) ? profile.nickname : "匿名用户";
-        myNickname = showNick;
-        navNickname.textContent = showNick;
-        navNickname.style.display = "block";
-        panelUsername.innerText = showNick;
-
-        authNav.innerHTML = `
-            <span style="padding:8px 10px;color:#1e293b;font-weight:500;">${userEmail}</span>
-            <button id="logoutBtn" style="
-                background:rgba(255,255,255,0.3);
-                border:none;
-                border-radius:8px;
-                padding:8px 14px;
-                cursor:pointer;
-                font-size:16px;
-            ">退出登录</button>
-        `;
-        document.getElementById('logoutBtn').addEventListener('click', async ()=>{
-            await supabase.auth.signOut();
-            window.location.href = "auth.html";
-        });
-
-        panelLinksBox.innerHTML = `
-            <a href="index.html">首页</a>
-            <a href="about.html">关于我</a>
-            <a href="projects.html">我的项目</a>
-            <a href="userlist.html">用户列表</a>
-            <a href="profile.html">个人资料</a>
-            <a href="album.html">相册</a>
-            <a href="chat.html">聊天室</a>
-        `;
-
-        msgInput.disabled = false;
-        sendBtn.disabled = false;
-        attachBtn.disabled = false;
-        document.getElementById('statusTip').innerText = `已登录为 ${showNick}，可发送文字 / 图片 / 文件`;
+    await waitForQISH();
+    if (!window.QISH || !QISH.updateAuthNav) {
+        console.warn("QISH 未加载");
+        return;
+    }
+    if (!supabase) return;
+    const r = await QISH.updateAuthNav({ supabase });
+    if (r && r.user) {
+        currentUser = r.user;
+        myAvatar = r.avatar || defaultAvatar;
+        myNickname = r.nickname || "匿名用户";
+        if (msgInput) msgInput.disabled = false;
+        if (sendBtn) sendBtn.disabled = false;
+        if (attachBtn) attachBtn.disabled = false;
+        if (statusTip) statusTip.innerText = `已登录为 ${myNickname}，可发送文字 / 图片 / 文件`;
     } else {
         currentUser = null;
-        navAvatar.src = defaultAvatar;
-        panelAvatar.src = defaultAvatar;
-        navNickname.style.display = "none";
-        panelUsername.innerText = "QISH";
-        authNav.innerHTML = `<a href="auth.html">登录/注册</a>`;
-        panelLinksBox.innerHTML = `
-            <a href="index.html">首页</a>
-            <a href="about.html">关于我</a>
-            <a href="projects.html">我的项目</a>
-            <a href="userlist.html">用户列表</a>
-            <a href="profile.html">个人资料</a>
-            <a href="./album.html">相册</a>
-            <a href="chat.html">聊天室</a>
-            <a href="auth.html">登录/注册</a>
-        `;
-        msgInput.disabled = true;
-        sendBtn.disabled = true;
-        attachBtn.disabled = true;
-        document.getElementById('statusTip').innerText = "请先登录后再发言";
+        myAvatar = defaultAvatar;
+        myNickname = "匿名用户";
+        if (msgInput) msgInput.disabled = true;
+        if (sendBtn) sendBtn.disabled = true;
+        if (attachBtn) attachBtn.disabled = true;
+        if (statusTip) statusTip.innerText = "请先登录后再发言";
     }
 }
 
@@ -1029,14 +991,18 @@ document.getElementById('fileInput').onchange = (e) => {
 };
 
 (async function init(){
+    if (typeof waitForQISH === "function") await waitForQISH();
     await updateAuthNav();
     await loadMessages();
     subscribeRealtime();
 })();
 
-supabase.auth.onAuthStateChange(()=>{
-    updateAuthNav();
-});
+if (supabase) {
+    supabase.auth.onAuthStateChange((event) => {
+        if (event === "INITIAL_SESSION") return;
+        updateAuthNav();
+    });
+}
 </script>
 </body>
 </html>

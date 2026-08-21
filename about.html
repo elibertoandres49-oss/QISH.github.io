@@ -10,10 +10,18 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
     <script>
-        const SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        window.supabaseClient = supabase;
+        window.SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
+        window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
+        window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true,
+                storage: window.localStorage,
+                storageKey: "qish-auth-v1"
+            }
+        });
+        const supabase = window.supabaseClient;
     </script>
     <script src="common.js" defer></script>
     <style>
@@ -142,13 +150,13 @@
         </a>
 
         <!-- X / Grok -->
-        <a class="social-btn x-btn" href="https://x.com/ElibertoAn86250" target="_blank" rel="noopener noreferrer" title="Grok on X">
+        <a class="social-btn x-btn" href="https://x.com/grok" target="_blank" rel="noopener noreferrer" title="Grok on X">
             <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
             </svg>
             <span class="social-text">
                 X · Grok
-                <span class="social-sub">@ElibertoAn86250/span>
+                <span class="social-sub">@grok 官方账号</span>
             </span>
         </a>
     </div>
@@ -158,11 +166,16 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
-    if (!window.QISH) return;
-    await QISH.updateAuthNav({ supabase });
-    supabase.auth.onAuthStateChange(() => {
-        QISH.updateAuthNav({ supabase });
-    });
+    const client = window.supabaseClient || (typeof supabase !== "undefined" ? supabase : null);
+    const t0 = Date.now();
+    while (!window.QISH && Date.now() - t0 < 4000) await new Promise(r => setTimeout(r, 30));
+    if (window.QISH && client) {
+        await QISH.updateAuthNav({ supabase: client });
+        client.auth.onAuthStateChange((event) => {
+            if (event === "INITIAL_SESSION") return;
+            QISH.updateAuthNav({ supabase: client });
+        });
+    }
 });
 </script>
 </body>
