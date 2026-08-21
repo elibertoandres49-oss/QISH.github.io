@@ -23,25 +23,29 @@
   function onPageReady() {
     document.body.classList.add("page-ready");
     highlightCurrentNav();
-    const rightWrap = document.getElementById("rightImage");
-    const rightImg = rightWrap ? rightWrap.querySelector("img") : null;
-    if (rightImg && rightWrap) {
-      rightImg.onerror = function () {
-        rightWrap.style.display = "none";
+    // 通用：角色立绘加载完成后从侧边滑入
+    function activateChar(wrapId) {
+      const wrap = document.getElementById(wrapId);
+      const img = wrap ? wrap.querySelector("img") : null;
+      if (!img || !wrap) return;
+      img.onerror = function () {
+        wrap.style.display = "none";
       };
-      const showRight = function () {
-        if (rightImg.naturalWidth === 0 && rightImg.complete) {
-          rightWrap.style.display = "none";
+      const show = function () {
+        if (img.naturalWidth === 0 && img.complete) {
+          wrap.style.display = "none";
           return;
         }
         // 页面就绪后再弹出，更顺滑
         setTimeout(function () {
-          rightWrap.classList.add("active");
+          wrap.classList.add("active");
         }, 320);
       };
-      if (rightImg.complete) showRight();
-      else rightImg.addEventListener("load", showRight);
+      if (img.complete) show();
+      else img.addEventListener("load", show);
     }
+    activateChar("rightImage");
+    activateChar("leftImage");
   }
   if (document.readyState === "loading") {
     window.addEventListener("DOMContentLoaded", onPageReady);
@@ -607,14 +611,14 @@
 .qm-player{position:fixed;right:20px;bottom:20px;z-index:9000;font-family:"Microsoft YaHei","PingFang SC",sans-serif;user-select:none}
 .qm-mini{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:999px;background:rgba(255,255,255,0.22);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.4);box-shadow:0 8px 32px rgba(0,0,0,0.15);cursor:pointer;transition:transform .25s ease,box-shadow .25s ease;max-width:260px}
 .qm-mini:hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(0,0,0,0.2)}
-.qm-disc{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#9b59b6,#8ec5fc);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(155,89,182,0.4);position:relative}
+.qm-disc{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#60a5fa,#93c5fd);display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(96,165,250,0.4);position:relative}
 .qm-disc.spinning{animation:qm-spin 3s linear infinite}
 @keyframes qm-spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 .qm-disc-inner{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,0.85)}
 .qm-mini-info{flex:1;min-width:0}
 .qm-mini-title{font-size:13px;font-weight:600;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .qm-mini-sub{font-size:11px;color:#64748b;margin-top:1px}
-.qm-mini-btn{width:32px;height:32px;border:none;border-radius:50%;background:linear-gradient(135deg,#9b59b6,#8ec5fc);color:#fff;font-size:12px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:transform .2s}
+.qm-mini-btn{width:32px;height:32px;border:none;border-radius:50%;background:linear-gradient(135deg,#60a5fa,#93c5fd);color:#fff;font-size:12px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:transform .2s}
 .qm-mini-btn:hover{transform:scale(1.08)}
 .qm-panel{position:absolute;right:0;bottom:58px;width:300px;background:rgba(255,255,255,0.28);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,0.4);border-radius:20px;box-shadow:0 12px 40px rgba(0,0,0,0.18);padding:16px;opacity:0;visibility:hidden;transform:translateY(12px) scale(0.96);transition:all .28s cubic-bezier(0.22,1,0.36,1);pointer-events:none}
 .qm-panel.open{opacity:1;visibility:visible;transform:translateY(0) scale(1);pointer-events:auto}
@@ -622,32 +626,32 @@
 .qm-panel-head h4{margin:0;font-size:15px;color:#1e293b;font-weight:700}
 .qm-close{width:28px;height:28px;border:none;border-radius:50%;background:rgba(255,255,255,0.4);cursor:pointer;font-size:16px;color:#334155;line-height:1}
 .qm-now{text-align:center;margin-bottom:12px}
-.qm-now-disc{width:72px;height:72px;border-radius:50%;margin:0 auto 10px;background:linear-gradient(135deg,#9b59b6,#8ec5fc);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(155,89,182,0.35)}
+.qm-now-disc{width:72px;height:72px;border-radius:50%;margin:0 auto 10px;background:linear-gradient(135deg,#60a5fa,#93c5fd);display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(96,165,250,0.35)}
 .qm-now-disc.spinning{animation:qm-spin 3s linear infinite}
 .qm-now-disc-inner{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,0.9)}
 .qm-now-name{font-size:14px;font-weight:600;color:#1e293b;word-break:break-all;max-height:2.6em;overflow:hidden}
 .qm-now-meta{font-size:12px;color:#64748b;margin-top:4px}
 .qm-progress-wrap{margin:12px 0 6px}
 .qm-progress{width:100%;height:6px;border-radius:999px;background:rgba(0,0,0,0.1);cursor:pointer;appearance:none;outline:none}
-.qm-progress::-webkit-slider-thumb{appearance:none;width:14px;height:14px;border-radius:50%;background:#9b59b6;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.2)}
+.qm-progress::-webkit-slider-thumb{appearance:none;width:14px;height:14px;border-radius:50%;background:#60a5fa;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,0.2)}
 .qm-time-row{display:flex;justify-content:space-between;font-size:11px;color:#64748b;margin-bottom:10px}
 .qm-controls{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px}
 .qm-ctrl{width:40px;height:40px;border:none;border-radius:50%;background:rgba(255,255,255,0.45);color:#1e293b;font-size:15px;cursor:pointer;transition:.2s;display:flex;align-items:center;justify-content:center}
 .qm-ctrl:hover{background:rgba(255,255,255,0.7);transform:scale(1.06)}
-.qm-ctrl.primary{width:48px;height:48px;background:linear-gradient(135deg,#9b59b6,#8ec5fc);color:#fff;font-size:16px}
+.qm-ctrl.primary{width:48px;height:48px;background:linear-gradient(135deg,#60a5fa,#93c5fd);color:#fff;font-size:16px}
 .qm-vol-row{display:flex;align-items:center;gap:8px;margin-bottom:12px}
 .qm-vol-row span{font-size:14px}
 .qm-vol{flex:1;height:5px;appearance:none;border-radius:999px;background:rgba(0,0,0,0.1);outline:none;cursor:pointer}
-.qm-vol::-webkit-slider-thumb{appearance:none;width:12px;height:12px;border-radius:50%;background:#8ec5fc;cursor:pointer}
+.qm-vol::-webkit-slider-thumb{appearance:none;width:12px;height:12px;border-radius:50%;background:#93c5fd;cursor:pointer}
 .qm-playlist{max-height:140px;overflow-y:auto;border-top:1px solid rgba(255,255,255,0.3);padding-top:10px}
 .qm-pl-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:10px;font-size:12px;color:#334155;cursor:pointer;transition:background .15s}
 .qm-pl-item:hover{background:rgba(255,255,255,0.35)}
-.qm-pl-item.active{background:rgba(155,89,182,0.22);font-weight:600;color:#1e293b}
+.qm-pl-item.active{background:rgba(96,165,250,0.22);font-weight:600;color:#1e293b}
 .qm-pl-item .qm-pl-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .qm-pl-del{border:none;background:transparent;color:#94a3b8;cursor:pointer;font-size:14px;padding:0 4px}
 .qm-pl-del:hover{color:#e53e3e}
 .qm-empty{text-align:center;font-size:12px;color:#64748b;padding:12px 0}
-.qm-mode-tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:999px;background:rgba(155,89,182,0.2);color:#6b21a8;margin-left:6px;font-weight:600}
+.qm-mode-tag{display:inline-block;font-size:10px;padding:2px 8px;border-radius:999px;background:rgba(96,165,250,0.2);color:#6b21a8;margin-left:6px;font-weight:600}
 .qm-mode-tag.together{background:rgba(34,197,94,0.2);color:#166534}
 @media (max-width:640px){.qm-player{right:12px;bottom:12px}.qm-panel{width:min(300px,calc(100vw - 24px))}.qm-mini{max-width:200px;padding:8px 12px}}
 /* 相册深色背景适配：文字更深、玻璃更亮 */
@@ -971,6 +975,220 @@ body.album-page .qm-empty{color:#64748b}
   }
 
 
+  // ========== 新消息通知 ==========
+  const LAST_CHAT_CHECK_KEY = "qish_last_chat_check";
+  const NEWMSG_QUERY_LIMIT = 500; // 单次查询上限保护
+
+  function getLastChatCheck() {
+    try {
+      const v = localStorage.getItem(LAST_CHAT_CHECK_KEY);
+      if (v) {
+        const n = parseInt(v, 10);
+        if (!isNaN(n) && n > 0) return n;
+      }
+    } catch (_) {}
+    return 0;
+  }
+
+  function setLastChatCheck(ts) {
+    try {
+      localStorage.setItem(LAST_CHAT_CHECK_KEY, String(ts || Date.now()));
+    } catch (_) {}
+  }
+
+  // 数字滚动动画：从 0 滚动到 target
+  function animateNumber(el, target, duration) {
+    if (!el) return;
+    duration = duration || 1200;
+    target = Math.max(0, Math.floor(target));
+    const startTime = performance.now();
+    el.classList.add("rolling");
+    function tick(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      // easeOutCubic，末尾减速
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.floor(target * eased);
+      el.textContent = current;
+      if (progress < 1) {
+        requestAnimationFrame(tick);
+      } else {
+        el.textContent = target;
+        el.classList.remove("rolling");
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+
+  // 查询 Supabase 中 since 之后的新消息数量
+  async function fetchNewMsgCount(supabase, sinceTs) {
+    if (!supabase || !sinceTs) return 0;
+    try {
+      const sinceISO = new Date(sinceTs).toISOString();
+      const { count, error } = await supabase
+        .from("public_messages")
+        .select("*", { count: "exact", head: true })
+        .gt("created_at", sinceISO)
+        .limit(NEWMSG_QUERY_LIMIT);
+      if (error) {
+        console.warn("[新消息通知] 查询失败:", error.message);
+        return 0;
+      }
+      return Math.min(count || 0, NEWMSG_QUERY_LIMIT);
+    } catch (e) {
+      console.warn("[新消息通知] 查询异常:", e);
+      return 0;
+    }
+  }
+
+  // 吸入动画 + 跳转
+  function suckInAndNavigate(mask, box) {
+    if (!mask || !box) return;
+    // 创建中心漩涡
+    const vortex = document.createElement("div");
+    vortex.className = "qish-msg-vortex";
+    document.body.appendChild(vortex);
+    // 创建闪白层
+    const flash = document.createElement("div");
+    flash.className = "qish-msg-flash";
+    document.body.appendChild(flash);
+
+    // 下一帧触发动画
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        vortex.classList.add("active");
+        flash.classList.add("active");
+        box.classList.add("sucking");
+        // 遮罩渐隐
+        mask.style.transition = "opacity 0.6s ease";
+        mask.style.opacity = "0";
+      });
+    });
+
+    // 动画结束后跳转
+    setTimeout(() => {
+      setLastChatCheck(Date.now());
+      window.location.href = "chat.html";
+    }, 820);
+  }
+
+  // 显示新消息通知弹窗
+  function showNewMsgNotifier(count, supabase) {
+    if (document.getElementById("qishMsgMask")) return;
+    count = Math.max(1, Math.floor(count));
+
+    const mask = document.createElement("div");
+    mask.className = "qish-msg-mask";
+    mask.id = "qishMsgMask";
+    mask.innerHTML =
+      '<div class="qish-msg-box" role="dialog" aria-modal="true">' +
+        '<div class="qish-msg-icon" style="position:relative;">' +
+          '💬' +
+          '<span class="qish-msg-dot" id="qishMsgDot">' + count + '</span>' +
+        '</div>' +
+        '<h3 class="qish-msg-title">聊天室有新消息</h3>' +
+        '<p class="qish-msg-desc">你离开期间大家聊了很多，快来看看吧～</p>' +
+        '<div class="qish-msg-number-wrap">' +
+          '<span class="qish-msg-number" id="qishMsgNumber">0</span>' +
+          '<span class="qish-msg-unit">条新消息</span>' +
+        '</div>' +
+        '<div class="qish-msg-actions">' +
+          '<button type="button" class="qish-msg-btn ignore" id="qishMsgIgnore">稍后再说</button>' +
+          '<button type="button" class="qish-msg-btn go" id="qishMsgGo">去看看</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(mask);
+
+    const box = mask.querySelector(".qish-msg-box");
+    const numEl = document.getElementById("qishMsgNumber");
+
+    // 触发入场动画
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        mask.classList.add("show");
+        // 入场动画完成后开始数字滚动
+        setTimeout(() => animateNumber(numEl, count, 1200), 350);
+      });
+    });
+
+    // 去看看：吸入动画 + 跳转
+    document.getElementById("qishMsgGo").addEventListener("click", () => {
+      document.getElementById("qishMsgGo").disabled = true;
+      document.getElementById("qishMsgIgnore").disabled = true;
+      suckInAndNavigate(mask, box);
+    });
+
+    // 忽略：关闭并标记已读
+    function closeNotifier() {
+      mask.classList.remove("show");
+      setTimeout(() => {
+        if (mask.parentNode) mask.parentNode.removeChild(mask);
+      }, 400);
+      setLastChatCheck(Date.now());
+    }
+    document.getElementById("qishMsgIgnore").addEventListener("click", closeNotifier);
+    mask.addEventListener("click", (e) => {
+      if (e.target === mask) closeNotifier();
+    });
+    // Esc 关闭
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        closeNotifier();
+        document.removeEventListener("keydown", onKey);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+  }
+
+  // 初始化：仅主页检查新消息
+  async function initNewMsgNotifier() {
+    const page = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+    const isHome = page === "index.html" || page === "" || page === "/";
+
+    // 聊天页面：更新最后查看时间（进过聊天室就标记为已读）
+    if (page === "chat.html") {
+      setLastChatCheck(Date.now());
+      return;
+    }
+    if (!isHome) return;
+
+    const supabase = window.supabaseClient || window.__qish_sb || null;
+    if (!supabase) return;
+
+    const lastCheck = getLastChatCheck();
+    // 首次访问：不弹通知，直接记录当前时间
+    if (!lastCheck) {
+      setLastChatCheck(Date.now());
+      return;
+    }
+
+    // 等页面淡入 + 公告可能弹出后，再检查（避免和公告弹窗打架）
+    setTimeout(async () => {
+      // 如果公告弹窗正在显示，等它关闭再弹
+      const announce = document.getElementById("qmAnnounceMask");
+      if (announce && announce.classList.contains("show")) {
+        // 监听公告关闭
+        const observer = new MutationObserver(() => {
+          if (!document.getElementById("qmAnnounceMask")) {
+            observer.disconnect();
+            doCheck();
+          }
+        });
+        observer.observe(document.body, { childList: true, subtree: false });
+        return;
+      }
+      doCheck();
+    }, 700);
+
+    async function doCheck() {
+      const count = await fetchNewMsgCount(supabase, lastCheck);
+      if (count > 0) {
+        showNewMsgNotifier(count, supabase);
+      }
+    }
+  }
+
+
   // ========== PWA ==========
   function initPWA() {
     // manifest + theme
@@ -983,7 +1201,7 @@ body.album-page .qm-empty{color:#64748b}
     if (!document.querySelector('meta[name="theme-color"]')) {
       const meta = document.createElement("meta");
       meta.name = "theme-color";
-      meta.content = "#9b59b6";
+      meta.content = "#60a5fa";
       document.head.appendChild(meta);
     }
     if (!document.querySelector('link[rel="apple-touch-icon"]')) {
@@ -1020,7 +1238,8 @@ body.album-page .qm-empty{color:#64748b}
 
   // ========== 主题 ==========
   const THEME_KEY = "qish_theme";
-  const THEMES = ["color", "light", "dark"];
+  const CUSTOM_BG_KEY = "qish_custom_bg";
+  const THEMES = ["color", "light", "dark", "custom"];
 
   function getSavedTheme() {
     try {
@@ -1030,18 +1249,51 @@ body.album-page .qm-empty{color:#64748b}
     return "color";
   }
 
+  function getCustomBg() {
+    try {
+      return localStorage.getItem(CUSTOM_BG_KEY) || "";
+    } catch (_) {
+      return "";
+    }
+  }
+
+  function setCustomBg(dataUrl) {
+    try {
+      if (dataUrl) {
+        localStorage.setItem(CUSTOM_BG_KEY, dataUrl);
+      } else {
+        localStorage.removeItem(CUSTOM_BG_KEY);
+      }
+      return true;
+    } catch (e) {
+      console.warn("[主题] 自定义背景保存失败（可能超出 localStorage 容量）:", e);
+      return false;
+    }
+  }
+
   function applyTheme(name) {
     if (!THEMES.includes(name)) name = "color";
     document.documentElement.setAttribute("data-theme", name);
     try {
       localStorage.setItem(THEME_KEY, name);
     } catch (_) {}
+    // 自定义主题：应用用户背景图
+    if (name === "custom") {
+      const bg = getCustomBg();
+      if (bg) {
+        document.documentElement.style.setProperty("--custom-bg", `url("${bg}")`);
+      } else {
+        document.documentElement.style.removeProperty("--custom-bg");
+      }
+    } else {
+      document.documentElement.style.removeProperty("--custom-bg");
+    }
     document.querySelectorAll(".theme-opt").forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.theme === name);
     });
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) {
-      meta.content = name === "dark" ? "#0b0f14" : name === "light" ? "#f5f6f8" : "#9b59b6";
+      meta.content = name === "dark" ? "#0b0f14" : name === "light" ? "#f5f6f8" : "#60a5fa";
     }
     // 相册页使用独立 CSS 变量，需单独同步
     applyAlbumTheme(name);
@@ -1055,16 +1307,16 @@ body.album-page .qm-empty{color:#64748b}
     }
     const map = {
       color: {
-        "--gradient-start": "#acbafc",
-        "--gradient-mid": "#b58cde",
-        "--gradient-end": "#f0aef7",
+        "--gradient-start": "#bae6fd",
+        "--gradient-mid": "#93c5fd",
+        "--gradient-end": "#dbeafe",
         "--glass-bg": "rgba(255, 255, 255, 0.18)",
         "--glass-bg-strong": "rgba(255, 255, 255, 0.28)",
         "--glass-border": "rgba(255, 255, 255, 0.35)",
         "--text-main": "#ffffff",
         "--text-sub": "rgba(255, 255, 255, 0.85)",
         "--shadow": "0 8px 32px rgba(0, 0, 0, 0.15)",
-        "--album-bg": "radial-gradient(circle at 10% 20%, rgba(102, 126, 234, 0.9), transparent 50%), radial-gradient(circle at 90% 10%, rgba(118, 75, 162, 0.9), transparent 50%), radial-gradient(circle at 50% 90%, rgba(240, 147, 251, 0.9), transparent 50%), linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
+        "--album-bg": "radial-gradient(circle at 10% 20%, rgba(96, 165, 250, 0.85), transparent 50%), radial-gradient(circle at 90% 10%, rgba(59, 130, 246, 0.7), transparent 50%), radial-gradient(circle at 50% 90%, rgba(147, 197, 253, 0.8), transparent 50%), linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #93c5fd 100%)",
       },
       light: {
         "--gradient-start": "#e2e8f0",
@@ -1118,16 +1370,22 @@ body.album-page .qm-empty{color:#64748b}
 .theme-switcher.open .theme-switcher-panel{display:flex}
 .theme-opt{border:none;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;text-align:left;background:transparent;color:#1e293b}
 .theme-opt:hover{background:#f1f5f9}
-.theme-opt.active{background:linear-gradient(135deg,#9b59b6,#8ec5fc);color:#fff}
+.theme-opt.active{background:linear-gradient(135deg,#60a5fa,#93c5fd);color:#fff}
 .theme-opt .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:middle;border:1px solid rgba(0,0,0,0.1)}
-.theme-opt .dot.color{background:linear-gradient(135deg,#e0c3fc,#8ec5fc,#f093fb)}
+.theme-opt .dot.color{background:linear-gradient(135deg,#e0f2fe,#bae6fd,#dbeafe)}
 .theme-opt .dot.light{background:#f8fafc}
 .theme-opt .dot.dark{background:#0f172a}
+.theme-opt .dot.custom{background:repeating-linear-gradient(45deg,#60a5fa,#60a5fa 4px,#93c5fd 4px,#93c5fd 8px)}
 html[data-theme="dark"] body.album-page{filter:none}
 html[data-theme="dark"] .theme-switcher-panel{background:#1e2430;border-color:rgba(255,255,255,0.1)}
 html[data-theme="dark"] .theme-opt{color:#e2e8f0}
 html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
-.nav-logout-btn{background:linear-gradient(135deg,#9b59b6,#8ec5fc);border:none;border-radius:999px;padding:7px 14px;cursor:pointer;font-size:14px;font-weight:600;color:#fff!important;white-space:nowrap;box-shadow:0 4px 12px rgba(155,89,182,.3)}
+.nav-logout-btn{background:linear-gradient(135deg,#60a5fa,#93c5fd);border:none;border-radius:999px;padding:7px 14px;cursor:pointer;font-size:14px;font-weight:600;color:#fff!important;white-space:nowrap;box-shadow:0 4px 12px rgba(96,165,250,.3)}
+.theme-opt.custom-opt{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.theme-opt .custom-main{flex:1;min-width:0;text-align:left}
+.theme-opt .custom-actions{display:flex;gap:2px;align-items:center;flex-shrink:0}
+.theme-opt .custom-change,.theme-opt .custom-clear{font-size:11px;opacity:0.55;cursor:pointer;padding:2px 5px;border-radius:5px;transition:all 0.2s ease;line-height:1}
+.theme-opt .custom-change:hover,.theme-opt .custom-clear:hover{opacity:1;background:rgba(0,0,0,0.1)}
 .panel-email{margin:4px 0 10px;font-size:12px;color:rgba(255,255,255,.85);word-break:break-all;line-height:1.35}
 `;
       document.head.appendChild(st);
@@ -1142,18 +1400,112 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
         '<button type="button" class="theme-opt" data-theme="color"><span class="dot color"></span>彩色</button>' +
         '<button type="button" class="theme-opt" data-theme="light"><span class="dot light"></span>白色</button>' +
         '<button type="button" class="theme-opt" data-theme="dark"><span class="dot dark"></span>黑色</button>' +
+        '<button type="button" class="theme-opt custom-opt" data-theme="custom" id="themeCustomBtn">' +
+          '<span class="custom-main"><span class="dot custom"></span>自定义背景</span>' +
+          '<span class="custom-actions">' +
+            '<span class="custom-change" id="themeCustomChange" title="更换图片">🔄</span>' +
+            '<span class="custom-clear" id="themeCustomClear" title="清除自定义背景">✕</span>' +
+          '</span>' +
+        '</button>' +
+        '<input type="file" id="themeBgInput" accept="image/*" style="display:none;">' +
       "</div>";
     document.body.appendChild(wrap);
 
     const toggle = document.getElementById("themeToggle");
+    const bgInput = document.getElementById("themeBgInput");
+    const customClear = document.getElementById("themeCustomClear");
+    const customChange = document.getElementById("themeCustomChange");
+
     toggle.addEventListener("click", (e) => {
       e.stopPropagation();
       wrap.classList.toggle("open");
     });
+
+    // 更换自定义背景图片
+    if (customChange) {
+      customChange.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (bgInput) bgInput.click();
+        wrap.classList.remove("open");
+      });
+    }
+
+    // 清除自定义背景
+    if (customClear) {
+      customClear.addEventListener("click", (e) => {
+        e.stopPropagation();
+        setCustomBg("");
+        applyTheme("color");
+        wrap.classList.remove("open");
+      });
+    }
+
+    // 选择自定义背景图片
+    if (bgInput) {
+      bgInput.addEventListener("change", (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
+          alert("请选择图片文件");
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const img = new Image();
+          img.onload = () => {
+            // 压缩图片：最大宽度 1920px，JPEG 质量 0.82，控制 localStorage 体积
+            const maxW = 1920;
+            let w = img.width;
+            let h = img.height;
+            if (w > maxW) {
+              h = Math.round(h * (maxW / w));
+              w = maxW;
+            }
+            const canvas = document.createElement("canvas");
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img, 0, 0, w, h);
+            const dataUrl = canvas.toDataURL("image/jpeg", 0.82);
+            const ok = setCustomBg(dataUrl);
+            if (ok) {
+              applyTheme("custom");
+            } else {
+              alert("图片过大，保存失败。请选择更小的图片或清除旧的自定义背景后重试。");
+            }
+            bgInput.value = "";
+          };
+          img.onerror = () => {
+            alert("图片加载失败");
+            bgInput.value = "";
+          };
+          img.src = ev.target.result;
+        };
+        reader.onerror = () => {
+          alert("读取文件失败");
+          bgInput.value = "";
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
     document.getElementById("themePanel").addEventListener("click", (e) => {
+      // 点击更换/清除按钮不触发主题切换
+      if (e.target.closest(".custom-change") || e.target.closest(".custom-clear")) return;
       const btn = e.target.closest(".theme-opt");
       if (!btn) return;
-      applyTheme(btn.dataset.theme);
+      const theme = btn.dataset.theme;
+      if (theme === "custom") {
+        // 已有保存背景 → 直接应用；没有 → 弹出选择器
+        if (getCustomBg()) {
+          applyTheme("custom");
+        } else if (bgInput) {
+          bgInput.click();
+        }
+        wrap.classList.remove("open");
+        return;
+      }
+      applyTheme(theme);
       wrap.classList.remove("open");
     });
     document.addEventListener("click", () => wrap.classList.remove("open"));
@@ -1162,10 +1514,10 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
 
 
   // ---------- 角色点击对话 ----------
-  function initCharDialogue() {
-    const wrap = document.getElementById("rightImage");
-    const img = document.getElementById("rightCharImg") || (wrap && wrap.querySelector("img"));
-    const bubble = document.getElementById("charBubble");
+  function setupChar(wrapId, imgId, bubbleId) {
+    const wrap = document.getElementById(wrapId);
+    const img = document.getElementById(imgId) || (wrap && wrap.querySelector("img"));
+    const bubble = document.getElementById(bubbleId);
     if (!wrap || !img || !bubble) return;
 
     let hideTimer = null;
@@ -1198,6 +1550,106 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
     });
   }
 
+  function initCharDialogue() {
+    setupChar("rightImage", "rightCharImg", "charBubble");
+    setupChar("leftImage", "leftCharImg", "leftCharBubble");
+  }
+
+
+  // ========== 在线状态 Presence ==========
+  const PRESENCE_CHANNEL = "online_users";
+  let presenceChannel = null;
+  let presenceTracked = false;
+  let presenceAuthListenerSet = false;
+
+  // 加入在线频道并上报当前用户状态
+  async function initPresence(supabase) {
+    if (!supabase || typeof supabase.auth !== "object") return;
+
+    // 清理旧频道
+    if (presenceChannel) {
+      try { await supabase.removeChannel(presenceChannel); } catch (_) {}
+      presenceChannel = null;
+      presenceTracked = false;
+    }
+
+    // 获取当前登录用户（会等待 session 恢复）
+    let user = null;
+    try {
+      const { data } = await supabase.auth.getUser();
+      user = data && data.user;
+    } catch (_) { user = null; }
+    if (!user) return; // 未登录不上报
+
+    // 拉取用户资料（昵称、头像）
+    let nickname = "匿名用户";
+    let avatar_url = "";
+    try {
+      const { data: profile } = await supabase
+        .from("public_user_list")
+        .select("nickname, avatar_url")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (profile) {
+        nickname = profile.nickname || nickname;
+        avatar_url = profile.avatar_url || "";
+      }
+    } catch (_) {}
+
+    // 创建频道，以 user_id 为 presence key（多标签页合并为同一在线状态）
+    presenceChannel = supabase.channel(PRESENCE_CHANNEL, {
+      config: { presence: { key: user.id } }
+    });
+
+    // 监听在线状态同步，派发自定义事件供各页面订阅
+    presenceChannel.on("presence", { event: "sync" }, () => {
+      try {
+        const state = presenceChannel.presenceState();
+        const ids = Object.keys(state);
+        window.dispatchEvent(new CustomEvent("qish-presence-sync", {
+          detail: { ids, state }
+        }));
+      } catch (_) {}
+    });
+
+    await presenceChannel.subscribe(async (status) => {
+      if (status === "SUBSCRIBED" && !presenceTracked) {
+        try {
+          await presenceChannel.track({
+            user_id: user.id,
+            nickname,
+            avatar_url,
+            online_at: Date.now()
+          });
+          presenceTracked = true;
+        } catch (_) {}
+      }
+    });
+
+    // 只绑定一次 auth 监听
+    if (!presenceAuthListenerSet) {
+      presenceAuthListenerSet = true;
+      try {
+        supabase.auth.onAuthStateChange((event) => {
+          if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+            initPresence(supabase);
+          }
+        });
+      } catch (_) {}
+    }
+  }
+
+  // 获取当前在线用户 ID 集合
+  function getOnlineUserIds() {
+    if (!presenceChannel) return new Set();
+    try {
+      const state = presenceChannel.presenceState();
+      return new Set(Object.keys(state));
+    } catch (_) {
+      return new Set();
+    }
+  }
+
   // 导出
   window.QISH = {
     DEFAULT_AVATAR,
@@ -1209,10 +1661,15 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
     isAudioFile,
     initAnnounce,
     showAnnounce,
+    initNewMsgNotifier,
+    showNewMsgNotifier,
+    fetchNewMsgCount,
     initPWA,
     initThemeSwitcher,
     applyTheme,
     initCharDialogue,
+    initPresence,
+    getOnlineUserIds,
   };
 
   // 自动初始化光效、侧栏、音乐播放器
@@ -1226,8 +1683,10 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
     setTimeout(() => {
       const sb = window.supabaseClient || window.__qish_sb || null;
       initMusicPlayer({ isChatPage: chat, supabase: sb });
+      if (sb) initPresence(sb);
     }, 50);
     try { initAnnounce(); } catch (e) { console.warn(e); }
+    try { initNewMsgNotifier(); } catch (e) { console.warn(e); }
     try { initPWA(); } catch (e) { console.warn(e); }
     try { initThemeSwitcher(); } catch (e) { console.warn(e); }
     try { initCharDialogue(); } catch (e) { console.warn(e); }

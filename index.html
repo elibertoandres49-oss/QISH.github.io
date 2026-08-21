@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>首页 - QISH</title>
     <script>
-(function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="color")?t:"color");}catch(e){document.documentElement.setAttribute("data-theme","color");}})();
+(function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="color"||t==="custom")?t:"color");}catch(e){document.documentElement.setAttribute("data-theme","color");}})();
 </script>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#9b59b6">
+    <meta name="theme-color" content="#60a5fa">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -48,19 +48,19 @@
         .home-announce-card:hover {
             transform: translateY(-3px);
             background: rgba(255, 255, 255, 0.32);
-            box-shadow: 0 10px 28px rgba(155, 89, 182, 0.2);
+            box-shadow: 0 10px 28px rgba(96, 165, 250, 0.2);
         }
         .home-announce-icon {
             width: 44px;
             height: 44px;
             border-radius: 14px;
-            background: linear-gradient(135deg, #9b59b6, #8ec5fc);
+            background: linear-gradient(135deg, #60a5fa, #93c5fd);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 22px;
             flex-shrink: 0;
-            box-shadow: 0 4px 14px rgba(155, 89, 182, 0.35);
+            box-shadow: 0 4px 14px rgba(96, 165, 250, 0.35);
         }
         .home-announce-info {
             flex: 1;
@@ -82,10 +82,164 @@
             text-overflow: ellipsis;
         }
         .home-announce-arrow {
-            color: #9b59b6;
+            color: #3b82f6;
             font-size: 18px;
             font-weight: 700;
             flex-shrink: 0;
+        }
+        /* 时间日期卡片 */
+        .home-time-card {
+            margin-top: 16px;
+            padding: 16px 20px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+        }
+        .home-time-card:hover {
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.5);
+            box-shadow: 0 10px 28px rgba(59, 130, 246, 0.2);
+        }
+        .home-time-main {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 0;
+        }
+        .home-time-clock {
+            font-size: 28px;
+            font-weight: 800;
+            color: #0f172a;
+            font-family: "Segoe UI", "Microsoft YaHei", monospace;
+            letter-spacing: 1px;
+            line-height: 1.2;
+        }
+        .home-time-date {
+            font-size: 13px;
+            color: #334155;
+            font-weight: 500;
+        }
+        .home-time-icon {
+            font-size: 32px;
+            flex-shrink: 0;
+            animation: time-icon-spin 20s linear infinite;
+        }
+        @keyframes time-icon-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        /* 时间详情弹窗 */
+        .time-modal-mask {
+            position: fixed;
+            inset: 0;
+            z-index: 10002;
+            background: rgba(15, 23, 42, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.35s ease, visibility 0.35s ease;
+        }
+        .time-modal-mask.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .time-modal-box {
+            width: min(380px, 92vw);
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            border-radius: 28px;
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.25);
+            padding: 32px 28px 24px;
+            text-align: center;
+            transform: translateY(24px) scale(0.9);
+            opacity: 0;
+            transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease;
+            position: relative;
+        }
+        .time-modal-mask.show .time-modal-box {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+        .time-modal-close {
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.5);
+            color: #475569;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .time-modal-close:hover {
+            background: rgba(255, 255, 255, 0.8);
+            transform: rotate(90deg);
+        }
+        .time-modal-big-clock {
+            font-size: 48px;
+            font-weight: 900;
+            color: #0f172a;
+            font-family: "Segoe UI", monospace;
+            letter-spacing: 2px;
+            margin-bottom: 4px;
+            line-height: 1.1;
+        }
+        .time-modal-full-date {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 20px;
+        }
+        .time-modal-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .time-modal-item {
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 14px;
+            padding: 12px 10px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .time-modal-item-label {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+        .time-modal-item-value {
+            font-size: 15px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        @media (max-width: 640px) {
+            .home-time-clock {
+                font-size: 22px;
+            }
+            .time-modal-big-clock {
+                font-size: 38px;
+            }
         }
     </style>
 </head>
@@ -144,6 +298,15 @@
         <a href="chat.html" class="chat-enter-btn">💬 进入聊天室</a>
     </div>
 
+    <!-- 时间日期板块：点击查看详情 -->
+    <div class="home-time-card" id="homeTimeCard" title="点击查看详细时间">
+        <div class="home-time-main">
+            <span class="home-time-clock" id="homeTimeClock">--:--:--</span>
+            <span class="home-time-date" id="homeTimeDate">加载中...</span>
+        </div>
+        <div class="home-time-icon">🕐</div>
+    </div>
+
     <!-- 公告板块：点击弹出完整公告 -->
     <div class="home-announce-card" id="homeAnnounceCard" title="点击查看完整公告">
         <div class="home-announce-icon">📢</div>
@@ -155,9 +318,105 @@
     </div>
 </div>
 
+<!-- 时间详情弹窗 -->
+<div class="time-modal-mask" id="timeModalMask">
+    <div class="time-modal-box" role="dialog" aria-modal="true">
+        <button class="time-modal-close" id="timeModalClose" aria-label="关闭">×</button>
+        <div class="time-modal-big-clock" id="timeModalClock">--:--:--</div>
+        <div class="time-modal-full-date" id="timeModalDate">加载中...</div>
+        <div class="time-modal-grid">
+            <div class="time-modal-item">
+                <div class="time-modal-item-label">星期</div>
+                <div class="time-modal-item-value" id="timeModalWeekday">-</div>
+            </div>
+            <div class="time-modal-item">
+                <div class="time-modal-item-label">一年中第几天</div>
+                <div class="time-modal-item-value" id="timeModalDayOfYear">-</div>
+            </div>
+            <div class="time-modal-item">
+                <div class="time-modal-item-label">距周末</div>
+                <div class="time-modal-item-value" id="timeModalToWeekend">-</div>
+            </div>
+            <div class="time-modal-item">
+                <div class="time-modal-item-label">当前季节</div>
+                <div class="time-modal-item-value" id="timeModalSeason">-</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <footer>© 2026 QISH · </footer>
 
 <script>
+// ========== 时间日期板块 ==========
+(function initTimeCard() {
+    const clockEl = document.getElementById("homeTimeClock");
+    const dateEl = document.getElementById("homeTimeDate");
+    const cardEl = document.getElementById("homeTimeCard");
+    const modalMask = document.getElementById("timeModalMask");
+    const modalClose = document.getElementById("timeModalClose");
+    const modalClock = document.getElementById("timeModalClock");
+    const modalDate = document.getElementById("timeModalDate");
+    const modalWeekday = document.getElementById("timeModalWeekday");
+    const modalDayOfYear = document.getElementById("timeModalDayOfYear");
+    const modalToWeekend = document.getElementById("timeModalToWeekend");
+    const modalSeason = document.getElementById("timeModalSeason");
+    if (!clockEl || !dateEl || !cardEl) return;
+
+    const weekdays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+    const seasons = ["冬季", "冬季", "春季", "春季", "春季", "夏季", "夏季", "夏季", "秋季", "秋季", "秋季", "冬季"];
+
+    function pad(n) { return String(n).padStart(2, "0"); }
+
+    function getDayOfYear(d) {
+        const start = new Date(d.getFullYear(), 0, 0);
+        const diff = d - start;
+        return Math.floor(diff / (1000 * 60 * 60 * 24));
+    }
+
+    function getDaysToWeekend(d) {
+        const day = d.getDay(); // 0=周日, 6=周六
+        if (day === 0 || day === 6) return "今天就是周末🎉";
+        return (6 - day) + " 天";
+    }
+
+    function updateTime() {
+        const now = new Date();
+        const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+        const dateStr = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${weekdays[now.getDay()]}`;
+        clockEl.textContent = timeStr;
+        dateEl.textContent = dateStr;
+        if (modalClock) modalClock.textContent = timeStr;
+        if (modalDate) modalDate.textContent = dateStr;
+        if (modalWeekday) modalWeekday.textContent = weekdays[now.getDay()];
+        if (modalDayOfYear) modalDayOfYear.textContent = `第 ${getDayOfYear(now)} 天`;
+        if (modalToWeekend) modalToWeekend.textContent = getDaysToWeekend(now);
+        if (modalSeason) modalSeason.textContent = seasons[now.getMonth()];
+    }
+
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    // 点击卡片打开弹窗
+    cardEl.addEventListener("click", () => {
+        updateTime();
+        modalMask.classList.add("show");
+        document.body.style.overflow = "hidden";
+    });
+
+    function closeModal() {
+        modalMask.classList.remove("show");
+        document.body.style.overflow = "";
+    }
+    if (modalClose) modalClose.addEventListener("click", closeModal);
+    if (modalMask) modalMask.addEventListener("click", (e) => {
+        if (e.target === modalMask) closeModal();
+    });
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && modalMask && modalMask.classList.contains("show")) closeModal();
+    });
+})();
+
 document.addEventListener("DOMContentLoaded", async () => {
     const client = window.supabaseClient || (typeof supabase !== "undefined" ? supabase : null);
     async function waitQ() {
