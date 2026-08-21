@@ -6,12 +6,14 @@
     <title>个人资料 - QISH</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
+    <script src="common.js" defer></script>
     <script>
         const SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
         let supabase;
         if(window.supabase){
             supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        window.supabaseClient = supabase;
         }
     </script>
     <style>
@@ -174,6 +176,7 @@
             <a href="userlist.html">用户列表</a>
             <a href="profile.html">个人资料</a>
             <a href="album.html">相册</a>
+            <a href="chat.html">聊天室</a>
             <a href="auth.html">登录/注册</a>
         </div>
     </div>
@@ -196,6 +199,7 @@
         <a href="userlist.html">用户列表</a>
         <a href="profile.html">个人资料</a>
         <a href="./album.html">相册</a>
+        <a href="chat.html">聊天室</a>
         <span id="auth-nav">
             <a href="auth.html">登录/注册</a>
         </span>
@@ -331,6 +335,7 @@ async function updateAuthNav() {
             <a href="userlist.html">用户列表</a>
             <a href="profile.html">个人资料</a>
             <a href="album.html">相册</a>
+            <a href="chat.html">聊天室</a>
         `;
     } else {
         currentUser = null;
@@ -346,6 +351,7 @@ async function updateAuthNav() {
             <a href="userlist.html">用户列表</a>
             <a href="profile.html">个人资料</a>
             <a href="album.html">相册</a>
+            <a href="chat.html">聊天室</a>
             <a href="auth.html">登录/注册</a>
         `;
         window.location.href = "auth.html";

@@ -5,17 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>首页 - QISH</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#9b59b6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
     <script>
         const SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
-        let supabase;
-        if(window.supabase){
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        }
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        window.supabaseClient = supabase;
     </script>
+    <script src="common.js" defer></script>
+    <style>
+        .home-announce-card {
+            margin-top: 28px;
+            padding: 18px 20px;
+            border-radius: 18px;
+            background: rgba(255, 255, 255, 0.22);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-align: left;
+        }
+        .home-announce-card:hover {
+            transform: translateY(-3px);
+            background: rgba(255, 255, 255, 0.32);
+            box-shadow: 0 10px 28px rgba(155, 89, 182, 0.2);
+        }
+        .home-announce-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #9b59b6, #8ec5fc);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 14px rgba(155, 89, 182, 0.35);
+        }
+        .home-announce-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .home-announce-info h3 {
+            margin: 0 0 4px;
+            font-size: 16px;
+            color: #1e293b;
+            font-weight: 700;
+            border: none;
+        }
+        .home-announce-info p {
+            margin: 0;
+            font-size: 13px;
+            color: #64748b;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .home-announce-arrow {
+            color: #9b59b6;
+            font-size: 18px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+    </style>
 </head>
-
+<body>
 <div class="side-panel" id="sidePanel">
     <div class="side-panel-content">
         <button class="close-btn" id="closePanel">×</button>
@@ -28,7 +91,8 @@
             <a href="projects.html">我的项目</a>
             <a href="userlist.html">用户列表</a>
             <a href="profile.html">个人资料</a>
-            <a href="./album.html">相册</a>
+            <a href="album.html">相册</a>
+            <a href="chat.html">聊天室</a>
             <a href="auth.html">登录/注册</a>
         </div>
     </div>
@@ -37,10 +101,7 @@
 <div class="right-image" id="rightImage">
     <img src="right-photo.jpg" alt="展示图片">
 </div>
-
 <div class="overlay" id="overlay"></div>
-
-<body>
 <div class="mouse-glow" id="glow"></div>
 
 <nav>
@@ -54,7 +115,8 @@
         <a href="projects.html">项目</a>
         <a href="userlist.html">用户列表</a>
         <a href="profile.html">个人资料</a>
-        <a href="./album.html">相册</a>
+        <a href="album.html">相册</a>
+        <a href="chat.html">聊天室</a>
         <span id="auth-nav">
             <a href="auth.html">登录/注册</a>
         </span>
@@ -63,145 +125,41 @@
 
 <div class="container">
     <h1>欢迎来到 QISH</h1>
-    <p></p>
+    <p>欢迎来到我的小站，点击下方按钮进入聊天室和大家一起聊天吧～</p>
+    <div style="text-align:center; margin-top: 28px;">
+        <a href="chat.html" class="chat-enter-btn">💬 进入聊天室</a>
+    </div>
+
+    <!-- 公告板块：点击弹出完整公告 -->
+    <div class="home-announce-card" id="homeAnnounceCard" title="点击查看完整公告">
+        <div class="home-announce-icon">📢</div>
+        <div class="home-announce-info">
+            <h3>网站公告</h3>
+            <p>点击查看最新公告与站内说明</p>
+        </div>
+        <span class="home-announce-arrow">›</span>
+    </div>
 </div>
 
 <footer>© 2026 QISH · </footer>
 
 <script>
-const glow = document.getElementById('glow');
-const sidePanel = document.getElementById('sidePanel');
-const overlay = document.getElementById('overlay');
-const closeBtn = document.getElementById('closePanel');
-const navAvatar = document.getElementById('navAvatar');
-const navNickname = document.getElementById('navNickname');
-const panelAvatar = document.getElementById("panelAvatar");
-const panelUsername = document.getElementById("panelUsername");
+document.addEventListener("DOMContentLoaded", async () => {
+    if (!window.QISH) return;
+    await QISH.updateAuthNav({ supabase });
+    supabase.auth.onAuthStateChange(() => {
+        QISH.updateAuthNav({ supabase });
+    });
 
-const defaultAvatar = "avatar.jpg";
-let currentUser = null;
-
-let mouseX = 0, mouseY = 0;
-let currentX = 0, currentY = 0;
-let velX = 0, velY = 0;
-
-document.addEventListener('mousemove', (e) => {
-    mouseX = e.clientX;
-    mouseY = e.clientY;
-});
-
-function animate() {
-    const dx = mouseX - currentX;
-    const dy = mouseY - currentY;
-    velX += dx * 0.12;
-    velY += dy * 0.12;
-    velX *= 0.78;
-    velY *= 0.78;
-    currentX += velX;
-    currentY += velY;
-    const speed = Math.sqrt(velX * velX + velY * velY);
-    const stretch = Math.min(speed * 0.08, 1.8);
-    const angle = Math.atan2(velY, velX) * (180 / Math.PI);
-    glow.style.left = currentX + 'px';
-    glow.style.top = currentY + 'px';
-    glow.style.transform = `translate(-50%, -50%) rotate(${angle}deg) scaleX(${1 + stretch}) scaleY(${1 - stretch * 0.3})`;
-    glow.style.borderRadius = stretch > 0.3 ? '40%' : '50%';
-    requestAnimationFrame(animate);
-}
-animate();
-
-navAvatar.addEventListener('click', () => {
-    sidePanel.classList.add('active');
-    overlay.classList.add('active');
-    document.getElementById('rightImage').classList.add('active');
-});
-
-function closePanel() {
-    sidePanel.classList.remove('active');
-    overlay.classList.remove('active');
-    document.getElementById('rightImage').classList.remove('active');
-}
-closeBtn.addEventListener('click', closePanel);
-overlay.addEventListener('click', closePanel);
-
-async function updateAuthNav() {
-    const { data } = await supabase.auth.getSession();
-    const session = data.session;
-    const authNav = document.getElementById('auth-nav');
-    const panelLinksBox = document.getElementById('panelLinksBox');
-
-    if (session) {
-        currentUser = session.user;
-        const userEmail = currentUser.email;
-
-        const { data: profile } = await supabase
-            .from("public_user_list")
-            .select("avatar_url, nickname")
-            .eq("user_id", currentUser.id)
-            .single();
-
-        if (profile && profile.avatar_url) {
-            navAvatar.src = profile.avatar_url;
-            panelAvatar.src = profile.avatar_url;
-        } else {
-            navAvatar.src = defaultAvatar;
-            panelAvatar.src = defaultAvatar;
-        }
-
-        const showNick = (profile && profile.nickname) ? profile.nickname : "匿名用户";
-        navNickname.textContent = showNick;
-        navNickname.style.display = "block";
-        panelUsername.innerText = showNick;
-
-        authNav.innerHTML = `
-            <span style="padding:8px 10px;color:#1e293b;font-weight:500;">${userEmail}</span>
-            <button id="logoutBtn" style="
-                background:rgba(255,255,255,0.3);
-                border:none;
-                border-radius:8px;
-                padding:8px 14px;
-                cursor:pointer;
-                font-size:16px;
-            ">退出登录</button>
-        `;
-        document.getElementById('logoutBtn').addEventListener('click', async ()=>{
-            await supabase.auth.signOut();
-            window.location.href = "auth.html";
+    // 点击公告板块 → 弹出公告（手动打开，不受「本日不再提醒」限制）
+    const card = document.getElementById("homeAnnounceCard");
+    if (card) {
+        card.addEventListener("click", () => {
+            if (typeof QISH.showAnnounce === "function") {
+                QISH.showAnnounce();
+            }
         });
-
-        panelLinksBox.innerHTML = `
-            <a href="index.html">首页</a>
-            <a href="about.html">关于我</a>
-            <a href="projects.html">我的项目</a>
-            <a href="userlist.html">用户列表</a>
-            <a href="profile.html">个人资料</a>
-            <a href="album.html">相册</a>
-        `;
-    } else {
-        currentUser = null;
-        navAvatar.src = defaultAvatar;
-        panelAvatar.src = defaultAvatar;
-        navNickname.style.display = "none";
-        panelUsername.innerText = "QISH";
-        authNav.innerHTML = `<a href="auth.html">登录/注册</a>`;
-        panelLinksBox.innerHTML = `
-            <a href="index.html">首页</a>
-            <a href="about.html">关于我</a>
-            <a href="projects.html">我的项目</a>
-            <a href="userlist.html">用户列表</a>
-            <a href="profile.html">个人资料</a>
-            <a href="./album.html">相册</a>
-            <a href="auth.html">登录/注册</a>
-        `;
     }
-}
-
-(async function init(){
-    await updateAuthNav();
-})();
-
-supabase.auth.onAuthStateChange(()=>{
-    init();
 });
 </script>
 </body>

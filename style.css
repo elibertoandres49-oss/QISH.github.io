@@ -14,6 +14,19 @@ body {
     animation: gradientMove 12s ease infinite;
     position: relative;
     overflow-x: hidden;
+    /* 页面切换过渡 */
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.28s ease, transform 0.28s ease;
+}
+body.page-ready {
+    opacity: 1;
+    transform: translateY(0);
+}
+body.page-leaving {
+    opacity: 0;
+    transform: translateY(-6px);
+    pointer-events: none;
 }
 
 /* 流动渐变动画 */
@@ -351,4 +364,529 @@ footer {
     padding: 5px 12px;
     border-radius: 12px;
     font-weight: 500;
+}
+
+/* 聊天入口按钮 */
+.chat-enter-btn {
+    display: inline-block;
+    padding: 14px 32px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #9b59b6, #8ec5fc);
+    color: #fff !important;
+    text-decoration: none;
+    font-size: 17px;
+    font-weight: 600;
+    box-shadow: 0 6px 20px rgba(155, 89, 182, 0.35);
+    transition: all 0.3s ease;
+}
+.chat-enter-btn:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 10px 28px rgba(155, 89, 182, 0.45);
+    background: linear-gradient(135deg, #8e44ad, #74b9ff);
+}
+
+/* 当前页导航高亮 */
+.nav-links a.nav-active,
+.panel-links a.nav-active {
+    background: rgba(155, 89, 182, 0.28);
+    color: #1e293b;
+    font-weight: 600;
+}
+
+/* 导航与侧栏链接更顺滑 */
+.nav-links a,
+.panel-links a {
+    transition: background 0.22s ease, transform 0.22s ease, color 0.22s ease;
+}
+.side-panel {
+    transition: left 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.right-image {
+    transition: right 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.overlay {
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+/* 减少不必要的重绘 */
+.mouse-glow {
+    will-change: transform, left, top;
+}
+.container {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* ========== 右下角音乐播放器 ========== */
+.qm-player {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 9000;
+  font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+  user-select: none;
+}
+.qm-mini {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  max-width: 260px;
+}
+.qm-mini:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2);
+}
+.qm-disc {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #9b59b6, #8ec5fc);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(155, 89, 182, 0.4);
+  position: relative;
+}
+.qm-disc.spinning {
+  animation: qm-spin 3s linear infinite;
+}
+@keyframes qm-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.qm-disc-inner {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.85);
+}
+.qm-mini-info {
+  flex: 1;
+  min-width: 0;
+}
+.qm-mini-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.qm-mini-sub {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 1px;
+}
+.qm-mini-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #9b59b6, #8ec5fc);
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+.qm-mini-btn:hover { transform: scale(1.08); }
+
+/* 展开面板 */
+.qm-panel {
+  position: absolute;
+  right: 0;
+  bottom: 58px;
+  width: 300px;
+  background: rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 20px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  padding: 16px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px) scale(0.96);
+  transition: all 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.qm-panel.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.qm-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.qm-panel-head h4 {
+  margin: 0;
+  font-size: 15px;
+  color: #1e293b;
+  font-weight: 700;
+}
+.qm-close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.4);
+  cursor: pointer;
+  font-size: 16px;
+  color: #334155;
+  line-height: 1;
+}
+.qm-now {
+  text-align: center;
+  margin-bottom: 12px;
+}
+.qm-now-disc {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  margin: 0 auto 10px;
+  background: linear-gradient(135deg, #9b59b6, #8ec5fc);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 20px rgba(155, 89, 182, 0.35);
+}
+.qm-now-disc.spinning {
+  animation: qm-spin 3s linear infinite;
+}
+.qm-now-disc-inner {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+}
+.qm-now-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  word-break: break-all;
+  max-height: 2.6em;
+  overflow: hidden;
+}
+.qm-now-meta {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 4px;
+}
+.qm-progress-wrap {
+  margin: 12px 0 6px;
+}
+.qm-progress {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.1);
+  cursor: pointer;
+  appearance: none;
+  outline: none;
+}
+.qm-progress::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #9b59b6;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.qm-time-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #64748b;
+  margin-bottom: 10px;
+}
+.qm-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.qm-ctrl {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.45);
+  color: #1e293b;
+  font-size: 15px;
+  cursor: pointer;
+  transition: 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.qm-ctrl:hover {
+  background: rgba(255,255,255,0.7);
+  transform: scale(1.06);
+}
+.qm-ctrl.primary {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #9b59b6, #8ec5fc);
+  color: #fff;
+  font-size: 16px;
+}
+.qm-vol-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.qm-vol-row span {
+  font-size: 14px;
+}
+.qm-vol {
+  flex: 1;
+  height: 5px;
+  appearance: none;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.1);
+  outline: none;
+  cursor: pointer;
+}
+.qm-vol::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #8ec5fc;
+  cursor: pointer;
+}
+.qm-playlist {
+  max-height: 140px;
+  overflow-y: auto;
+  border-top: 1px solid rgba(255,255,255,0.3);
+  padding-top: 10px;
+}
+.qm-pl-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  color: #334155;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.qm-pl-item:hover {
+  background: rgba(255,255,255,0.35);
+}
+.qm-pl-item.active {
+  background: rgba(155, 89, 182, 0.22);
+  font-weight: 600;
+  color: #1e293b;
+}
+.qm-pl-item .qm-pl-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.qm-pl-del {
+  border: none;
+  background: transparent;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 4px;
+}
+.qm-pl-del:hover { color: #e53e3e; }
+.qm-empty {
+  text-align: center;
+  font-size: 12px;
+  color: #64748b;
+  padding: 12px 0;
+}
+.qm-mode-tag {
+  display: inline-block;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(155, 89, 182, 0.2);
+  color: #6b21a8;
+  margin-left: 6px;
+  font-weight: 600;
+}
+.qm-mode-tag.together {
+  background: rgba(34, 197, 94, 0.2);
+  color: #166534;
+}
+
+/* 聊天室音频消息操作按钮 */
+.msg-audio-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.msg-audio-btn {
+  padding: 5px 12px;
+  border: none;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #fff;
+  transition: 0.2s;
+}
+.msg-audio-btn.add {
+  background: linear-gradient(135deg, #9b59b6, #8ec5fc);
+}
+.msg-audio-btn.together {
+  background: linear-gradient(135deg, #36b37e, #42c9a3);
+}
+.msg-audio-btn:hover {
+  transform: translateY(-1px);
+  opacity: 0.92;
+}
+
+@media (max-width: 640px) {
+  .qm-player {
+    right: 12px;
+    bottom: 12px;
+  }
+  .qm-panel {
+    width: min(300px, calc(100vw - 24px));
+  }
+  .qm-mini {
+    max-width: 200px;
+    padding: 8px 12px;
+  }
+}
+
+/* ========== 首页公告弹窗 ========== */
+.qm-announce-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(15, 23, 42, 0.35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+.qm-announce-mask.show {
+  opacity: 1;
+  visibility: visible;
+}
+.qm-announce-box {
+  width: min(420px, 90vw);
+  max-height: min(52vh, 480px);
+  background: rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.22);
+  padding: 28px 26px 22px;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(24px) scale(0.92);
+  opacity: 0;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease;
+}
+.qm-announce-mask.show .qm-announce-box {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+.qm-announce-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b21a8;
+  background: rgba(155, 89, 182, 0.2);
+  margin-bottom: 12px;
+}
+.qm-announce-title {
+  margin: 0 0 12px;
+  font-size: 1.35em;
+  font-weight: 800;
+  color: #1e293b;
+  letter-spacing: 0.02em;
+}
+.qm-announce-body {
+  flex: 1;
+  overflow-y: auto;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #334155;
+  margin-bottom: 20px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.qm-announce-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.qm-announce-btn {
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.qm-announce-btn.cancel {
+  background: rgba(255, 255, 255, 0.45);
+  color: #334155;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+.qm-announce-btn.cancel:hover {
+  background: rgba(255, 255, 255, 0.7);
+  transform: translateY(-1px);
+}
+.qm-announce-btn.today {
+  background: linear-gradient(135deg, #9b59b6, #8ec5fc);
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(155, 89, 182, 0.35);
+}
+.qm-announce-btn.today:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(155, 89, 182, 0.45);
+}
+@media (max-width: 640px) {
+  .qm-announce-box {
+    width: 92vw;
+    max-height: 60vh;
+    padding: 22px 18px 18px;
+  }
+  .qm-announce-title {
+    font-size: 1.15em;
+  }
 }

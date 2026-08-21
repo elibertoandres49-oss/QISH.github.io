@@ -5,23 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>登录注册 - QISH</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Supabase CDN 引入 -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
     <script>
-        // =========替换为你自己的信息=========
         const SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
-        // ===================================
-        let supabase;
-        if(window.supabase){
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            console.log("supabase初始化成功", supabase);
-        }else{
-            console.error("Supabase CDN加载失败！");
-        }
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        window.supabaseClient = supabase;
     </script>
+    <script src="common.js" defer></script>
     <style>
-        /* 登录页面局部美化，磨砂玻璃 */
         .auth-card{
             background: rgba(255, 255, 255, 0.20);
             backdrop-filter: blur(22px);
@@ -34,9 +26,7 @@
             margin:0 auto;
             transition: transform 0.25s ease;
         }
-        .auth-card:hover{
-            transform: translateY(-4px);
-        }
+        .auth-card:hover{ transform: translateY(-4px); }
         .auth-card h1{
             border-bottom:none;
             text-align:center;
@@ -58,18 +48,13 @@
             font-size:16px;
             color:#222;
         }
-        .auth-input::placeholder{
-            color:#555;
-        }
+        .auth-input::placeholder{ color:#555; }
         .auth-input:focus{
             outline:none;
             border-color:#9b59b6;
             box-shadow:0 0 0 3px rgba(155, 89, 182, 0.15);
         }
-        .auth-label{
-            font-weight:500;
-            color:#2c3e50;
-        }
+        .auth-label{ font-weight:500; color:#2c3e50; }
         .auth-submit{
             width:100%;
             padding:14px;
@@ -87,10 +72,7 @@
             transform: translateY(-2px);
             box-shadow:0 6px 20px rgba(155, 89, 182,0.3);
         }
-        .auth-toggle-wrap{
-            text-align:center;
-            margin-top:24px;
-        }
+        .auth-toggle-wrap{ text-align:center; margin-top:24px; }
         .auth-toggle{
             background:none;
             border:none;
@@ -98,9 +80,7 @@
             font-size:15px;
             cursor:pointer;
         }
-        .auth-toggle:hover{
-            text-decoration:underline;
-        }
+        .auth-toggle:hover{ text-decoration:underline; }
         .back-home{
             display:block;
             text-align:center;
@@ -109,26 +89,25 @@
             text-decoration:none;
             font-size:14px;
         }
-        .back-home:hover{
-            text-decoration:underline;
-        }
-        #message{
-            text-align:center;
-            margin-bottom:16px;
-            font-weight:500;
-        }
+        .back-home:hover{ text-decoration:underline; }
+        #message{ text-align:center; margin-bottom:16px; font-weight:500; }
     </style>
 </head>
+<body>
 <div class="side-panel" id="sidePanel">
     <div class="side-panel-content">
         <button class="close-btn" id="closePanel">×</button>
-        <img src="avatar.jpg" alt="头像" class="panel-avatar">
-        <h2>QISH</h2>
-        <p class="panel-desc">这里可以写一段简短的自我介绍。</p>
-        <div class="panel-links">
+        <img src="avatar.jpg" alt="头像" class="panel-avatar" id="panelAvatar">
+        <h2 id="panelUsername">QISH</h2>
+        <p class="panel-desc">ovo</p>
+        <div class="panel-links" id="panelLinksBox">
             <a href="index.html">首页</a>
             <a href="about.html">关于我</a>
             <a href="projects.html">我的项目</a>
+            <a href="userlist.html">用户列表</a>
+            <a href="profile.html">个人资料</a>
+            <a href="album.html">相册</a>
+            <a href="chat.html">聊天室</a>
             <a href="auth.html">登录/注册</a>
         </div>
     </div>
@@ -137,15 +116,24 @@
     <img src="right-photo.jpg" alt="展示图片">
 </div>
 <div class="overlay" id="overlay"></div>
-<body>
 <div class="mouse-glow" id="glow"></div>
+
 <nav>
-    <img src="avatar.png" alt="头像" class="nav-avatar">
+    <div class="nav-avatar-area">
+        <img src="avatar.jpg" alt="头像" class="nav-avatar" id="navAvatar">
+        <span class="nav-nickname" id="navNickname" style="display: none;"></span>
+    </div>
     <div class="nav-links">
         <a href="index.html">首页</a>
         <a href="about.html">关于我</a>
         <a href="projects.html">项目</a>
-        <a href="auth.html">登录/注册</a>
+        <a href="userlist.html">用户列表</a>
+        <a href="profile.html">个人资料</a>
+        <a href="album.html">相册</a>
+        <a href="chat.html">聊天室</a>
+        <span id="auth-nav">
+            <a href="auth.html">登录/注册</a>
+        </span>
     </div>
 </nav>
 
@@ -164,7 +152,7 @@
         </form>
         <div class="auth-toggle-wrap">
             <span id="toggle-text">没有账号？</span>
-            <button class="auth-toggle" id="toggle-mode">去注册</button>
+            <button class="auth-toggle" id="toggle-mode" type="button">去注册</button>
         </div>
         <a class="back-home" href="index.html">← 返回首页</a>
     </div>
@@ -172,65 +160,6 @@
 <footer>© 2026 QISH · </footer>
 
 <script>
-const glow = document.getElementById('glow');
-const sidePanel = document.getElementById('sidePanel');
-const overlay = document.getElementById('overlay');
-const closeBtn = document.getElementById('closePanel');
-const avatar = document.querySelector('.nav-avatar');
-let mouseX = 0, mouseY = 0;
-let currentX = 0, currentY = 0;
-let velX = 0, velY = 0;
-
-document.addEventListener('mousemove', (e) => {
-    mouseX = e.clientX;
-    mouseY = e.clientY;
-});
-function animate() {
-    const dx = mouseX - currentX;
-    const dy = mouseY - currentY;
-    velX += dx * 0.12;
-    velY += dy * 0.12;
-    velX *= 0.78;
-    velY *= 0.78;
-    currentX += velX;
-    currentY += velY;
-    const speed = Math.sqrt(velX * velX + velY * velY);
-    const stretch = Math.min(speed * 0.08, 1.8);
-    const angle = Math.atan2(velY, velX) * (180 / Math.PI);
-    glow.style.left = currentX + 'px';
-    glow.style.top = currentY + 'px';
-    glow.style.transform = `translate(-50%, -50%) rotate(${angle}deg) scaleX(${1 + stretch}) scaleY(${1 - stretch * 0.3})`;
-    glow.style.borderRadius = stretch > 0.3 ? '40%' : '50%';
-    requestAnimationFrame(animate);
-}
-animate();
-
-document.addEventListener('click', (e) => {
-    if (e.target.closest('.nav-avatar') || e.target.closest('.side-panel') || e.target.closest('.close-btn')) return;
-    const ripple = document.createElement('div');
-    ripple.className = 'click-ripple';
-    ripple.style.left = e.clientX + 'px';
-    ripple.style.top = e.clientY + 'px';
-    ripple.style.width = '80px';
-    ripple.style.height = '80px';
-    document.body.appendChild(ripple);
-    setTimeout(() => ripple.remove(), 700);
-});
-
-avatar.addEventListener('click', () => {
-    sidePanel.classList.add('active');
-    overlay.classList.add('active');
-    document.getElementById('rightImage').classList.add('active');
-});
-function closePanel() {
-    sidePanel.classList.remove('active');
-    overlay.classList.remove('active');
-    document.getElementById('rightImage').classList.remove('active');
-}
-closeBtn.addEventListener('click', closePanel);
-overlay.addEventListener('click', closePanel);
-
-// ==========Supabase登录注册逻辑==========
 let isLoginMode = true;
 const formTitle = document.getElementById('form-title');
 const submitBtn = document.getElementById('submit-btn');
@@ -269,7 +198,7 @@ authForm.addEventListener('submit', async (e)=>{
             email,
             password,
             options:{
-                emailRedirectTo:"http://127.0.0.1:5500/auth.html"
+                emailRedirectTo: window.location.origin + "/auth.html"
             }
         });
     }
@@ -281,19 +210,22 @@ authForm.addEventListener('submit', async (e)=>{
         msgBox.style.color='green';
         if(isLoginMode){
             msgBox.innerText = "登录成功！跳转首页";
-            setTimeout(()=>{ window.location.href="index.html"; },1200);
+            setTimeout(()=>{ window.location.href="index.html"; },800);
         }else{
             msgBox.innerText = "注册成功，请去邮箱确认邮件（查看垃圾箱）";
         }
     }
-})
+});
 
-(async function checkSession(){
+document.addEventListener("DOMContentLoaded", async () => {
+    if (window.QISH) {
+        await QISH.updateAuthNav({ supabase });
+    }
     const {data} = await supabase.auth.getSession();
     if(data.session){
         window.location.href="index.html";
     }
-})();
+});
 </script>
 </body>
 </html>

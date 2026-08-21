@@ -9,26 +9,89 @@
     <script>
         const SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
-        let supabase;
-        if(window.supabase){
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        }
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        window.supabaseClient = supabase;
     </script>
+    <script src="common.js" defer></script>
+    <style>
+        .about-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-top: 28px;
+            justify-content: flex-start;
+        }
+        .social-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 22px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 600;
+            color: #fff !important;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.35);
+        }
+        .social-btn:hover {
+            transform: translateY(-3px) scale(1.03);
+            filter: brightness(1.05);
+        }
+        .social-btn .social-icon {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+        .social-btn .social-text {
+            line-height: 1.3;
+        }
+        .social-btn .social-sub {
+            display: block;
+            font-size: 11px;
+            font-weight: 500;
+            opacity: 0.9;
+            margin-top: 1px;
+        }
+        /* 哔哩哔哩 */
+        .bili-btn {
+            background: linear-gradient(135deg, #fb7299 0%, #fc8bab 45%, #00a1d6 100%);
+            box-shadow: 0 6px 20px rgba(251, 114, 153, 0.35);
+        }
+        .bili-btn:hover {
+            box-shadow: 0 10px 28px rgba(251, 114, 153, 0.45);
+        }
+        /* X / Grok */
+        .x-btn {
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 40%, #333 100%);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+        }
+        .x-btn:hover {
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 50%, #444 100%);
+        }
+        .about-desc {
+            margin-top: 8px;
+            color: #555;
+            font-size: 16px;
+        }
+    </style>
 </head>
-
+<body>
 <div class="side-panel" id="sidePanel">
     <div class="side-panel-content">
         <button class="close-btn" id="closePanel">×</button>
         <img src="avatar.jpg" alt="头像" class="panel-avatar" id="panelAvatar">
         <h2 id="panelUsername">QISH</h2>
-        <p class="panel-desc">ovo。</p>
+        <p class="panel-desc">ovo</p>
         <div class="panel-links" id="panelLinksBox">
             <a href="index.html">首页</a>
             <a href="about.html">关于我</a>
             <a href="projects.html">我的项目</a>
             <a href="userlist.html">用户列表</a>
             <a href="profile.html">个人资料</a>
-            <a href="./album.html">相册</a>
+            <a href="album.html">相册</a>
+            <a href="chat.html">聊天室</a>
             <a href="auth.html">登录/注册</a>
         </div>
     </div>
@@ -37,10 +100,7 @@
 <div class="right-image" id="rightImage">
     <img src="right-photo.jpg" alt="展示图片">
 </div>
-
 <div class="overlay" id="overlay"></div>
-
-<body>
 <div class="mouse-glow" id="glow"></div>
 
 <nav>
@@ -55,6 +115,7 @@
         <a href="userlist.html">用户列表</a>
         <a href="profile.html">个人资料</a>
         <a href="album.html">相册</a>
+        <a href="chat.html">聊天室</a>
         <span id="auth-nav">
             <a href="auth.html">登录/注册</a>
         </span>
@@ -63,155 +124,42 @@
 
 <div class="container">
     <h1>关于我</h1>
-    <p>臭打音游的</p>
+    <p class="about-desc">臭打音游的</p>
+
+    <div class="about-links">
+        <!-- 哔哩哔哩 -->
+        <a class="social-btn bili-btn" href="https://space.bilibili.com/594604605" target="_blank" rel="noopener noreferrer" title="QISH_的个人空间">
+            <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M18.223 3.086a1.25 1.25 0 0 1 0 1.768L17.08 5.996h1.17A3.75 3.75 0 0 1 22 9.747v7.5a3.75 3.75 0 0 1-3.75 3.75H5.75A3.75 3.75 0 0 1 2 17.247v-7.5a3.75 3.75 0 0 1 3.75-3.75h1.166L5.775 4.855a1.25 1.25 0 1 1 1.767-1.768l2.652 2.652c.07.07.14.126.216.17h3.178c.077-.046.147-.102.218-.172l2.65-2.651a1.25 1.25 0 0 1 1.768 0zM8.75 11.5a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5zm6.5 0a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5z"/>
+            </svg>
+            <span class="social-text">
+                哔哩哔哩
+                <span class="social-sub">QISH_ 的个人空间</span>
+            </span>
+        </a>
+
+        <!-- X / Grok -->
+        <a class="social-btn x-btn" href="https://x.com/ElibertoAn86250" target="_blank" rel="noopener noreferrer" title="Grok on X">
+            <svg class="social-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+            <span class="social-text">
+                X · Grok
+                <span class="social-sub">@QISH</span>
+            </span>
+        </a>
+    </div>
 </div>
 
 <footer>© 2026 QISH · </footer>
 
 <script>
-const glow = document.getElementById('glow');
-const sidePanel = document.getElementById('sidePanel');
-const overlay = document.getElementById('overlay');
-const closeBtn = document.getElementById('closePanel');
-const navAvatar = document.getElementById('navAvatar');
-const navNickname = document.getElementById('navNickname');
-const panelAvatar = document.getElementById("panelAvatar");
-const panelUsername = document.getElementById("panelUsername");
-
-const defaultAvatar = "avatar.jpg";
-let currentUser = null;
-
-let mouseX = 0, mouseY = 0;
-let currentX = 0, currentY = 0;
-let velX = 0, velY = 0;
-
-document.addEventListener('mousemove', (e) => {
-    mouseX = e.clientX;
-    mouseY = e.clientY;
-});
-
-function animate() {
-    const dx = mouseX - currentX;
-    const dy = mouseY - currentY;
-    velX += dx * 0.12;
-    velY += dy * 0.12;
-    velX *= 0.78;
-    velY *= 0.78;
-    currentX += velX;
-    currentY += velY;
-    const speed = Math.sqrt(velX * velX + velY * velY);
-    const stretch = Math.min(speed * 0.08, 1.8);
-    const angle = Math.atan2(velY, velX) * (180 / Math.PI);
-    glow.style.left = currentX + 'px';
-    glow.style.top = currentY + 'px';
-    glow.style.transform = `translate(-50%, -50%) rotate(${angle}deg) scaleX(${1 + stretch}) scaleY(${1 - stretch * 0.3})`;
-    glow.style.borderRadius = stretch > 0.3 ? '40%' : '50%';
-    requestAnimationFrame(animate);
-}
-animate();
-
-navAvatar.addEventListener('click', () => {
-    sidePanel.classList.add('active');
-    overlay.classList.add('active');
-    document.getElementById('rightImage').classList.add('active');
-});
-
-function closePanel() {
-    sidePanel.classList.remove('active');
-    overlay.classList.remove('active');
-    document.getElementById('rightImage').classList.remove('active');
-}
-closeBtn.addEventListener('click', closePanel);
-overlay.addEventListener('click', closePanel);
-
-async function updateAuthNav() {
-    const { data } = await supabase.auth.getSession();
-    const session = data.session;
-    const authNav = document.getElementById('auth-nav');
-    const panelLinksBox = document.getElementById('panelLinksBox');
-
-    if (session) {
-        currentUser = session.user;
-        const userEmail = currentUser.email;
-
-        const { data: profile } = await supabase
-            .from("public_user_list")
-            .select("avatar_url, nickname")
-            .eq("user_id", currentUser.id)
-            .single();
-
-        if (profile && profile.avatar_url) {
-            navAvatar.src = profile.avatar_url;
-            panelAvatar.src = profile.avatar_url;
-        } else {
-            navAvatar.src = defaultAvatar;
-            panelAvatar.src = defaultAvatar;
-        }
-
-        const showNick = (profile && profile.nickname) ? profile.nickname : "匿名用户";
-        navNickname.textContent = showNick;
-        navNickname.style.display = "block";
-        panelUsername.innerText = showNick;
-
-       authNav.innerHTML = `
-    <span style="padding:8px 10px;color:#1e293b;font-weight:500;">${userEmail}</span>
-    <button id="logoutBtn" style="
-        background:rgba(255,255,255,0.3);
-        border:none;
-        border-radius:8px;
-        padding:8px 14px;
-        cursor:pointer;
-        font-size:16px;
-    ">退出登录</button>
-`;
-// ✅innerHTML生成完立刻在内部绑定点击事件
-document.getElementById('logoutBtn').onclick = async function(){
-    try{
-        // scope:'local'只清除当前标签会话，防止网络卡死
-        const {error} = await supabase.auth.signOut({scope:'local'});
-        if(error){
-            console.error("退出失败",error);
-        }
-    }catch(e){
-        console.error("退出异常",e);
-    }
-    // 直接跳转登录页，强制刷新页面清除全部JS内存状态
-    window.location.replace("./auth.html");
-};
-
-        panelLinksBox.innerHTML = `
-            <a href="index.html">首页</a>
-            <a href="about.html">关于我</a>
-            <a href="projects.html">我的项目</a>
-            <a href="userlist.html">用户列表</a>
-            <a href="profile.html">个人资料</a>
-            <a href="album.html">相册</a>
-        `;
-    } else {
-        currentUser = null;
-        navAvatar.src = defaultAvatar;
-        panelAvatar.src = defaultAvatar;
-        navNickname.style.display = "none";
-        panelUsername.innerText = "QISH";
-        authNav.innerHTML = `<a href="auth.html">登录/注册</a>`;
-        panelLinksBox.innerHTML = `
-            <a href="index.html">首页</a>
-            <a href="about.html">关于我</a>
-            <a href="projects.html">我的项目</a>
-            <a href="userlist.html">用户列表</a>
-            <a href="profile.html">个人资料</a>
-            <a href="album.html">相册</a>
-            <a href="auth.html">登录/注册</a>
-        `;
-    }
-}
-
-(async function init(){
-    await updateAuthNav();
-})();
-
-supabase.auth.onAuthStateChange(()=>{
-    init();
+document.addEventListener("DOMContentLoaded", async () => {
+    if (!window.QISH) return;
+    await QISH.updateAuthNav({ supabase });
+    supabase.auth.onAuthStateChange(() => {
+        QISH.updateAuthNav({ supabase });
+    });
 });
 </script>
 </body>

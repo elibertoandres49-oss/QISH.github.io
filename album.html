@@ -307,8 +307,10 @@ body::before {
     <div class="trail-light" id="trailLight"></div>
 
     <div class="page-wrapper">
-        <div class="back-wrap">
+        <div class="back-wrap" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
             <button class="btn-back" onclick="location.href='./index.html'">← 返回主页</button>
+            <button class="btn-back" onclick="location.href='./chat.html'">💬 聊天室</button>
+            <button class="btn-back" onclick="location.href='./profile.html'">个人资料</button>
         </div>
 
         <div class="page-title">成员相册</div>
@@ -331,6 +333,7 @@ body::before {
     </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="common.js" defer></script>
 <script>
 // ===================== 【务必修改这里】 =====================
 const SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
@@ -495,7 +498,7 @@ uploadBtn.onclick = async ()=>{
     }
 
     let nickName = "匿名用户";
-    const {data:userInfo} = await sb.from("profiles").select("nickname").eq("id",user.id).single();
+    const {data:userInfo} = await sb.from("public_user_list").select("nickname").eq("user_id",user.id).single();
     if(userInfo?.nickname) nickName = userInfo.nickname;
 
     const filePath = `${user.id}/${Date.now()}.${file.name.split(".").pop()}`;
