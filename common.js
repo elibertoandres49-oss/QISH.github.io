@@ -5,20 +5,42 @@
 (function () {
   const DEFAULT_AVATAR = "avatar.jpg";
 
+  // 尽早应用主题，减少闪烁
+  try {
+    var _t = localStorage.getItem("qish_theme");
+    if (_t === "light" || _t === "dark" || _t === "color") {
+      document.documentElement.setAttribute("data-theme", _t);
+    } else {
+      document.documentElement.setAttribute("data-theme", "color");
+    }
+  } catch (e) {
+    document.documentElement.setAttribute("data-theme", "color");
+  }
+
+
   // ---------- 页面进入过渡 ----------
   document.documentElement.classList.add("js-ready");
   function onPageReady() {
     document.body.classList.add("page-ready");
     highlightCurrentNav();
-    const rightImg = document.querySelector("#rightImage img");
-    if (rightImg) {
+    const rightWrap = document.getElementById("rightImage");
+    const rightImg = rightWrap ? rightWrap.querySelector("img") : null;
+    if (rightImg && rightWrap) {
       rightImg.onerror = function () {
-        const wrap = document.getElementById("rightImage");
-        if (wrap) wrap.style.display = "none";
+        rightWrap.style.display = "none";
       };
-      if (rightImg.complete && rightImg.naturalWidth === 0) {
-        rightImg.onerror();
-      }
+      const showRight = function () {
+        if (rightImg.naturalWidth === 0 && rightImg.complete) {
+          rightWrap.style.display = "none";
+          return;
+        }
+        // 页面就绪后再弹出，更顺滑
+        setTimeout(function () {
+          rightWrap.classList.add("active");
+        }, 320);
+      };
+      if (rightImg.complete) showRight();
+      else rightImg.addEventListener("load", showRight);
     }
   }
   if (document.readyState === "loading") {
@@ -70,6 +92,10 @@
   function initMouseGlow() {
     const glow = document.getElementById("glow");
     if (!glow) return;
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      glow.style.display = "none";
+      return;
+    }
     let mouseX = window.innerWidth / 2;
     let mouseY = window.innerHeight / 2;
     let currentX = mouseX;
@@ -121,12 +147,10 @@
     function openPanel() {
       sidePanel.classList.add("active");
       overlay.classList.add("active");
-      if (rightImage) rightImage.classList.add("active");
     }
     function closePanel() {
       sidePanel.classList.remove("active");
       overlay.classList.remove("active");
-      if (rightImage) rightImage.classList.remove("active");
     }
 
     if (navAvatar) navAvatar.addEventListener("click", openPanel);
@@ -948,6 +972,185 @@ body.album-page .qm-empty{color:#64748b}
     }
   }
 
+
+  // ========== 主题 ==========
+  const THEME_KEY = "qish_theme";
+  const THEMES = ["color", "light", "dark"];
+
+  function getSavedTheme() {
+    try {
+      const t = localStorage.getItem(THEME_KEY);
+      if (THEMES.includes(t)) return t;
+    } catch (_) {}
+    return "color";
+  }
+
+  function applyTheme(name) {
+    if (!THEMES.includes(name)) name = "color";
+    document.documentElement.setAttribute("data-theme", name);
+    try {
+      localStorage.setItem(THEME_KEY, name);
+    } catch (_) {}
+    document.querySelectorAll(".theme-opt").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.theme === name);
+    });
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) {
+      meta.content = name === "dark" ? "#0b0f14" : name === "light" ? "#f5f6f8" : "#9b59b6";
+    }
+    // 相册页使用独立 CSS 变量，需单独同步
+    applyAlbumTheme(name);
+  }
+
+  function applyAlbumTheme(name) {
+    const root = document.documentElement;
+    const body = document.body;
+    if (!body || !body.classList.contains("album-page")) {
+      // 仍写入变量，进入相册时即可用
+    }
+    const map = {
+      color: {
+        "--gradient-start": "#acbafc",
+        "--gradient-mid": "#b58cde",
+        "--gradient-end": "#f0aef7",
+        "--glass-bg": "rgba(255, 255, 255, 0.18)",
+        "--glass-bg-strong": "rgba(255, 255, 255, 0.28)",
+        "--glass-border": "rgba(255, 255, 255, 0.35)",
+        "--text-main": "#ffffff",
+        "--text-sub": "rgba(255, 255, 255, 0.85)",
+        "--shadow": "0 8px 32px rgba(0, 0, 0, 0.15)",
+        "--album-bg": "radial-gradient(circle at 10% 20%, rgba(102, 126, 234, 0.9), transparent 50%), radial-gradient(circle at 90% 10%, rgba(118, 75, 162, 0.9), transparent 50%), radial-gradient(circle at 50% 90%, rgba(240, 147, 251, 0.9), transparent 50%), linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)",
+      },
+      light: {
+        "--gradient-start": "#e2e8f0",
+        "--gradient-mid": "#f1f5f9",
+        "--gradient-end": "#ffffff",
+        "--glass-bg": "rgba(255, 255, 255, 0.85)",
+        "--glass-bg-strong": "rgba(255, 255, 255, 0.95)",
+        "--glass-border": "rgba(15, 23, 42, 0.1)",
+        "--text-main": "#0f172a",
+        "--text-sub": "#64748b",
+        "--shadow": "0 8px 28px rgba(15, 23, 42, 0.08)",
+        "--album-bg": "#f5f6f8",
+      },
+      dark: {
+        "--gradient-start": "#1e293b",
+        "--gradient-mid": "#0f172a",
+        "--gradient-end": "#020617",
+        "--glass-bg": "rgba(30, 41, 59, 0.75)",
+        "--glass-bg-strong": "rgba(30, 41, 59, 0.9)",
+        "--glass-border": "rgba(255, 255, 255, 0.12)",
+        "--text-main": "#e2e8f0",
+        "--text-sub": "#94a3b8",
+        "--shadow": "0 8px 32px rgba(0, 0, 0, 0.45)",
+        "--album-bg": "#0b0f14",
+      },
+    };
+    const vars = map[name] || map.color;
+    Object.keys(vars).forEach((k) => {
+      root.style.setProperty(k, vars[k]);
+      if (body) body.style.setProperty(k, vars[k]);
+    });
+    if (body && body.classList.contains("album-page")) {
+      body.style.background = vars["--album-bg"];
+      body.style.color = vars["--text-main"];
+    }
+  }
+
+
+  function initThemeSwitcher() {
+    applyTheme(getSavedTheme());
+    if (document.getElementById("themeSwitcher")) return;
+
+    // 相册等未引入 style.css 的页面也能用主题切换器
+    if (!document.getElementById("themeSwitcherStyles")) {
+      const st = document.createElement("style");
+      st.id = "themeSwitcherStyles";
+      st.textContent = `
+.theme-switcher{position:fixed;left:16px;bottom:20px;z-index:9999;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.theme-switcher-toggle{width:46px;height:46px;border-radius:50%;border:1px solid rgba(255,255,255,0.5);background:rgba(255,255,255,0.85);backdrop-filter:blur(16px);box-shadow:0 6px 20px rgba(0,0,0,0.2);cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;color:#1e293b}
+.theme-switcher-panel{display:none;flex-direction:column;gap:6px;padding:10px;border-radius:14px;background:rgba(255,255,255,0.9);border:1px solid rgba(0,0,0,0.08);box-shadow:0 8px 24px rgba(0,0,0,0.15);min-width:120px}
+.theme-switcher.open .theme-switcher-panel{display:flex}
+.theme-opt{border:none;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;text-align:left;background:transparent;color:#1e293b}
+.theme-opt:hover{background:#f1f5f9}
+.theme-opt.active{background:linear-gradient(135deg,#9b59b6,#8ec5fc);color:#fff}
+.theme-opt .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:middle;border:1px solid rgba(0,0,0,0.1)}
+.theme-opt .dot.color{background:linear-gradient(135deg,#e0c3fc,#8ec5fc,#f093fb)}
+.theme-opt .dot.light{background:#f8fafc}
+.theme-opt .dot.dark{background:#0f172a}
+html[data-theme="dark"] body.album-page{filter:none}
+html[data-theme="dark"] .theme-switcher-panel{background:#1e2430;border-color:rgba(255,255,255,0.1)}
+html[data-theme="dark"] .theme-opt{color:#e2e8f0}
+html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
+`;
+      document.head.appendChild(st);
+    }
+
+    const wrap = document.createElement("div");
+    wrap.className = "theme-switcher";
+    wrap.id = "themeSwitcher";
+    wrap.innerHTML =
+      '<button type="button" class="theme-switcher-toggle" id="themeToggle" title="切换主题">🎨</button>' +
+      '<div class="theme-switcher-panel" id="themePanel">' +
+        '<button type="button" class="theme-opt" data-theme="color"><span class="dot color"></span>彩色</button>' +
+        '<button type="button" class="theme-opt" data-theme="light"><span class="dot light"></span>白色</button>' +
+        '<button type="button" class="theme-opt" data-theme="dark"><span class="dot dark"></span>黑色</button>' +
+      "</div>";
+    document.body.appendChild(wrap);
+
+    const toggle = document.getElementById("themeToggle");
+    toggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      wrap.classList.toggle("open");
+    });
+    document.getElementById("themePanel").addEventListener("click", (e) => {
+      const btn = e.target.closest(".theme-opt");
+      if (!btn) return;
+      applyTheme(btn.dataset.theme);
+      wrap.classList.remove("open");
+    });
+    document.addEventListener("click", () => wrap.classList.remove("open"));
+    applyTheme(getSavedTheme());
+  }
+
+
+  // ---------- 角色点击对话 ----------
+  function initCharDialogue() {
+    const wrap = document.getElementById("rightImage");
+    const img = document.getElementById("rightCharImg") || (wrap && wrap.querySelector("img"));
+    const bubble = document.getElementById("charBubble");
+    if (!wrap || !img || !bubble) return;
+
+    let hideTimer = null;
+    let jumping = false;
+
+    function showBubble() {
+      bubble.classList.add("show");
+      bubble.setAttribute("aria-hidden", "false");
+      if (hideTimer) clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => {
+        bubble.classList.remove("show");
+        bubble.setAttribute("aria-hidden", "true");
+      }, 3200);
+    }
+
+    function jump() {
+      if (jumping) return;
+      jumping = true;
+      wrap.classList.add("jump");
+      setTimeout(() => {
+        wrap.classList.remove("jump");
+        jumping = false;
+      }, 450);
+    }
+
+    img.addEventListener("click", (e) => {
+      e.stopPropagation();
+      jump();
+      showBubble();
+    });
+  }
+
   // 导出
   window.QISH = {
     DEFAULT_AVATAR,
@@ -960,6 +1163,9 @@ body.album-page .qm-empty{color:#64748b}
     initAnnounce,
     showAnnounce,
     initPWA,
+    initThemeSwitcher,
+    applyTheme,
+    initCharDialogue,
   };
 
   // 自动初始化光效、侧栏、音乐播放器
@@ -974,7 +1180,10 @@ body.album-page .qm-empty{color:#64748b}
       const sb = window.supabaseClient || window.supabase;
       initMusicPlayer({ isChatPage: chat, supabase: sb });
     }, 50);
-    initAnnounce();
+    try { initAnnounce(); } catch (e) { console.warn(e); }
+    try { initPWA(); } catch (e) { console.warn(e); }
+    try { initThemeSwitcher(); } catch (e) { console.warn(e); }
+    try { initCharDialogue(); } catch (e) { console.warn(e); }
   }
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", boot);

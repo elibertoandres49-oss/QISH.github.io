@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>成员相册</title>
+    <script>
+    (function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="color")?t:"color");}catch(e){document.documentElement.setAttribute("data-theme","color");}})();
+    </script>
     <style>
 :root {
     --gradient-start: #acbafc;
@@ -26,13 +29,50 @@ body {
     min-height: 100vh;
     color: var(--text-main);
     font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
-    background:
+    background: var(--album-bg,
         radial-gradient(circle at 10% 20%, rgba(102, 126, 234, 0.9), transparent 50%),
         radial-gradient(circle at 90% 10%, rgba(118, 75, 162, 0.9), transparent 50%),
         radial-gradient(circle at 50% 90%, rgba(240, 147, 251, 0.9), transparent 50%),
-        linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%));
     background-attachment: fixed;
+    transition: background 0.35s ease, color 0.25s ease;
 }
+
+/* 主题：白 */
+html[data-theme="light"] body.album-page {
+    --text-main: #0f172a;
+    --text-sub: #64748b;
+    --glass-bg: rgba(255, 255, 255, 0.88);
+    --glass-bg-strong: rgba(255, 255, 255, 0.96);
+    --glass-border: rgba(15, 23, 42, 0.1);
+    --shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
+    --album-bg: #f5f6f8;
+    background: #f5f6f8;
+    color: #0f172a;
+}
+html[data-theme="light"] body.album-page .trail-light {
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.12), transparent 70%);
+}
+html[data-theme="light"] body.album-page .photo-card {
+    color: #0f172a;
+}
+
+/* 主题：黑 */
+html[data-theme="dark"] body.album-page {
+    --text-main: #e2e8f0;
+    --text-sub: #94a3b8;
+    --glass-bg: rgba(30, 41, 59, 0.75);
+    --glass-bg-strong: rgba(30, 41, 59, 0.92);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+    --album-bg: #0b0f14;
+    background: #0b0f14;
+    color: #e2e8f0;
+}
+html[data-theme="dark"] body.album-page .trail-light {
+    background: radial-gradient(circle, rgba(167, 139, 250, 0.15), transparent 70%);
+}
+
 
 body::before {
     content: "";
@@ -303,7 +343,7 @@ body::before {
 }
 </style>
 </head>
-<body>
+<body class="album-page">
     <div class="trail-light" id="trailLight"></div>
 
     <div class="page-wrapper">

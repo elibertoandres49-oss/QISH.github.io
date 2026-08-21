@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>首页 - QISH</title>
+    <script>
+(function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="color")?t:"color");}catch(e){document.documentElement.setAttribute("data-theme","color");}})();
+</script>
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#9b59b6">
@@ -99,7 +102,10 @@
 </div>
 
 <div class="right-image" id="rightImage">
-    <img src="right-photo.jpg" alt="展示图片">
+    <img src="right-photo.png" alt="展示图片" id="rightCharImg">
+    <div class="char-bubble" id="charBubble" aria-hidden="true">
+        <span class="char-bubble-text">欢迎来到QISH小站~</span>
+    </div>
 </div>
 <div class="overlay" id="overlay"></div>
 <div class="mouse-glow" id="glow"></div>
