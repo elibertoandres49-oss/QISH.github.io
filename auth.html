@@ -10,18 +10,35 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
     <script>
-        window.SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
-        window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
-        window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
-            auth: {
-                persistSession: true,
-                autoRefreshToken: true,
-                detectSessionInUrl: true,
-                storage: window.localStorage,
-                storageKey: "qish-auth-v1"
+        (function initSupabase() {
+            window.SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
+            window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
+            function tryCreate() {
+                if (window.supabase && typeof window.supabase.createClient === "function") {
+                    window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+                        auth: {
+                            persistSession: true,
+                            autoRefreshToken: true,
+                            detectSessionInUrl: true,
+                            storage: window.localStorage,
+                            storageKey: "qish-auth-v1"
+                        }
+                    });
+                    return true;
+                }
+                return false;
             }
-        });
-        const supabase = window.supabaseClient;
+            if (!tryCreate()) {
+                // CDN 尚未加载完成，轮询等待最多 8 秒
+                var tries = 0;
+                var iv = setInterval(function () {
+                    tries++;
+                    if (tryCreate() || tries > 40) {
+                        clearInterval(iv);
+                    }
+                }, 200);
+            }
+        })();
     </script>
     <script src="common.js" defer></script>
     <style>
@@ -124,7 +141,10 @@
     </div>
 </div>
 <div class="right-image" id="rightImage">
-    <img src="right-photo.jpg" alt="展示图片">
+    <img src="chibi-normal.png" alt="Q版小人" id="rightCharImg">
+    <div class="char-bubble" id="charBubble" aria-hidden="true">
+        <span class="char-bubble-text">欢迎来到QISH小站~</span>
+    </div>
 </div>
 <div class="overlay" id="overlay"></div>
 <div class="mouse-glow" id="glow"></div>
@@ -179,6 +199,47 @@ const toggleBtn = document.getElementById('toggle-mode');
 const authForm = document.getElementById('auth-form');
 const msgBox = document.getElementById('message');
 
+// 等待 Supabase 客户端就绪（最多 10 秒）
+async function waitForSupabase() {
+    if (window.supabaseClient) return window.supabaseClient;
+    return new Promise((resolve) => {
+        let elapsed = 0;
+        const iv = setInterval(() => {
+            elapsed += 200;
+            if (window.supabaseClient) {
+                clearInterval(iv);
+                resolve(window.supabaseClient);
+            } else if (elapsed >= 10000) {
+                clearInterval(iv);
+                resolve(null);
+            }
+        }, 200);
+    });
+}
+
+function setLoading(loading) {
+    submitBtn.disabled = loading;
+    submitBtn.style.opacity = loading ? '0.6' : '1';
+    submitBtn.style.cursor = loading ? 'not-allowed' : 'pointer';
+    if (loading) {
+        submitBtn.dataset.origText = submitBtn.innerText;
+        submitBtn.innerText = isLoginMode ? '登录中…' : '注册中…';
+    } else if (submitBtn.dataset.origText) {
+        submitBtn.innerText = submitBtn.dataset.origText;
+    }
+}
+
+function friendlyError(msg) {
+    if (!msg) return '操作失败，请重试';
+    if (msg.includes('Invalid login credentials')) return '邮箱或密码错误';
+    if (msg.includes('Email not confirmed')) return '该邮箱尚未验证，请先去邮箱点击确认链接';
+    if (msg.includes('User already registered')) return '该邮箱已注册，请直接登录';
+    if (msg.includes('Password should be at least')) return '密码至少需要 6 位';
+    if (msg.includes('Unable to validate email address')) return '邮箱格式不正确';
+    if (msg.includes('Failed to fetch') || msg.includes('Network')) return '网络连接失败，请检查网络后重试';
+    return msg;
+}
+
 toggleBtn.addEventListener('click', ()=>{
     isLoginMode = !isLoginMode;
     if(isLoginMode){
@@ -198,57 +259,68 @@ toggleBtn.addEventListener('click', ()=>{
 authForm.addEventListener('submit', async (e)=>{
     e.preventDefault();
     msgBox.innerText = '';
+    const sb = await waitForSupabase();
+    if (!sb) {
+        msgBox.style.color = "red";
+        msgBox.innerText = "认证服务加载失败，请刷新页面或检查网络连接";
+        return;
+    }
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value.trim();
+    setLoading(true);
 
-    let res;
-    if(isLoginMode){
-        res = await supabase.auth.signInWithPassword({email,password});
-    }else{
-        res = await supabase.auth.signUp({
-            email,
-            password,
-            options:{
-                emailRedirectTo: window.location.origin + "/auth.html"
-            }
-        });
-    }
-
-    if(res.error){
-        msgBox.style.color="red";
-        msgBox.innerText = res.error.message;
-    }else{
-        msgBox.style.color='green';
+    try {
+        let res;
         if(isLoginMode){
-            msgBox.innerText = "登录成功！正在跳转…";
-            // 确保 session 已写入 localStorage 再跳转
-            try {
-                await supabase.auth.getSession();
-            } catch (e) {}
-            setTimeout(function () {
-                window.location.replace("index.html");
-            }, 400);
+            res = await sb.auth.signInWithPassword({email,password});
         }else{
-            if (res.data && res.data.session) {
-                msgBox.innerText = "注册成功，已自动登录，正在跳转…";
-                setTimeout(function () { window.location.replace("index.html"); }, 600);
-            } else {
-                msgBox.innerText = "注册成功，请去邮箱确认邮件（查看垃圾箱）";
+            res = await sb.auth.signUp({
+                email,
+                password,
+                options:{
+                    emailRedirectTo: window.location.origin + "/auth.html"
+                }
+            });
+        }
+
+        if(res.error){
+            msgBox.style.color="red";
+            msgBox.innerText = friendlyError(res.error.message);
+        }else{
+            msgBox.style.color='green';
+            if(isLoginMode){
+                msgBox.innerText = "登录成功！正在跳转…";
+                try { await sb.auth.getSession(); } catch (_) {}
+                setTimeout(function () { window.location.replace("index.html"); }, 500);
+            }else{
+                if (res.data && res.data.session) {
+                    msgBox.innerText = "注册成功，已自动登录，正在跳转…";
+                    setTimeout(function () { window.location.replace("index.html"); }, 600);
+                } else {
+                    msgBox.innerText = "注册成功，请去邮箱点击确认邮件（查看垃圾箱），确认后即可登录";
+                }
             }
         }
+    } catch (err) {
+        msgBox.style.color = "red";
+        msgBox.innerText = friendlyError(err && err.message ? err.message : String(err));
+    } finally {
+        setLoading(false);
     }
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
-    const client = window.supabaseClient || supabase;
+    const client = await waitForSupabase();
     if (window.QISH && client) {
         await QISH.updateAuthNav({ supabase: client });
     }
     if (client) {
-        const { data } = await client.auth.getSession();
-        if (data.session) {
-            window.location.replace("index.html");
-        }
+        try {
+            const { data } = await client.auth.getSession();
+            if (data.session) {
+                window.location.replace("index.html");
+            }
+        } catch (_) {}
     }
 });
 </script>

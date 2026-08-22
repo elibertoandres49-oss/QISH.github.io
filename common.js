@@ -39,6 +39,10 @@
         // 页面就绪后再弹出，更顺滑
         setTimeout(function () {
           wrap.classList.add("active");
+          // 入场动画完成后，Q版小人启动缓慢漂移
+          if (wrapId === "rightImage") {
+            setTimeout(function () { wrap.classList.add("char-drifting"); }, 750);
+          }
         }, 320);
       };
       if (img.complete) show();
@@ -720,6 +724,7 @@ body.album-page .qm-empty{color:#64748b}
 
     document.getElementById("qmMini").addEventListener("click", (e) => {
       if (e.target.id === "qmMiniPlay" || e.target.closest("#qmMiniPlay")) return;
+      if (wrap.dataset.wasDragged === "1") { wrap.dataset.wasDragged = "0"; return; }
       panelOpen = !panelOpen;
       document.getElementById("qmPanel").classList.toggle("open", panelOpen);
     });
@@ -760,6 +765,99 @@ body.album-page .qm-empty{color:#64748b}
       if (audioEl) audioEl.volume = musicState.volume;
       saveMusicState();
     });
+
+    // ========== 播放器拖动 ==========
+    (function initDrag() {
+      const POS_KEY = "qish_music_pos";
+      const mini = document.getElementById("qmMini");
+      let dragging = false;
+      let startX, startY, origLeft, origTop;
+      let moved = false;
+
+      // 恢复保存的位置
+      try {
+        const saved = localStorage.getItem(POS_KEY);
+        if (saved) {
+          const pos = JSON.parse(saved);
+          if (pos && typeof pos.left === "number" && typeof pos.top === "number") {
+            wrap.style.right = "auto";
+            wrap.style.bottom = "auto";
+            wrap.style.left = pos.left + "px";
+            wrap.style.top = pos.top + "px";
+          }
+        }
+      } catch (_) {}
+
+      function onDown(e) {
+        // 点播放按钮不触发拖动
+        if (e.target.id === "qmMiniPlay" || e.target.closest("#qmMiniPlay")) return;
+        const pt = e.touches ? e.touches[0] : e;
+        dragging = true;
+        moved = false;
+        startX = pt.clientX;
+        startY = pt.clientY;
+        const rect = wrap.getBoundingClientRect();
+        origLeft = rect.left;
+        origTop = rect.top;
+        wrap.style.right = "auto";
+        wrap.style.bottom = "auto";
+        wrap.style.left = origLeft + "px";
+        wrap.style.top = origTop + "px";
+        mini.style.cursor = "grabbing";
+        mini.style.transition = "none";
+        e.preventDefault();
+      }
+
+      function onMove(e) {
+        if (!dragging) return;
+        const pt = e.touches ? e.touches[0] : e;
+        const dx = pt.clientX - startX;
+        const dy = pt.clientY - startY;
+        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+        let newLeft = origLeft + dx;
+        let newTop = origTop + dy;
+        // 限制在视口内（至少露出 40px）
+        const maxLeft = window.innerWidth - 40;
+        const maxTop = window.innerHeight - 40;
+        newLeft = Math.max(-(wrap.offsetWidth - 40), Math.min(maxLeft, newLeft));
+        newTop = Math.max(0, Math.min(maxTop, newTop));
+        wrap.style.left = newLeft + "px";
+        wrap.style.top = newTop + "px";
+        e.preventDefault();
+      }
+
+      function onUp() {
+        if (!dragging) return;
+        dragging = false;
+        mini.style.cursor = "";
+        mini.style.transition = "";
+        if (moved) {
+          wrap.dataset.wasDragged = "1";
+          try {
+            const rect = wrap.getBoundingClientRect();
+            localStorage.setItem(POS_KEY, JSON.stringify({ left: rect.left, top: rect.top }));
+          } catch (_) {}
+          // 双击重置位置
+        }
+      }
+
+      mini.addEventListener("mousedown", onDown);
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup", onUp);
+      mini.addEventListener("touchstart", onDown, { passive: false });
+      document.addEventListener("touchmove", onMove, { passive: false });
+      document.addEventListener("touchend", onUp);
+
+      // 双击迷你播放器恢复默认位置
+      let lastTap = 0;
+      mini.addEventListener("dblclick", () => {
+        wrap.style.left = "";
+        wrap.style.top = "";
+        wrap.style.right = "";
+        wrap.style.bottom = "";
+        try { localStorage.removeItem(POS_KEY); } catch (_) {}
+      });
+    })();
   }
 
   function broadcastSync() {
@@ -1020,16 +1118,26 @@ body.album-page .qm-empty{color:#64748b}
     requestAnimationFrame(tick);
   }
 
-  // 查询 Supabase 中 since 之后的新消息数量
+  // 查询 Supabase 中 since 之后的新消息数量（排除自己发的）
   async function fetchNewMsgCount(supabase, sinceTs) {
     if (!supabase || !sinceTs) return 0;
     try {
+      // 获取当前用户 ID，用于排除自己的消息
+      let myUserId = null;
+      try {
+        const { data: udata } = await supabase.auth.getUser();
+        if (udata && udata.user) myUserId = udata.user.id;
+      } catch (_) {}
+
       const sinceISO = new Date(sinceTs).toISOString();
-      const { count, error } = await supabase
+      let query = supabase
         .from("public_messages")
         .select("*", { count: "exact", head: true })
-        .gt("created_at", sinceISO)
-        .limit(NEWMSG_QUERY_LIMIT);
+        .gt("created_at", sinceISO);
+      if (myUserId) {
+        query = query.neq("user_id", myUserId);
+      }
+      const { count, error } = await query.limit(NEWMSG_QUERY_LIMIT);
       if (error) {
         console.warn("[新消息通知] 查询失败:", error.message);
         return 0;
@@ -1513,41 +1621,335 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
   }
 
 
-  // ---------- 角色点击对话 ----------
+  // ---------- 角色点击对话（Q版小人完整系统） ----------
   function setupChar(wrapId, imgId, bubbleId) {
     const wrap = document.getElementById(wrapId);
     const img = document.getElementById(imgId) || (wrap && wrap.querySelector("img"));
     const bubble = document.getElementById(bubbleId);
     if (!wrap || !img || !bubble) return;
 
+    const isChibi = wrapId === "rightImage";
+
+    // ===== 对话文案库 =====
+    const DIALOGUES = {
+      normal: [
+        "欢迎过来玩哦✨",
+        "今天过得怎么样？",
+        "不要忘记休息啦",
+        "能来到这里，真的很开心",
+        "四处逛逛我的小站吧",
+        "有发现什么有趣的东西吗",
+        "风今天也很温柔呢",
+        "慢慢来，不用着急哦",
+        "要不要听听站内的音乐？",
+        "很高兴与你相遇🌟",
+        "放松一下，短暂歇一会吧",
+        "这里是属于我们的小角落",
+        "希望你能拥有好心情",
+        "累了就稍微放空一下",
+      ],
+      shy: [
+        "诶！不要一直戳我啦🥺",
+        "老是点我，有点不好意思咯",
+        "别、别碰我嘛，脸都发烫了",
+        "哇，看得我都害羞了",
+        "再点我就要躲起来咯",
+        "呜，你很喜欢逗我吗",
+      ],
+      happy: [
+        "哇！好开心见到你🎉",
+        "今天的心情超级棒！",
+        "能被你触碰，我很高兴",
+        "嘿嘿，和你聊天好快乐",
+        "感觉整个人都暖洋洋的",
+        "要不要一起玩一会呀",
+      ],
+      night: [
+        "夜晚悄悄降临咯🌙",
+        "天色已经很晚啦",
+        "眼皮开始变得沉沉的",
+        "夜晚适合安安静静发呆",
+        "不要熬夜熬得太晚哦",
+        "晚风轻轻吹过来了",
+        "可以准备好好休息咯",
+      ],
+      lateNight: [
+        "哈啊……好困呀🥱",
+        "都这么晚了你还没睡吗",
+        "脑袋昏昏沉沉的，好想睡觉",
+        "夜深了，该早点休息啦",
+        "我快要撑不住要睡着了",
+        "快去睡觉，不许继续熬夜",
+      ],
+    };
+
+    // 表情图映射
+    const EXPRESSIONS = {
+      normal: "chibi-normal.png",
+      shy: "chibi-shy.png",
+      happy: "chibi-happy.png",
+      sleepy: "chibi-sleepy.png",
+      surprised: "chibi-surprised.png",
+    };
+
+    // ===== 状态变量 =====
     let hideTimer = null;
     let jumping = false;
+    let clickCount = 0;
+    let clickResetTimer = null;
+    let shyActive = false;
+    let shyTimer = null;
+    let swayTimer = null;
+    let lastNormalIdx = -1;
 
-    function showBubble() {
+    // ===== 工具函数 =====
+    function getTimeMode() {
+      const h = new Date().getHours();
+      if (h >= 23 || h < 7) return "lateNight";
+      if (h >= 19) return "night";
+      return "day";
+    }
+    function isSleepyTime() {
+      const m = getTimeMode();
+      return m === "night" || m === "lateNight";
+    }
+    function pick(arr) {
+      if (arr.length <= 1) return arr[0];
+      let idx;
+      do { idx = Math.floor(Math.random() * arr.length); } while (idx === lastNormalIdx);
+      lastNormalIdx = idx;
+      return arr[idx];
+    }
+    function setExpression(mood) {
+      if (!isChibi) return;
+      const src = EXPRESSIONS[mood] || EXPRESSIONS.normal;
+      if (!img.src.endsWith(src)) img.src = src;
+    }
+    function showBubble(text) {
+      const textEl = bubble.querySelector(".char-bubble-text");
+      if (textEl) textEl.textContent = text;
       bubble.classList.add("show");
       bubble.setAttribute("aria-hidden", "false");
       if (hideTimer) clearTimeout(hideTimer);
-      hideTimer = setTimeout(() => {
+      hideTimer = setTimeout(function () {
         bubble.classList.remove("show");
         bubble.setAttribute("aria-hidden", "true");
-      }, 3200);
+      }, 3600);
     }
-
     function jump() {
       if (jumping) return;
       jumping = true;
       wrap.classList.add("jump");
-      setTimeout(() => {
+      setTimeout(function () {
         wrap.classList.remove("jump");
         jumping = false;
-      }, 450);
+      }, 420);
+    }
+    function restoreIdle() {
+      if (shyActive) return;
+      if (isSleepyTime()) {
+        setExpression("sleepy");
+        wrap.classList.add("char-sleepy");
+      } else {
+        setExpression("normal");
+        wrap.classList.remove("char-sleepy");
+      }
     }
 
-    img.addEventListener("click", (e) => {
+    // ===== 害羞状态 =====
+    function triggerShy() {
+      if (shyActive) return;
+      shyActive = true;
+      wrap.classList.remove("char-drifting", "char-sleepy");
+      wrap.classList.add("char-shy");
+      setExpression("shy");
+      showBubble(pick(DIALOGUES.shy));
+      if (shyTimer) clearTimeout(shyTimer);
+      shyTimer = setTimeout(function () {
+        shyActive = false;
+        clickCount = 0;
+        wrap.classList.remove("char-shy");
+        restoreIdle();
+        if (!isSleepyTime()) wrap.classList.add("char-drifting");
+      }, 3400);
+    }
+
+    // ===== 开心状态 =====
+    function triggerHappy() {
+      setExpression("happy");
+      showBubble(pick(DIALOGUES.happy));
+      setTimeout(function () { if (!shyActive) restoreIdle(); }, 3200);
+    }
+
+    // ===== 普通对话（按时段选池） =====
+    function normalChat() {
+      const mode = getTimeMode();
+      let pool;
+      if (mode === "lateNight") pool = DIALOGUES.lateNight;
+      else if (mode === "night") pool = DIALOGUES.night;
+      else pool = DIALOGUES.normal;
+      showBubble(pick(pool));
+    }
+
+    // ===== 空闲摇摆（每 6~12 秒触发一次） =====
+    function scheduleSway() {
+      if (!isChibi) return;
+      const delay = 6000 + Math.random() * 6000;
+      swayTimer = setTimeout(function () {
+        if (!shyActive && !jumping && !wrap.classList.contains("char-sway")) {
+          wrap.classList.add("char-sway");
+          setTimeout(function () { wrap.classList.remove("char-sway"); }, 2400);
+        }
+        scheduleSway();
+      }, delay);
+    }
+
+    // ===== Q版小人：用 .char-inner 包裹 img 实现呼吸分层 =====
+    if (isChibi && img.parentElement && !img.parentElement.classList.contains("char-inner")) {
+      const inner = document.createElement("div");
+      inner.className = "char-inner";
+      img.parentNode.insertBefore(inner, img);
+      inner.appendChild(img);
+    }
+
+    // ===== 点击交互 =====
+    img.addEventListener("click", function (e) {
       e.stopPropagation();
+      // 拖动后不触发点击对话
+      if (wrap.dataset.wasDragged === "1") { wrap.dataset.wasDragged = "0"; return; }
       jump();
-      showBubble();
+
+      if (!isChibi) {
+        // 左侧立绘：仅弹动 + 气泡
+        showBubble(bubble.querySelector(".char-bubble-text") ? bubble.querySelector(".char-bubble-text").textContent : "你好呀~");
+        return;
+      }
+
+      // 快速连续点击计数
+      clickCount++;
+      if (clickResetTimer) clearTimeout(clickResetTimer);
+      clickResetTimer = setTimeout(function () { clickCount = 0; }, 1800);
+
+      // 连续点 ≥5 次 → 害羞
+      if (clickCount >= 5 && !shyActive) {
+        triggerShy();
+        return;
+      }
+      // 害羞中继续点 → 换害羞文案
+      if (shyActive) {
+        showBubble(pick(DIALOGUES.shy));
+        return;
+      }
+      // 15% 概率触发开心（夜间不触发）
+      if (Math.random() < 0.15 && !isSleepyTime()) {
+        triggerHappy();
+        return;
+      }
+      // 普通对话
+      normalChat();
     });
+
+    // ===== 初始化状态 =====
+    if (isChibi) {
+      if (isSleepyTime()) {
+        setExpression("sleepy");
+        wrap.classList.add("char-sleepy");
+      } else {
+        setExpression("normal");
+      }
+      scheduleSway();
+
+      // ===== 角色拖动 =====
+      (function initCharDrag() {
+        const POS_KEY = "qish_char_pos";
+        let dragging = false;
+        let startX, startY, origLeft, origTop;
+        let moved = false;
+
+        // 恢复保存的位置
+        try {
+          const saved = localStorage.getItem(POS_KEY);
+          if (saved) {
+            const pos = JSON.parse(saved);
+            if (pos && typeof pos.left === "number" && typeof pos.top === "number") {
+              wrap.style.right = "auto";
+              wrap.style.bottom = "auto";
+              wrap.style.left = pos.left + "px";
+              wrap.style.top = pos.top + "px";
+              wrap.classList.remove("char-drifting"); // 自定义位置时关闭漂移
+            }
+          }
+        } catch (_) {}
+
+        function onDown(e) {
+          const pt = e.touches ? e.touches[0] : e;
+          dragging = true;
+          moved = false;
+          startX = pt.clientX;
+          startY = pt.clientY;
+          const rect = wrap.getBoundingClientRect();
+          origLeft = rect.left;
+          origTop = rect.top;
+          wrap.style.right = "auto";
+          wrap.style.bottom = "auto";
+          wrap.style.left = origLeft + "px";
+          wrap.style.top = origTop + "px";
+          wrap.classList.remove("char-drifting");
+          img.style.cursor = "grabbing";
+          e.preventDefault();
+        }
+
+        function onMove(e) {
+          if (!dragging) return;
+          const pt = e.touches ? e.touches[0] : e;
+          const dx = pt.clientX - startX;
+          const dy = pt.clientY - startY;
+          if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+          let newLeft = origLeft + dx;
+          let newTop = origTop + dy;
+          const maxLeft = window.innerWidth - 40;
+          const maxTop = window.innerHeight - 40;
+          newLeft = Math.max(-(wrap.offsetWidth - 40), Math.min(maxLeft, newLeft));
+          newTop = Math.max(0, Math.min(maxTop, newTop));
+          wrap.style.left = newLeft + "px";
+          wrap.style.top = newTop + "px";
+          e.preventDefault();
+        }
+
+        function onUp() {
+          if (!dragging) return;
+          dragging = false;
+          img.style.cursor = "";
+          if (moved) {
+            wrap.dataset.wasDragged = "1";
+            try {
+              const rect = wrap.getBoundingClientRect();
+              localStorage.setItem(POS_KEY, JSON.stringify({ left: rect.left, top: rect.top }));
+            } catch (_) {}
+          }
+        }
+
+        img.addEventListener("mousedown", onDown);
+        document.addEventListener("mousemove", onMove);
+        document.addEventListener("mouseup", onUp);
+        img.addEventListener("touchstart", onDown, { passive: false });
+        document.addEventListener("touchmove", onMove, { passive: false });
+        document.addEventListener("touchend", onUp);
+
+        // 双击恢复默认位置
+        img.addEventListener("dblclick", () => {
+          wrap.style.left = "";
+          wrap.style.top = "";
+          wrap.style.right = "";
+          wrap.style.bottom = "";
+          try { localStorage.removeItem(POS_KEY); } catch (_) {}
+          // 恢复漂移
+          if (!wrap.classList.contains("char-shy") && !wrap.classList.contains("char-sleepy")) {
+            wrap.classList.add("char-drifting");
+          }
+        });
+      })();
+    }
   }
 
   function initCharDialogue() {
@@ -1579,26 +1981,27 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
       const { data } = await supabase.auth.getUser();
       user = data && data.user;
     } catch (_) { user = null; }
-    if (!user) return; // 未登录不上报
 
-    // 拉取用户资料（昵称、头像）
+    // 拉取用户资料（昵称、头像）——仅登录用户
     let nickname = "匿名用户";
     let avatar_url = "";
-    try {
-      const { data: profile } = await supabase
-        .from("public_user_list")
-        .select("nickname, avatar_url")
-        .eq("user_id", user.id)
-        .maybeSingle();
-      if (profile) {
-        nickname = profile.nickname || nickname;
-        avatar_url = profile.avatar_url || "";
-      }
-    } catch (_) {}
+    if (user) {
+      try {
+        const { data: profile } = await supabase
+          .from("public_user_list")
+          .select("nickname, avatar_url")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (profile) {
+          nickname = profile.nickname || nickname;
+          avatar_url = profile.avatar_url || "";
+        }
+      } catch (_) {}
+    }
 
-    // 创建频道，以 user_id 为 presence key（多标签页合并为同一在线状态）
+    // 创建频道（游客也可以订阅，接收在线状态同步）
     presenceChannel = supabase.channel(PRESENCE_CHANNEL, {
-      config: { presence: { key: user.id } }
+      config: { presence: { key: user ? user.id : "guest-" + Math.random().toString(36).slice(2, 10) } }
     });
 
     // 监听在线状态同步，派发自定义事件供各页面订阅
@@ -1614,14 +2017,28 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
 
     await presenceChannel.subscribe(async (status) => {
       if (status === "SUBSCRIBED" && !presenceTracked) {
-        try {
-          await presenceChannel.track({
-            user_id: user.id,
-            nickname,
-            avatar_url,
-            online_at: Date.now()
-          });
+        // 仅登录用户上报自己的在线状态
+        if (user) {
+          try {
+            await presenceChannel.track({
+              user_id: user.id,
+              nickname,
+              avatar_url,
+              online_at: Date.now()
+            });
+            presenceTracked = true;
+          } catch (_) {}
+        } else {
+          // 游客也标记为已订阅，避免重复
           presenceTracked = true;
+        }
+        // 订阅成功后立即派发一次同步，让页面拿到初始在线列表
+        try {
+          const state = presenceChannel.presenceState();
+          const ids = Object.keys(state);
+          window.dispatchEvent(new CustomEvent("qish-presence-sync", {
+            detail: { ids, state }
+          }));
         } catch (_) {}
       }
     });

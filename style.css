@@ -8,22 +8,22 @@
 :root,
 [data-theme="color"],
 [data-theme="custom"] {
-    --bg-main: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 50%, #dbeafe 100%);
+    --bg-main: linear-gradient(135deg, #5fa5da 0%, #bae6fd 50%, #dbeafe 100%);
     --bg-size: 400% 400%;
     --text-main: #0f172a;
-    --text-sub: #334155;
-    --text-body: #1e293b;
-    --nav-bg: rgba(255, 255, 255, 0.35);
-    --nav-border: rgba(255, 255, 255, 0.45);
-    --card-bg: rgba(255, 255, 255, 0.45);
-    --card-border: rgba(255, 255, 255, 0.55);
+    --text-sub: #1e293b;
+    --text-body: #0f172a;
+    --nav-bg: rgba(65, 125, 181, 0.55);
+    --nav-border: rgba(84, 76, 76, 0.6);
+    --card-bg: rgba(255, 255, 255, 0.6);
+    --card-border: rgba(35, 21, 21, 0.65);
     --card-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    --accent: #3b82f6;
-    --accent-2: #60a5fa;
-    --accent-grad: linear-gradient(135deg, #3b82f6, #60a5fa);
-    --btn-text: #fff;
-    --footer-color: #334155;
-    --glass-strong: rgba(255, 255, 255, 0.5);
+    --accent: #2563eb;
+    --accent-2: #3b82f6;
+    --accent-grad: linear-gradient(135deg, #2563eb, #3b82f6);
+    --btn-text: #362b2b;
+    --footer-color: #1e293b;
+    --glass-strong: rgba(255, 255, 255, 0.6);
     --overlay-bg: rgba(0, 0, 0, 0.25);
     --glow-bg: rgba(59, 130, 246, 0.15);
 }
@@ -157,8 +157,7 @@ body {
     position: relative;
     overflow-x: hidden;
     opacity: 0;
-    transform: translateY(6px);
-    transition: opacity 0.25s ease, transform 0.25s ease, background 0.35s ease, color 0.25s ease;
+    transition: opacity 0.3s ease, background 0.35s ease, color 0.25s ease;
 }
 [data-theme="light"] body,
 [data-theme="dark"] body,
@@ -168,11 +167,9 @@ html[data-theme="dark"] body {
 }
 body.page-ready {
     opacity: 1;
-    transform: translateY(0);
 }
 body.page-leaving {
     opacity: 0;
-    transform: translateY(-6px);
     pointer-events: none;
 }
 
@@ -467,92 +464,138 @@ footer {
     background: rgba(255, 255, 255, 0.55);
     transform: translateY(-2px);
 }
-/* 右侧角色立绘弹出 */
+/* ========== 右下角Q版悬浮小人 ========== */
 .right-image {
     position: fixed;
-    top: 50%;
-    right: 24px;
-    transform: translateY(-50%) translateX(120%) scale(0.88);
-    width: min(320px, 34vw);
-    height: auto;
-    max-height: 88vh;
+    bottom: 72px;
+    right: 18px;
+    transform: translateY(130%) scale(0.85);
+    width: 148px;
     z-index: 50;
     opacity: 0;
     pointer-events: none;
     transition:
-        transform 0.75s cubic-bezier(0.22, 1, 0.36, 1),
-        opacity 0.55s ease;
-    border-radius: 0;
+        transform 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 0.5s ease;
     overflow: visible;
-    box-shadow: none;
-    background: transparent;
 }
-
 .right-image.active {
-    transform: translateY(-50%) translateX(0) scale(1);
+    transform: translateY(0) scale(1);
     opacity: 1;
     pointer-events: auto;
+}
+
+/* 缓慢漂移：右下角限定区域小范围飘 */
+.right-image.char-drifting {
+    animation: char-drift 16s ease-in-out infinite;
+}
+@keyframes char-drift {
+    0%, 100% { transform: translate(0, 0); }
+    20%      { transform: translate(-7px, -5px); }
+    40%      { transform: translate(5px, -9px); }
+    60%      { transform: translate(-4px, -6px); }
+    80%      { transform: translate(6px, -3px); }
+}
+
+/* 害羞状态：微微往右边躲闪 */
+.right-image.char-shy {
+    transform: translateX(14px) rotate(3deg);
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* 呼吸层（常驻空闲动画） */
+.char-inner {
+    animation: char-breathe 3.2s ease-in-out infinite;
+    transform-origin: center bottom;
+}
+@keyframes char-breathe {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-5px); }
 }
 
 .right-image img {
     width: 100%;
     height: auto;
-    max-height: 88vh;
-    object-fit: contain;
     display: block;
-    filter: drop-shadow(0 16px 40px rgba(0, 0, 0, 0.28));
     user-select: none;
     -webkit-user-drag: none;
     cursor: pointer;
+    filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.2));
     transform-origin: center bottom;
-    transition: transform 0.15s ease;
 }
+
+/* 点击弹动反馈 */
 .right-image.jump img {
-    animation: char-jump 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    animation: char-bounce 0.42s cubic-bezier(0.22, 1, 0.36, 1);
 }
-@keyframes char-jump {
+@keyframes char-bounce {
     0%   { transform: translateY(0) scale(1, 1); }
-    25%  { transform: translateY(-18px) scale(0.97, 1.04); }
-    50%  { transform: translateY(-8px) scale(1.02, 0.98); }
-    70%  { transform: translateY(-2px) scale(0.99, 1.01); }
+    30%  { transform: translateY(-16px) scale(0.95, 1.06); }
+    60%  { transform: translateY(-5px) scale(1.04, 0.96); }
     100% { transform: translateY(0) scale(1, 1); }
+}
+
+/* 空闲小动作：左右轻微摇摆 */
+.right-image.char-sway img {
+    animation: char-sway 2.4s ease-in-out;
+}
+@keyframes char-sway {
+    0%, 100% { transform: rotate(0deg); }
+    25%      { transform: rotate(-5deg); }
+    75%      { transform: rotate(5deg); }
+}
+
+/* 犯困夜晚模式：垂头晃动 */
+.right-image.char-sleepy .char-inner {
+    animation: char-breathe-sleepy 4.8s ease-in-out infinite;
+}
+.right-image.char-sleepy img {
+    animation: char-droop 2.4s ease-in-out infinite alternate;
+}
+@keyframes char-breathe-sleepy {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-3px); }
+}
+@keyframes char-droop {
+    0%   { transform: rotate(-5deg) translateY(2px); }
+    100% { transform: rotate(-9deg) translateY(5px); }
 }
 
 /* 角色对话框 */
 .char-bubble {
     position: absolute;
     left: 50%;
-    bottom: 18%;
-    transform: translateX(-50%) translateY(12px) scale(0.6);
+    bottom: calc(100% + 6px);
+    transform: translateX(-50%) translateY(10px) scale(0.65);
     opacity: 0;
     pointer-events: none;
     z-index: 5;
-    max-width: 90%;
-    padding: 12px 18px;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.95);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+    width: max-content;
+    max-width: 260px;
+    padding: 10px 16px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.85);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
     color: #1e293b;
-    font-size: 15px;
+    font-size: 13.5px;
     font-weight: 600;
-    line-height: 1.4;
+    line-height: 1.45;
     white-space: nowrap;
     text-align: center;
     transition:
         opacity 0.28s ease,
-        transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+        transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .char-bubble::after {
     content: "";
     position: absolute;
     left: 50%;
-    bottom: -8px;
+    bottom: -7px;
     transform: translateX(-50%);
-    border-width: 8px 8px 0 8px;
+    border-width: 7px 7px 0 7px;
     border-style: solid;
-    border-color: rgba(255, 255, 255, 0.95) transparent transparent transparent;
-    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.06));
+    border-color: rgba(255, 255, 255, 0.96) transparent transparent transparent;
 }
 .char-bubble.show {
     opacity: 1;
@@ -563,24 +606,34 @@ footer {
     display: inline-block;
 }
 [data-theme="dark"] .char-bubble {
-    background: rgba(30, 41, 59, 0.95);
+    background: rgba(30, 41, 59, 0.96);
     border-color: rgba(255, 255, 255, 0.12);
     color: #e2e8f0;
 }
 [data-theme="dark"] .char-bubble::after {
-    border-color: rgba(30, 41, 59, 0.95) transparent transparent transparent;
+    border-color: rgba(30, 41, 59, 0.96) transparent transparent transparent;
 }
-
+[data-theme="dark"] .right-image img {
+    filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.5));
+}
 
 @media (max-width: 900px) {
     .right-image {
-        width: min(220px, 28vw);
-        right: 8px;
+        width: 118px;
+        right: 10px;
+        bottom: 68px;
     }
 }
 @media (max-width: 640px) {
     .right-image {
-        display: none; /* 小屏不挡内容 */
+        width: 96px;
+        right: 8px;
+        bottom: 64px;
+    }
+    .char-bubble {
+        font-size: 12px;
+        max-width: 160px;
+        padding: 8px 12px;
     }
 }
 
