@@ -83,9 +83,14 @@ window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window
   position: absolute; left: 0; right: 0; top: 0; bottom: 56px;
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px;
 }
-.lane { position: relative; background: rgba(255,255,255,0.03); border-left: 1px solid rgba(255,255,255,0.06); overflow: hidden; }
+.lane {
+  position: relative; background: rgba(255,255,255,0.03);
+  border-left: 1px solid rgba(255,255,255,0.06); overflow: hidden;
+  touch-action: none; /* 整轨可点，禁止页面滚动抢触摸 */
+  cursor: pointer;
+}
 .lane:first-child { border-left: none; }
-.lane.active { background: rgba(96,165,250,0.12); }
+.lane.active { background: rgba(96,165,250,0.18); }
 .hit-line {
   position: absolute; left: 0; right: 0; bottom: 56px; height: 4px; z-index: 5; pointer-events: none;
   background: linear-gradient(90deg, transparent, #60a5fa, #93c5fd, #60a5fa, transparent);
@@ -1593,30 +1598,111 @@ window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window
     judgeTail(lane);
   });
 
-  document.querySelectorAll(".key-btn").forEach((btn) => {
-    const lane = Number(btn.dataset.lane);
-    const down = (e) => {
-      e.preventDefault();
-      keyDown[lane] = true;
-      btn.classList.add("pressed");
-      const laneEl = document.querySelector('.lane[data-lane="' + lane + '"]');
-      if (laneEl) laneEl.classList.add("active");
-      judgeHead(lane);
-    };
-    const up = () => {
+  // 按键 / 整轨触摸（移动端判定范围为整条轨道）
+  const laneTouchIds = [{}, {}, {}, {}]; // lane -> Set of touch identifiers
+
+  function setLanePressed(lane, on) {
+    if (lane < 0 || lane > 3) return;
+    const btn = document.querySelector('.key-btn[data-lane="' + lane + '"]');
+    const laneEl = document.querySelector('.lane[data-lane="' + lane + '"]');
+    if (on) {
+      if (!keyDown[lane]) {
+        keyDown[lane] = true;
+        if (btn) btn.classList.add("pressed");
+        if (laneEl) laneEl.classList.add("active");
+        judgeHead(lane);
+      } else {
+        keyDown[lane] = true;
+        if (btn) btn.classList.add("pressed");
+        if (laneEl) laneEl.classList.add("active");
+      }
+    } else {
       keyDown[lane] = false;
-      btn.classList.remove("pressed");
-      const laneEl = document.querySelector('.lane[data-lane="' + lane + '"]');
+      if (btn) btn.classList.remove("pressed");
       if (laneEl) laneEl.classList.remove("active");
       judgeTail(lane);
-    };
-    btn.addEventListener("mousedown", down);
-    btn.addEventListener("mouseup", up);
-    btn.addEventListener("mouseleave", up);
-    btn.addEventListener("touchstart", down, { passive: false });
-    btn.addEventListener("touchend", up);
-    btn.addEventListener("touchcancel", up);
+    }
+  }
+
+  function bindLaneInput(el, lane) {
+    el.addEventListener("mousedown", (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      setLanePressed(lane, true);
+    });
+    el.addEventListener("mouseup", () => setLanePressed(lane, false));
+    el.addEventListener("mouseleave", () => {
+      if (keyDown[lane]) setLanePressed(lane, false);
+    });
+    el.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const id = e.changedTouches[i].identifier;
+        laneTouchIds[lane][id] = true;
+      }
+      setLanePressed(lane, true);
+    }, { passive: false });
+    el.addEventListener("touchend", (e) => {
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        delete laneTouchIds[lane][e.changedTouches[i].identifier];
+      }
+      if (Object.keys(laneTouchIds[lane]).length === 0) setLanePressed(lane, false);
+    });
+    el.addEventListener("touchcancel", (e) => {
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        delete laneTouchIds[lane][e.changedTouches[i].identifier];
+      }
+      if (Object.keys(laneTouchIds[lane]).length === 0) setLanePressed(lane, false);
+    });
+  }
+
+  document.querySelectorAll(".key-btn").forEach((btn) => {
+    bindLaneInput(btn, Number(btn.dataset.lane));
   });
+  document.querySelectorAll(".lane").forEach((laneEl) => {
+    bindLaneInput(laneEl, Number(laneEl.dataset.lane));
+  });
+
+  // 在 play-stage 上按 X 坐标映射轨道（点到 note 空隙也算）
+  const playStageEl = document.getElementById("playStage");
+  if (playStageEl) {
+    const stageTouches = {}; // id -> lane
+    function laneFromClientX(clientX) {
+      const rect = playStageEl.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const w = rect.width || 1;
+      let lane = Math.floor((x / w) * 4);
+      if (lane < 0) lane = 0;
+      if (lane > 3) lane = 3;
+      return lane;
+    }
+    playStageEl.addEventListener("touchstart", (e) => {
+      // 若目标已是 lane/key，交给它们处理，避免重复
+      const t = e.target;
+      if (t && (t.classList.contains("lane") || t.classList.contains("key-btn") || t.closest(".key-btn") || t.closest(".lane"))) return;
+      if (t && (t.closest(".result-mask") || t.closest(".play-side"))) return;
+      e.preventDefault();
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+        const lane = laneFromClientX(touch.clientX);
+        stageTouches[touch.identifier] = lane;
+        laneTouchIds[lane][touch.identifier] = true;
+        setLanePressed(lane, true);
+      }
+    }, { passive: false });
+    const stageTouchEnd = (e) => {
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const id = e.changedTouches[i].identifier;
+        const lane = stageTouches[id];
+        if (lane === undefined) continue;
+        delete stageTouches[id];
+        delete laneTouchIds[lane][id];
+        if (Object.keys(laneTouchIds[lane]).length === 0) setLanePressed(lane, false);
+      }
+    };
+    playStageEl.addEventListener("touchend", stageTouchEnd);
+    playStageEl.addEventListener("touchcancel", stageTouchEnd);
+  }
 
   // ========== 编辑器 ==========
   function setEdMsg(text, ok) {
