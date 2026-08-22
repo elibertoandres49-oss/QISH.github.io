@@ -721,15 +721,28 @@ body.album-page .qm-empty{color:#64748b}
         '<button type="button" class="qm-mini-btn" id="qmMiniPlay">▶</button>' +
       '</div>';
     document.body.appendChild(wrap);
+    try {
+      var _qm = document.getElementById("qmMini");
+      if (_qm) _qm.style.touchAction = "manipulation";
+    } catch (_) {}
 
+    let qmSuppressClick = false;
     document.getElementById("qmMini").addEventListener("click", (e) => {
       if (e.target.id === "qmMiniPlay" || e.target.closest("#qmMiniPlay")) return;
+      if (qmSuppressClick) {
+        qmSuppressClick = false;
+        return;
+      }
       if (wrap.dataset.wasDragged === "1") { wrap.dataset.wasDragged = "0"; return; }
       panelOpen = !panelOpen;
       document.getElementById("qmPanel").classList.toggle("open", panelOpen);
     });
     document.getElementById("qmMiniPlay").addEventListener("click", (e) => {
       e.stopPropagation();
+      if (qmSuppressClick) {
+        qmSuppressClick = false;
+        return;
+      }
       togglePlay();
     });
     document.getElementById("qmClose").addEventListener("click", () => {
@@ -766,13 +779,98 @@ body.album-page .qm-empty{color:#64748b}
       saveMusicState();
     });
 
-    // ========== 播放器拖动 ==========
+    // ========== 播放器拖动（轻点展开 + 甩出撞边反弹，与小人一致） ==========
     (function initDrag() {
       const POS_KEY = "qish_music_pos";
+      const MOVE_THRESHOLD = 12;
+      const FRICTION = 0.965;
+      const BOUNCE = 0.72;
+      const MIN_SPEED = 0.35;
+      const FLING_THRESHOLD = 2.2;
       const mini = document.getElementById("qmMini");
       let dragging = false;
       let startX, startY, origLeft, origTop;
       let moved = false;
+      let isTouch = false;
+      let lastX = 0, lastY = 0, lastT = 0;
+      let velX = 0, velY = 0;
+      let posX = 0, posY = 0;
+      let inertiaRaf = null;
+
+      function stopInertia() {
+        if (inertiaRaf) {
+          cancelAnimationFrame(inertiaRaf);
+          inertiaRaf = null;
+        }
+      }
+
+      function clampBounds(left, top) {
+        const w = wrap.offsetWidth || 220;
+        const h = wrap.offsetHeight || 56;
+        const minL = -(w - 48);
+        const maxL = window.innerWidth - 48;
+        const minT = 0;
+        const maxT = window.innerHeight - Math.min(h, 48);
+        return {
+          left: Math.max(minL, Math.min(maxL, left)),
+          top: Math.max(minT, Math.min(maxT, top)),
+          minL, maxL, minT, maxT
+        };
+      }
+
+      function applyPos(left, top) {
+        wrap.style.right = "auto";
+        wrap.style.bottom = "auto";
+        wrap.style.left = left + "px";
+        wrap.style.top = top + "px";
+        posX = left;
+        posY = top;
+      }
+
+      function savePos() {
+        try {
+          localStorage.setItem(POS_KEY, JSON.stringify({ left: posX, top: posY }));
+        } catch (_) {}
+      }
+
+      function bounceStep() {
+        if (dragging) {
+          inertiaRaf = null;
+          return;
+        }
+        posX += velX;
+        posY += velY;
+        velX *= FRICTION;
+        velY *= FRICTION;
+
+        const b = clampBounds(posX, posY);
+        if (posX <= b.minL) {
+          posX = b.minL;
+          velX = Math.abs(velX) * BOUNCE;
+        } else if (posX >= b.maxL) {
+          posX = b.maxL;
+          velX = -Math.abs(velX) * BOUNCE;
+        }
+        if (posY <= b.minT) {
+          posY = b.minT;
+          velY = Math.abs(velY) * BOUNCE;
+        } else if (posY >= b.maxT) {
+          posY = b.maxT;
+          velY = -Math.abs(velY) * BOUNCE;
+        }
+
+        applyPos(posX, posY);
+
+        const speed = Math.sqrt(velX * velX + velY * velY);
+        if (speed < MIN_SPEED) {
+          velX = 0;
+          velY = 0;
+          inertiaRaf = null;
+          savePos();
+          return;
+        }
+        inertiaRaf = requestAnimationFrame(bounceStep);
+      }
 
       // 恢复保存的位置
       try {
@@ -780,32 +878,38 @@ body.album-page .qm-empty{color:#64748b}
         if (saved) {
           const pos = JSON.parse(saved);
           if (pos && typeof pos.left === "number" && typeof pos.top === "number") {
-            wrap.style.right = "auto";
-            wrap.style.bottom = "auto";
-            wrap.style.left = pos.left + "px";
-            wrap.style.top = pos.top + "px";
+            const c = clampBounds(pos.left, pos.top);
+            applyPos(c.left, c.top);
           }
         }
       } catch (_) {}
 
       function onDown(e) {
-        // 点播放按钮不触发拖动
         if (e.target.id === "qmMiniPlay" || e.target.closest("#qmMiniPlay")) return;
+        isTouch = !!e.touches;
         const pt = e.touches ? e.touches[0] : e;
+        stopInertia();
         dragging = true;
         moved = false;
+        velX = 0;
+        velY = 0;
         startX = pt.clientX;
         startY = pt.clientY;
+        lastX = pt.clientX;
+        lastY = pt.clientY;
+        lastT = performance.now();
         const rect = wrap.getBoundingClientRect();
         origLeft = rect.left;
         origTop = rect.top;
-        wrap.style.right = "auto";
-        wrap.style.bottom = "auto";
-        wrap.style.left = origLeft + "px";
-        wrap.style.top = origTop + "px";
-        mini.style.cursor = "grabbing";
-        mini.style.transition = "none";
-        e.preventDefault();
+        posX = origLeft;
+        posY = origTop;
+        // touch 不 preventDefault，否则无法轻点展开
+        if (!isTouch) {
+          applyPos(origLeft, origTop);
+          mini.style.cursor = "grabbing";
+          mini.style.transition = "none";
+          e.preventDefault();
+        }
       }
 
       function onMove(e) {
@@ -813,44 +917,70 @@ body.album-page .qm-empty{color:#64748b}
         const pt = e.touches ? e.touches[0] : e;
         const dx = pt.clientX - startX;
         const dy = pt.clientY - startY;
-        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
-        let newLeft = origLeft + dx;
-        let newTop = origTop + dy;
-        // 限制在视口内（至少露出 40px）
-        const maxLeft = window.innerWidth - 40;
-        const maxTop = window.innerHeight - 40;
-        newLeft = Math.max(-(wrap.offsetWidth - 40), Math.min(maxLeft, newLeft));
-        newTop = Math.max(0, Math.min(maxTop, newTop));
-        wrap.style.left = newLeft + "px";
-        wrap.style.top = newTop + "px";
+
+        if (!moved && (Math.abs(dx) > MOVE_THRESHOLD || Math.abs(dy) > MOVE_THRESHOLD)) {
+          moved = true;
+          applyPos(origLeft, origTop);
+          mini.style.transition = "none";
+        }
+        if (!moved) return;
+
+        const now = performance.now();
+        const dt = Math.max(1, now - lastT);
+        const rawVx = (pt.clientX - lastX) * (16 / dt);
+        const rawVy = (pt.clientY - lastY) * (16 / dt);
+        velX = velX * 0.35 + rawVx * 0.65;
+        velY = velY * 0.35 + rawVy * 0.65;
+        lastX = pt.clientX;
+        lastY = pt.clientY;
+        lastT = now;
+
+        const c = clampBounds(origLeft + dx, origTop + dy);
+        applyPos(c.left, c.top);
         e.preventDefault();
       }
 
-      function onUp() {
+      function onUp(e) {
         if (!dragging) return;
         dragging = false;
         mini.style.cursor = "";
         mini.style.transition = "";
         if (moved) {
           wrap.dataset.wasDragged = "1";
-          try {
-            const rect = wrap.getBoundingClientRect();
-            localStorage.setItem(POS_KEY, JSON.stringify({ left: rect.left, top: rect.top }));
-          } catch (_) {}
-          // 双击重置位置
+          const speed = Math.sqrt(velX * velX + velY * velY);
+          if (speed >= FLING_THRESHOLD) {
+            stopInertia();
+            inertiaRaf = requestAnimationFrame(bounceStep);
+          } else {
+            velX = 0;
+            velY = 0;
+            savePos();
+          }
+        } else if (isTouch) {
+          qmSuppressClick = true;
+          if (e && e.target && (e.target.id === "qmMiniPlay" || (e.target.closest && e.target.closest("#qmMiniPlay")))) {
+            togglePlay();
+          } else {
+            panelOpen = !panelOpen;
+            document.getElementById("qmPanel").classList.toggle("open", panelOpen);
+          }
         }
+        isTouch = false;
       }
 
       mini.addEventListener("mousedown", onDown);
       document.addEventListener("mousemove", onMove);
       document.addEventListener("mouseup", onUp);
-      mini.addEventListener("touchstart", onDown, { passive: false });
+      mini.addEventListener("touchstart", onDown, { passive: true });
       document.addEventListener("touchmove", onMove, { passive: false });
       document.addEventListener("touchend", onUp);
+      document.addEventListener("touchcancel", onUp);
 
-      // 双击迷你播放器恢复默认位置
-      let lastTap = 0;
+      // 双击恢复默认位置
       mini.addEventListener("dblclick", () => {
+        stopInertia();
+        velX = 0;
+        velY = 0;
         wrap.style.left = "";
         wrap.style.top = "";
         wrap.style.right = "";
@@ -993,7 +1123,7 @@ body.album-page .qm-empty{color:#64748b}
   // 可在此修改公告内容
   const ANNOUNCE_CONFIG = {
     title: "网站公告",
-    body: "欢迎来到 QISH 小站～\n\n• 聊天室支持发图、文件与一起听歌\n• 右下角可使用音乐播放器\n• 有问题可以在聊天室留言\n\n祝你玩得开心！",
+    body: "欢迎来到 QISH 小站～\n\n• 聊天室支持发图、文件与一起听歌\n• 右下角可使用音乐播放器\n• 有问题可以在聊天室留言\n\n• 项目里有4k音游可以玩哦\n\n祝你玩得开心！",
     onlyHome: true, // 仅首页弹出
   };
 
@@ -1812,42 +1942,41 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
       inner.appendChild(img);
     }
 
-    // ===== 点击交互 =====
-    img.addEventListener("click", function (e) {
-      e.stopPropagation();
+    // ===== 点击 / 轻触对话（桌面 click + 手机 tap 共用） =====
+    function handleCharTap(e) {
+      if (e) e.stopPropagation();
       // 拖动后不触发点击对话
-      if (wrap.dataset.wasDragged === "1") { wrap.dataset.wasDragged = "0"; return; }
+      if (wrap.dataset.wasDragged === "1") {
+        wrap.dataset.wasDragged = "0";
+        return;
+      }
       jump();
 
       if (!isChibi) {
-        // 左侧立绘：仅弹动 + 气泡
         showBubble(bubble.querySelector(".char-bubble-text") ? bubble.querySelector(".char-bubble-text").textContent : "你好呀~");
         return;
       }
 
-      // 快速连续点击计数
       clickCount++;
       if (clickResetTimer) clearTimeout(clickResetTimer);
       clickResetTimer = setTimeout(function () { clickCount = 0; }, 1800);
 
-      // 连续点 ≥5 次 → 害羞
       if (clickCount >= 5 && !shyActive) {
         triggerShy();
         return;
       }
-      // 害羞中继续点 → 换害羞文案
       if (shyActive) {
         showBubble(pick(DIALOGUES.shy));
         return;
       }
-      // 15% 概率触发开心（夜间不触发）
       if (Math.random() < 0.15 && !isSleepyTime()) {
         triggerHappy();
         return;
       }
-      // 普通对话
       normalChat();
-    });
+    }
+    try { img.style.touchAction = "manipulation"; img.style.webkitUserSelect = "none"; img.style.userSelect = "none"; } catch (_) {}
+    img.addEventListener("click", handleCharTap);
 
     // ===== 初始化状态 =====
     if (isChibi) {
@@ -1859,12 +1988,98 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
       }
       scheduleSway();
 
-      // ===== 角色拖动 =====
+      // ===== 角色拖动（含甩出 + 边缘反弹；手机轻点触发对话） =====
       (function initCharDrag() {
         const POS_KEY = "qish_char_pos";
+        const FRICTION = 0.965;
+        const BOUNCE = 0.72;
+        const MIN_SPEED = 0.35;
+        const FLING_THRESHOLD = 2.2;
+        const MOVE_THRESHOLD = 12; // 手机手指抖动阈值
+
         let dragging = false;
         let startX, startY, origLeft, origTop;
         let moved = false;
+        let isTouch = false;
+        let lastX = 0, lastY = 0, lastT = 0;
+        let velX = 0, velY = 0;
+        let posX = 0, posY = 0;
+        let inertiaRaf = null;
+        let suppressNextClick = false;
+
+        function stopInertia() {
+          if (inertiaRaf) {
+            cancelAnimationFrame(inertiaRaf);
+            inertiaRaf = null;
+          }
+        }
+
+        function clampBounds(left, top) {
+          const w = wrap.offsetWidth || 148;
+          const minL = -(w - 48);
+          const maxL = window.innerWidth - 48;
+          const minT = 0;
+          const maxT = window.innerHeight - 48;
+          return {
+            left: Math.max(minL, Math.min(maxL, left)),
+            top: Math.max(minT, Math.min(maxT, top)),
+            minL, maxL, minT, maxT
+          };
+        }
+
+        function applyPos(left, top) {
+          wrap.style.right = "auto";
+          wrap.style.bottom = "auto";
+          wrap.style.left = left + "px";
+          wrap.style.top = top + "px";
+          posX = left;
+          posY = top;
+        }
+
+        function savePos() {
+          try {
+            localStorage.setItem(POS_KEY, JSON.stringify({ left: posX, top: posY }));
+          } catch (_) {}
+        }
+
+        function bounceStep() {
+          if (dragging) {
+            inertiaRaf = null;
+            return;
+          }
+          posX += velX;
+          posY += velY;
+          velX *= FRICTION;
+          velY *= FRICTION;
+
+          const b = clampBounds(posX, posY);
+          if (posX <= b.minL) {
+            posX = b.minL;
+            velX = Math.abs(velX) * BOUNCE;
+          } else if (posX >= b.maxL) {
+            posX = b.maxL;
+            velX = -Math.abs(velX) * BOUNCE;
+          }
+          if (posY <= b.minT) {
+            posY = b.minT;
+            velY = Math.abs(velY) * BOUNCE;
+          } else if (posY >= b.maxT) {
+            posY = b.maxT;
+            velY = -Math.abs(velY) * BOUNCE;
+          }
+
+          applyPos(posX, posY);
+
+          const speed = Math.sqrt(velX * velX + velY * velY);
+          if (speed < MIN_SPEED) {
+            velX = 0;
+            velY = 0;
+            inertiaRaf = null;
+            savePos();
+            return;
+          }
+          inertiaRaf = requestAnimationFrame(bounceStep);
+        }
 
         // 恢复保存的位置
         try {
@@ -1872,31 +2087,38 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
           if (saved) {
             const pos = JSON.parse(saved);
             if (pos && typeof pos.left === "number" && typeof pos.top === "number") {
-              wrap.style.right = "auto";
-              wrap.style.bottom = "auto";
-              wrap.style.left = pos.left + "px";
-              wrap.style.top = pos.top + "px";
-              wrap.classList.remove("char-drifting"); // 自定义位置时关闭漂移
+              const c = clampBounds(pos.left, pos.top);
+              applyPos(c.left, c.top);
+              wrap.classList.remove("char-drifting");
             }
           }
         } catch (_) {}
 
         function onDown(e) {
+          isTouch = !!e.touches;
           const pt = e.touches ? e.touches[0] : e;
+          stopInertia();
           dragging = true;
           moved = false;
+          velX = 0;
+          velY = 0;
           startX = pt.clientX;
           startY = pt.clientY;
+          lastX = pt.clientX;
+          lastY = pt.clientY;
+          lastT = performance.now();
           const rect = wrap.getBoundingClientRect();
           origLeft = rect.left;
           origTop = rect.top;
-          wrap.style.right = "auto";
-          wrap.style.bottom = "auto";
-          wrap.style.left = origLeft + "px";
-          wrap.style.top = origTop + "px";
-          wrap.classList.remove("char-drifting");
-          img.style.cursor = "grabbing";
-          e.preventDefault();
+          posX = origLeft;
+          posY = origTop;
+          // 手机端：touchstart 不 preventDefault，否则会吞掉 click / 无法触发对话
+          if (!isTouch) {
+            applyPos(origLeft, origTop);
+            wrap.classList.remove("char-drifting");
+            img.style.cursor = "grabbing";
+            e.preventDefault();
+          }
         }
 
         function onMove(e) {
@@ -1904,46 +2126,80 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
           const pt = e.touches ? e.touches[0] : e;
           const dx = pt.clientX - startX;
           const dy = pt.clientY - startY;
-          if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
-          let newLeft = origLeft + dx;
-          let newTop = origTop + dy;
-          const maxLeft = window.innerWidth - 40;
-          const maxTop = window.innerHeight - 40;
-          newLeft = Math.max(-(wrap.offsetWidth - 40), Math.min(maxLeft, newLeft));
-          newTop = Math.max(0, Math.min(maxTop, newTop));
-          wrap.style.left = newLeft + "px";
-          wrap.style.top = newTop + "px";
+
+          if (!moved && (Math.abs(dx) > MOVE_THRESHOLD || Math.abs(dy) > MOVE_THRESHOLD)) {
+            moved = true;
+            applyPos(origLeft, origTop);
+            wrap.classList.remove("char-drifting");
+          }
+          if (!moved) return;
+
+          const now = performance.now();
+          const dt = Math.max(1, now - lastT);
+          const rawVx = (pt.clientX - lastX) * (16 / dt);
+          const rawVy = (pt.clientY - lastY) * (16 / dt);
+          velX = velX * 0.35 + rawVx * 0.65;
+          velY = velY * 0.35 + rawVy * 0.65;
+          lastX = pt.clientX;
+          lastY = pt.clientY;
+          lastT = now;
+
+          const c = clampBounds(origLeft + dx, origTop + dy);
+          applyPos(c.left, c.top);
           e.preventDefault();
         }
 
-        function onUp() {
+        function onUp(e) {
           if (!dragging) return;
           dragging = false;
           img.style.cursor = "";
           if (moved) {
             wrap.dataset.wasDragged = "1";
-            try {
-              const rect = wrap.getBoundingClientRect();
-              localStorage.setItem(POS_KEY, JSON.stringify({ left: rect.left, top: rect.top }));
-            } catch (_) {}
+            suppressNextClick = true;
+            const speed = Math.sqrt(velX * velX + velY * velY);
+            if (speed >= FLING_THRESHOLD) {
+              stopInertia();
+              inertiaRaf = requestAnimationFrame(bounceStep);
+            } else {
+              velX = 0;
+              velY = 0;
+              savePos();
+            }
+          } else if (isTouch) {
+            // 手机轻点：直接触发对话（不依赖可能被吞掉的 click）
+            suppressNextClick = true;
+            handleCharTap(e);
           }
+          isTouch = false;
         }
 
         img.addEventListener("mousedown", onDown);
         document.addEventListener("mousemove", onMove);
         document.addEventListener("mouseup", onUp);
-        img.addEventListener("touchstart", onDown, { passive: false });
+        img.addEventListener("touchstart", onDown, { passive: true });
         document.addEventListener("touchmove", onMove, { passive: false });
         document.addEventListener("touchend", onUp);
+        document.addEventListener("touchcancel", onUp);
+
+        // 若浏览器仍派发了 click，避免与 touch 轻点重复触发
+        img.addEventListener("click", function (e) {
+          if (suppressNextClick) {
+            suppressNextClick = false;
+            e.stopPropagation();
+            e.preventDefault();
+          }
+        }, true);
 
         // 双击恢复默认位置
         img.addEventListener("dblclick", () => {
+          stopInertia();
+          velX = 0;
+          velY = 0;
           wrap.style.left = "";
           wrap.style.top = "";
           wrap.style.right = "";
           wrap.style.bottom = "";
           try { localStorage.removeItem(POS_KEY); } catch (_) {}
-          // 恢复漂移
           if (!wrap.classList.contains("char-shy") && !wrap.classList.contains("char-sleepy")) {
             wrap.classList.add("char-drifting");
           }

@@ -24,6 +24,74 @@
         var supabase = window.supabaseClient;
     </script>
     <script src="common.js" defer></script>
+    <style>
+        .project-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 18px;
+            margin-top: 24px;
+        }
+        .project-card {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+            background: rgba(255, 255, 255, 0.22);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 20px;
+            padding: 22px 20px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 8px 28px rgba(0, 0, 0, 0.1);
+            transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+            cursor: pointer;
+        }
+        .project-card:hover {
+            transform: translateY(-4px);
+            background: rgba(255, 255, 255, 0.32);
+            box-shadow: 0 14px 36px rgba(59, 130, 246, 0.22);
+        }
+        .project-card-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            margin-bottom: 14px;
+            background: linear-gradient(135deg, #60a5fa, #93c5fd);
+            box-shadow: 0 6px 18px rgba(96, 165, 250, 0.35);
+        }
+        .project-card h3 {
+            margin: 0 0 6px;
+            font-size: 18px;
+            font-weight: 800;
+            color: #0f172a;
+            border: none;
+        }
+        .project-card p {
+            margin: 0;
+            font-size: 13px;
+            color: #64748b;
+            line-height: 1.45;
+        }
+        .project-card-tag {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            background: rgba(59, 130, 246, 0.15);
+            color: #2563eb;
+        }
+        [data-theme="dark"] .project-card h3 { color: #f1f5f9; }
+        [data-theme="dark"] .project-card p { color: #94a3b8; }
+        [data-theme="dark"] .project-card {
+            background: rgba(30, 41, 59, 0.6);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+    </style>
 </head>
 <body>
 <div class="side-panel" id="sidePanel">
@@ -45,6 +113,12 @@
     </div>
 </div>
 
+<div class="right-image" id="rightImage">
+    <img src="chibi-normal.png" alt="Q版小人" id="rightCharImg">
+    <div class="char-bubble" id="charBubble" aria-hidden="true">
+        <span class="char-bubble-text">欢迎来到QISH小站~</span>
+    </div>
+</div>
 <div class="overlay" id="overlay"></div>
 <div class="mouse-glow" id="glow"></div>
 
@@ -69,7 +143,16 @@
 
 <div class="container">
     <h1>我的项目</h1>
-    <p>待定</p>
+    <p>点击卡片进入对应功能</p>
+
+    <div class="project-grid">
+        <a class="project-card" href="rhythm4k.html">
+            <div class="project-card-icon">🎹</div>
+            <h3>4K 音游</h3>
+            <p>四轨道下落式音游，按键 DFJK。可编辑铺面、上传曲目，登录后游玩。</p>
+            <span class="project-card-tag">Rhythm · DFJK</span>
+        </a>
+    </div>
 </div>
 
 <footer>© 2026 QISH · </footer>

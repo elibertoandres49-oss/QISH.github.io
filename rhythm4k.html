@@ -1,0 +1,2311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>4K 音游 - QISH</title>
+<script>
+(function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="color"||t==="custom")?t:"color");}catch(e){document.documentElement.setAttribute("data-theme","color");}})();
+</script>
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script>
+window.SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
+window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
+window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage, storageKey: "qish-auth-v1" }
+});
+</script>
+<script src="common.js" defer></script>
+<style>
+.r4k-page { max-width: 980px; margin: 20px auto 40px; padding: 0 14px; }
+.r4k-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }
+.r4k-header h1 { margin: 0; border: none; font-size: 1.6em; }
+.r4k-back { padding: 8px 16px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.4); background: rgba(255,255,255,0.25); color: var(--text-main,#0f172a); text-decoration: none; font-weight: 600; font-size: 14px; }
+.r4k-tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.r4k-tab { padding: 10px 18px; border: none; border-radius: 12px; background: rgba(255,255,255,0.25); color: #334155; font-weight: 700; cursor: pointer; }
+.r4k-tab.active { background: linear-gradient(135deg,#3b82f6,#60a5fa); color: #fff; box-shadow: 0 4px 14px rgba(59,130,246,0.35); }
+.r4k-panel { display: none; }
+.r4k-panel.active { display: block; }
+
+.chart-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.chart-card {
+  background: rgba(255,255,255,0.22); border: 1px solid rgba(255,255,255,0.4); border-radius: 18px;
+  overflow: hidden; cursor: pointer; transition: 0.25s; display: flex; gap: 12px; padding: 12px;
+}
+.chart-card:hover { transform: translateY(-3px); background: rgba(255,255,255,0.32); }
+.chart-cover { width: 72px; height: 72px; border-radius: 12px; object-fit: cover; background: #94a3b8; flex-shrink: 0; }
+.chart-info { flex: 1; min-width: 0; }
+.chart-title { font-weight: 800; font-size: 15px; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chart-meta { font-size: 12px; color: #64748b; margin-top: 4px; line-height: 1.4; }
+.chart-diff { display: inline-block; margin-top: 6px; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; background: rgba(59,130,246,0.18); color: #1d4ed8; }
+.chart-diff.hard, .chart-diff.expert { background: rgba(239,68,68,0.18); color: #b91c1c; }
+.chart-diff.easy { background: rgba(34,197,94,0.18); color: #15803d; }
+.empty-charts { text-align: center; padding: 40px 16px; color: #64748b; }
+
+.play-wrap {
+  background: rgba(15,23,42,0.88); border-radius: 20px; border: 1px solid rgba(255,255,255,0.15);
+  padding: 12px; position: relative; overflow: hidden; user-select: none;
+}
+.play-hud {
+  display: flex; justify-content: space-between; align-items: center; color: #e2e8f0; font-size: 13px;
+  padding: 4px 8px 10px; flex-wrap: wrap; gap: 8px;
+}
+.play-hud .score { font-size: 22px; font-weight: 900; color: #fff; }
+.play-hud .combo { font-weight: 800; color: #93c5fd; }
+.play-main {
+  display: flex; gap: 10px; align-items: stretch;
+}
+.play-side {
+  flex: 0 0 118px; width: 118px;
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 10px 8px; border-radius: 12px;
+  background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08);
+  color: #cbd5e1; font-size: 11px;
+}
+.play-side .side-title { font-weight: 800; font-size: 12px; color: #93c5fd; margin-bottom: 2px; }
+.play-side label { display: flex; flex-direction: column; gap: 4px; }
+.play-side input[type=range] { width: 100%; }
+.play-side .color-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.play-side .color-row label { align-items: center; font-size: 10px; }
+.play-side input[type=color] {
+  width: 100%; height: 26px; border: none; padding: 0; background: none; cursor: pointer;
+}
+.play-side .side-val { font-weight: 700; color: #e2e8f0; }
+.play-side .r4k-btn { padding: 6px 8px; font-size: 11px; width: 100%; }
+.play-stage {
+  position: relative; flex: 1; min-width: 0; height: min(78vh, 720px);
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+  border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08);
+}
+.lanes {
+  position: absolute; left: 0; right: 0; top: 0; bottom: 56px;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px;
+}
+.lane { position: relative; background: rgba(255,255,255,0.03); border-left: 1px solid rgba(255,255,255,0.06); overflow: hidden; }
+.lane:first-child { border-left: none; }
+.lane.active { background: rgba(96,165,250,0.12); }
+.hit-line {
+  position: absolute; left: 0; right: 0; bottom: 56px; height: 4px; z-index: 5; pointer-events: none;
+  background: linear-gradient(90deg, transparent, #60a5fa, #93c5fd, #60a5fa, transparent);
+  box-shadow: 0 0 12px rgba(96,165,250,0.6);
+}
+.keys-bar {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 56px;
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px;
+  z-index: 8; margin: 0; padding: 0;
+  background: rgba(0,0,0,0.35);
+}
+.keys-bar .key-btn {
+  border-radius: 0; padding: 0; height: 56px; font-size: 18px;
+  border: none; border-left: 1px solid rgba(255,255,255,0.08);
+}
+.keys-bar .key-btn:first-child { border-left: none; }
+.play-rank {
+  flex: 0 0 150px; width: 150px;
+  display: flex; flex-direction: column;
+  padding: 10px 8px; border-radius: 12px;
+  background: rgba(0,0,0,0.25); border: 1px solid rgba(255,255,255,0.08);
+  color: #cbd5e1; font-size: 11px; max-height: min(78vh, 720px); overflow: hidden;
+}
+.play-rank .side-title { font-weight: 800; font-size: 12px; color: #fbbf24; margin-bottom: 6px; }
+.rank-list { overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.rank-item {
+  display: flex; gap: 6px; align-items: center; padding: 7px 8px;
+  border-radius: 10px; background: rgba(255,255,255,0.06);
+}
+.rank-item .rk { width: 14px; font-weight: 800; color: #94a3b8; text-align: center; flex-shrink: 0; font-size: 11px; }
+.rank-item .rk.top1 { color: #fbbf24; }
+.rank-item .rk.top2 { color: #e2e8f0; }
+.rank-item .rk.top3 { color: #fdba74; }
+.rank-avatar {
+  width: 22px; height: 22px; border-radius: 50%; object-fit: cover; cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.25); flex-shrink: 0;
+}
+.rank-info { min-width: 0; flex: 1; line-height: 1.25; }
+/* 游玩右侧深色底：浅色字 */
+.play-rank .rank-score { font-size: 13px; font-weight: 800; color: #ffffff; letter-spacing: 0.3px; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+.play-rank .rank-acc { font-size: 11px; font-weight: 700; color: #7dd3fc; }
+.play-rank .rank-name { font-weight: 600; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #cbd5e1; }
+.rank-empty { color: #94a3b8; text-align: center; padding: 12px 4px; line-height: 1.4; }
+/* 曲库弹窗浅色底：深色字，保证可读 */
+.cm-rank { margin-top: 14px; border-top: 1px solid rgba(15,23,42,0.12); padding-top: 12px; }
+.cm-rank h4 { margin: 0 0 8px; font-size: 14px; border: none; color: #0f172a; }
+.cm-rank .rank-item {
+  padding: 8px 10px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+.cm-rank .rank-avatar { width: 24px; height: 24px; }
+.cm-rank .rank-score { font-size: 16px; font-weight: 900; color: #0f172a !important; letter-spacing: 0.2px; text-shadow: none; }
+.cm-rank .rank-acc { font-size: 13px; font-weight: 800; color: #0369a1 !important; }
+.cm-rank .rank-name { font-size: 12px; font-weight: 600; color: #475569 !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cm-rank .rk { color: #64748b; }
+.cm-rank .rk.top1 { color: #b45309; }
+.cm-rank .rk.top2 { color: #475569; }
+.cm-rank .rk.top3 { color: #c2410c; }
+.cm-rank .rank-empty { color: #64748b; }
+/* 深色主题下曲库弹窗 */
+[data-theme="dark"] .cm-rank h4 { color: #f1f5f9; }
+[data-theme="dark"] .cm-rank { border-top-color: rgba(255,255,255,0.12); }
+[data-theme="dark"] .cm-rank .rank-item {
+  background: rgba(15,23,42,0.65);
+  border-color: rgba(255,255,255,0.12);
+}
+[data-theme="dark"] .cm-rank .rank-score { color: #ffffff !important; }
+[data-theme="dark"] .cm-rank .rank-acc { color: #7dd3fc !important; }
+[data-theme="dark"] .cm-rank .rank-name { color: #cbd5e1 !important; }
+[data-theme="dark"] .cm-rank .rk.top1 { color: #fbbf24; }
+[data-theme="dark"] .cm-rank .rk.top2 { color: #e2e8f0; }
+[data-theme="dark"] .cm-rank .rk.top3 { color: #fdba74; }
+.user-peek-mask {
+  display: none; position: fixed; inset: 0; z-index: 2100;
+  background: rgba(15,23,42,0.7); align-items: center; justify-content: center; padding: 16px;
+}
+.user-peek-mask.show { display: flex; }
+.user-peek {
+  background: rgba(255,255,255,0.96); border-radius: 18px; padding: 20px; max-width: 320px; width: 100%;
+  text-align: center; color: #0f172a;
+}
+.user-peek img { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; }
+.user-peek h3 { margin: 10px 0 6px; border: none; }
+.user-peek p { font-size: 13px; color: #64748b; margin: 0; }
+[data-theme="dark"] .user-peek { background: rgba(30,41,59,0.96); color: #f1f5f9; }
+[data-theme="dark"] .user-peek p { color: #94a3b8; }
+.note {
+  position: absolute; left: 8%; width: 84%; height: 16px; border-radius: 6px; z-index: 3; pointer-events: none;
+  background: linear-gradient(180deg, #93c5fd, #3b82f6); box-shadow: 0 0 10px rgba(59,130,246,0.5);
+  will-change: transform; top: 0; left: 8%;
+}
+.note.l1 { background: linear-gradient(180deg, #a5b4fc, #6366f1); }
+.note.l2 { background: linear-gradient(180deg, #c4b5fd, #8b5cf6); }
+.note.l3 { background: linear-gradient(180deg, #f9a8d4, #ec4899); }
+.note.hold-body {
+  height: 40px; border-radius: 8px; opacity: 0.85;
+  background: linear-gradient(180deg, rgba(96,165,250,0.85), rgba(59,130,246,0.55));
+  box-shadow: 0 0 12px rgba(59,130,246,0.35);
+}
+.note.hold-body.l1 { background: linear-gradient(180deg, rgba(129,140,248,0.85), rgba(99,102,241,0.55)); }
+.note.hold-body.l2 { background: linear-gradient(180deg, rgba(167,139,250,0.85), rgba(139,92,246,0.55)); }
+.note.hold-body.l3 { background: linear-gradient(180deg, rgba(244,114,182,0.85), rgba(236,72,153,0.55)); }
+.note.hold-head { z-index: 4; }
+.key-btn {
+  padding: 14px 0; border: none; border-radius: 12px; font-size: 18px; font-weight: 800; color: #fff;
+  cursor: pointer; border: 2px solid rgba(255,255,255,0.2); touch-action: manipulation;
+  background: linear-gradient(180deg, #3b82f6, #1d4ed8); transition: filter 0.08s, transform 0.08s;
+}
+.key-btn.pressed, .key-btn:active { transform: scale(0.96); filter: brightness(1.25); border-color: #fff; }
+.judge-flash {
+  position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%);
+  font-size: 28px; font-weight: 900; color: #fff; pointer-events: none; opacity: 0; z-index: 20;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+}
+.judge-flash.show { animation: judgePop 0.45s ease-out forwards; }
+.combo-flash {
+  position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%);
+  font-size: 22px; font-weight: 900; color: #93c5fd; pointer-events: none; opacity: 0; z-index: 20;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.55); letter-spacing: 1px;
+}
+.combo-flash.show { animation: judgePop 0.45s ease-out forwards; }
+@keyframes judgePop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  20% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+  100% { opacity: 0; transform: translate(-50%, -70%) scale(1); }
+}
+.grade-banner {
+  position: absolute; left: 50%; top: 28%; transform: translate(-50%, -50%) scale(0.6);
+  font-size: 36px; font-weight: 900; pointer-events: none; opacity: 0; z-index: 25;
+  text-shadow: 0 4px 20px rgba(0,0,0,0.6); letter-spacing: 2px; white-space: nowrap;
+}
+.grade-banner.show { animation: gradePop 1.2s ease-out forwards; }
+.grade-banner.ap { color: #fbbf24; }
+.grade-banner.fc { color: #34d399; }
+@keyframes gradePop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  15% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+  40% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -80%) scale(1); }
+}
+.chart-modal-mask {
+  display: none; position: fixed; inset: 0; z-index: 2000;
+  background: rgba(15,23,42,0.72); align-items: center; justify-content: center; padding: 16px;
+}
+.chart-modal-mask.show { display: flex; }
+.chart-modal {
+  background: rgba(255,255,255,0.95); border-radius: 20px; max-width: 420px; width: 100%;
+  padding: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.35); color: #0f172a;
+  border: 1px solid rgba(255,255,255,0.5);
+}
+.chart-modal img { width: 100%; height: 180px; object-fit: cover; border-radius: 14px; background: #94a3b8; }
+.chart-modal h3 { margin: 12px 0 6px; border: none; font-size: 1.25em; }
+.chart-modal .meta { font-size: 13px; color: #64748b; line-height: 1.55; }
+.chart-modal .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+[data-theme="dark"] .chart-modal { background: rgba(30,41,59,0.96); color: #f1f5f9; }
+[data-theme="dark"] .chart-modal .meta { color: #94a3b8; }
+.play-actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
+.r4k-btn {
+  padding: 10px 18px; border: none; border-radius: 999px; font-weight: 700; cursor: pointer; font-size: 14px;
+  background: linear-gradient(135deg,#3b82f6,#60a5fa); color: #fff;
+}
+.r4k-btn.secondary { background: rgba(255,255,255,0.25); color: #0f172a; border: 1px solid rgba(255,255,255,0.35); }
+.r4k-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.result-mask {
+  position: absolute; inset: 0; background: rgba(15,23,42,0.82); display: none; align-items: center; justify-content: center;
+  z-index: 30; border-radius: 14px;
+}
+.result-mask.show { display: flex; }
+.result-box {
+  background: rgba(255,255,255,0.12); backdrop-filter: blur(16px); border-radius: 20px; padding: 28px 24px;
+  text-align: center; color: #fff; min-width: 240px; border: 1px solid rgba(255,255,255,0.2);
+}
+.result-box h2 { margin: 0 0 8px; border: none; color: #fff; font-size: 1.5em; }
+.result-box .big-score { font-size: 36px; font-weight: 900; margin: 12px 0; }
+.result-stats { font-size: 13px; color: #cbd5e1; line-height: 1.7; }
+
+/* ===== 编辑器：从下往上 ===== */
+.editor-layout { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 860px) { .editor-layout { grid-template-columns: 270px 1fr; } }
+.editor-form {
+  background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.35); border-radius: 18px; padding: 16px;
+}
+.editor-form label { display: block; font-size: 12px; font-weight: 600; color: #334155; margin: 8px 0 4px; }
+.editor-form input[type="text"], .editor-form input[type="number"], .editor-form select, .editor-form input[type="file"] {
+  width: 100%; box-sizing: border-box; padding: 9px 11px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.4); background: rgba(255,255,255,0.35); font-size: 14px; color: #0f172a;
+}
+.editor-form .row { display: flex; gap: 8px; }
+.editor-form .row > * { flex: 1; }
+.editor-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.editor-stage-wrap {
+  background: rgba(15,23,42,0.92); border-radius: 18px; padding: 12px; border: 1px solid rgba(255,255,255,0.12);
+  display: flex; flex-direction: column; min-height: 480px;
+}
+.ed-toolbar {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 8px; color: #cbd5e1; font-size: 12px;
+}
+.ed-toolbar button { font-size: 13px; padding: 8px 14px; }
+.ed-mode-btn.active { box-shadow: 0 0 0 2px #fbbf24; }
+.editor-viewport {
+  position: relative; flex: 1; min-height: 380px; border-radius: 12px; overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.1); background: #0b1220;
+}
+.editor-scroll {
+  position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden;
+}
+.editor-canvas {
+  position: relative; width: 100%;
+  display: grid; grid-template-columns: 52px repeat(4, 1fr);
+  /* bottom: t=0，向上时间增加；初始 scroll 在底部 */
+}
+.editor-time-col { position: relative; border-right: 1px solid rgba(255,255,255,0.12); }
+.editor-lane-col {
+  position: relative; border-right: 1px solid rgba(255,255,255,0.06); cursor: crosshair;
+  background: rgba(255,255,255,0.02);
+}
+.editor-lane-col:hover { background: rgba(96,165,250,0.06); }
+.beat-line {
+  position: absolute; left: 0; right: 0; height: 1px; background: rgba(255,255,255,0.05); pointer-events: none; z-index: 1;
+}
+.beat-line.sub { background: rgba(255,255,255,0.08); }
+.beat-line.half { background: rgba(147,197,253,0.18); }
+.beat-line.major { background: rgba(96,165,250,0.38); height: 2px; }
+.beat-label {
+  position: absolute; right: 4px; font-size: 10px; color: #64748b; transform: translateY(50%);
+  pointer-events: none; z-index: 2;
+}
+.ed-note {
+  position: absolute; left: 10%; width: 80%; border-radius: 5px; cursor: pointer; z-index: 3;
+  background: #3b82f6; box-shadow: 0 0 6px rgba(59,130,246,0.5); min-height: 12px;
+}
+.ed-note.l1 { background: #6366f1; }
+.ed-note.l2 { background: #8b5cf6; }
+.ed-note.l3 { background: #ec4899; }
+.ed-note.hold {
+  background: linear-gradient(0deg, #1d4ed8, #60a5fa);
+  opacity: 0.9; border: 1px solid rgba(255,255,255,0.35);
+}
+.ed-note.hold.l1 { background: linear-gradient(0deg, #4338ca, #818cf8); }
+.ed-note.hold.l2 { background: linear-gradient(0deg, #6d28d9, #a78bfa); }
+.ed-note.hold.l3 { background: linear-gradient(0deg, #be185d, #f472b6); }
+.ed-note:hover { outline: 2px solid #fff; filter: brightness(1.15); }
+/* 判定线：固定在视口底部上方 */
+.ed-judge-line {
+  position: absolute; left: 52px; right: 0; bottom: 48px; height: 3px; z-index: 20; pointer-events: none;
+  background: linear-gradient(90deg, #f43f5e, #fb7185, #f43f5e);
+  box-shadow: 0 0 14px rgba(244,63,94,0.7);
+}
+.ed-judge-label {
+  position: absolute; left: 4px; bottom: 40px; z-index: 21; font-size: 10px; color: #fb7185; font-weight: 700;
+  pointer-events: none;
+}
+.ed-playhead {
+  position: absolute; left: 0; right: 0; height: 2px; background: #fbbf24; z-index: 15; pointer-events: none;
+  box-shadow: 0 0 8px rgba(251,191,36,0.7); display: none; /* 不再强制跟随判定线 */
+}
+.editor-hint { font-size: 12px; color: #94a3b8; margin-top: 8px; line-height: 1.55; }
+.msg-line { margin-top: 8px; font-size: 13px; font-weight: 600; min-height: 20px; }
+.cover-preview { width: 72px; height: 72px; border-radius: 12px; object-fit: cover; margin-top: 6px; background: #64748b; }
+.ed-status { color: #93c5fd; font-weight: 700; }
+
+[data-theme="dark"] .r4k-tab { color: #e2e8f0; }
+[data-theme="dark"] .chart-title { color: #f1f5f9; }
+[data-theme="dark"] .editor-form label { color: #cbd5e1; }
+[data-theme="dark"] .r4k-btn.secondary { color: #e2e8f0; }
+
+@media (max-width: 640px) {
+  .play-stage { height: min(70vh, 580px); }
+  .play-side { flex: 0 0 96px; width: 96px; padding: 8px 6px; gap: 8px; }
+  .play-rank { flex: 0 0 120px; width: 120px; }
+  .keys-bar .key-btn { font-size: 15px; }
+  .hit-line { bottom: 56px; }
+  .editor-viewport { min-height: 320px; }
+}
+.hud-time { font-size: 13px; font-weight: 700; color: #fde68a; letter-spacing: 0.5px; }
+</style>
+</head>
+<body>
+<div class="side-panel" id="sidePanel">
+  <div class="side-panel-content">
+    <button class="close-btn" id="closePanel">×</button>
+    <img src="avatar.jpg" alt="头像" class="panel-avatar" id="panelAvatar">
+    <h2 id="panelUsername">QISH</h2>
+    <p class="panel-desc">ovo</p>
+    <div class="panel-links" id="panelLinksBox">
+      <a href="index.html">首页</a>
+      <a href="about.html">关于我</a>
+      <a href="projects.html">我的项目</a>
+      <a href="userlist.html">用户列表</a>
+      <a href="profile.html">个人资料</a>
+      <a href="album.html">相册</a>
+      <a href="chat.html">聊天室</a>
+      <a href="auth.html">登录/注册</a>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="overlay"></div>
+<div class="mouse-glow" id="glow"></div>
+
+<nav>
+  <div class="nav-avatar-area">
+    <img src="avatar.jpg" alt="头像" class="nav-avatar" id="navAvatar">
+    <span class="nav-nickname" id="navNickname" style="display:none;"></span>
+  </div>
+  <div class="nav-links">
+    <a href="index.html">首页</a>
+    <a href="about.html">关于我</a>
+    <a href="projects.html">项目</a>
+    <a href="userlist.html">用户列表</a>
+    <a href="profile.html">个人资料</a>
+    <a href="album.html">相册</a>
+    <a href="chat.html">聊天室</a>
+    <span id="auth-nav"><a href="auth.html">登录/注册</a></span>
+  </div>
+</nav>
+
+<div class="r4k-page">
+  <div class="r4k-header">
+    <h1>🎹 4K 音游</h1>
+    <a class="r4k-back" href="projects.html">← 返回项目</a>
+  </div>
+
+  <div class="r4k-tabs">
+    <button type="button" class="r4k-tab active" data-tab="list">曲库</button>
+    <button type="button" class="r4k-tab" data-tab="play">游玩</button>
+    <button type="button" class="r4k-tab" data-tab="editor">铺面编辑</button>
+  </div>
+
+  <div class="r4k-panel active" id="panelList">
+    <p style="color:#64748b;font-size:14px;margin-bottom:12px;">选择铺面开始游玩。上传需登录。</p>
+    <div class="chart-list" id="chartList"></div>
+    <div class="empty-charts" id="chartEmpty" style="display:none;">暂无铺面，去「铺面编辑」创建并上传吧～</div>
+  </div>
+
+  <div class="r4k-panel" id="panelPlay">
+    <div class="play-wrap">
+      <div class="play-hud">
+        <div>
+          <div id="playTitle" style="font-weight:700;font-size:14px;">未选择铺面</div>
+          <div id="playSub" style="opacity:0.75;font-size:12px;">从曲库选择或编辑后测试</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="score" id="hudScore">0</div>
+          <div class="combo" id="hudCombo">COMBO 0</div>
+          <div class="hud-time" id="hudTime">剩余 --:--</div>
+        </div>
+      </div>
+      <div class="play-main">
+      <aside class="play-side" id="noteStylePanel">
+        <div class="side-title">设置</div>
+        <label>流速 <span class="side-val" id="playSpeedVal">3.4x</span>
+          <input type="range" id="playSpeed" min="0.8" max="6" step="0.1" value="3.4">
+        </label>
+        <label>延迟 ms <span class="side-val" id="playOffsetVal">0</span>
+          <input type="range" id="playOffset" min="-300" max="300" step="1" value="0">
+        </label>
+        <label>厚度 <span class="side-val" id="noteThickVal">16px</span>
+          <input type="range" id="noteThick" min="8" max="36" step="1" value="16">
+        </label>
+        <div class="color-row">
+          <label>1<input type="color" id="noteColor0" value="#3b82f6"></label>
+          <label>2<input type="color" id="noteColor1" value="#6366f1"></label>
+          <label>3<input type="color" id="noteColor2" value="#8b5cf6"></label>
+          <label>4<input type="color" id="noteColor3" value="#ec4899"></label>
+        </div>
+        <button type="button" class="r4k-btn secondary" id="noteStyleReset">重置</button>
+      </aside>
+      <div class="play-stage" id="playStage">
+        <div class="lanes" id="lanes">
+          <div class="lane" data-lane="0"></div>
+          <div class="lane" data-lane="1"></div>
+          <div class="lane" data-lane="2"></div>
+          <div class="lane" data-lane="3"></div>
+        </div>
+        <div class="hit-line"></div>
+        <div class="keys-bar">
+          <button type="button" class="key-btn" data-lane="0">D</button>
+          <button type="button" class="key-btn" data-lane="1">F</button>
+          <button type="button" class="key-btn" data-lane="2">J</button>
+          <button type="button" class="key-btn" data-lane="3">K</button>
+        </div>
+        <div class="judge-flash" id="judgeFlash"></div>
+        <div class="combo-flash" id="comboFlash"></div>
+        <div class="grade-banner" id="gradeBanner"></div>
+        <div class="result-mask" id="resultMask">
+          <div class="result-box">
+            <h2 id="resultGrade">CLEAR</h2>
+            <div class="big-score" id="resultScore">0</div>
+            <div class="result-stats" id="resultStats"></div>
+            <div class="play-actions" style="justify-content:center;margin-top:16px;">
+              <button type="button" class="r4k-btn" id="btnSubmitScore">上传成绩</button>
+              <button type="button" class="r4k-btn" id="btnRetry">再来一次</button>
+              <button type="button" class="r4k-btn secondary" id="btnBackList">返回曲库</button>
+            </div>
+            <div id="scoreUploadMsg" style="margin-top:8px;font-size:12px;min-height:16px;"></div>
+          </div>
+        </div>
+      </div>
+      <aside class="play-rank" id="playRankPanel">
+        <div class="side-title">排行榜</div>
+        <div class="rank-list" id="playRankList"><div class="rank-empty">选择铺面后显示</div></div>
+      </aside>
+      </div><!-- /.play-main -->
+      <div class="play-actions">
+        <button type="button" class="r4k-btn" id="btnStart">开始 / 暂停（空格）</button>
+        <button type="button" class="r4k-btn secondary" id="btnStop">停止</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="r4k-panel" id="panelEditor">
+    <div class="editor-layout">
+      <div class="editor-form">
+        <label>曲名</label>
+        <input type="text" id="edTitle" placeholder="曲名" maxlength="80">
+        <label>作者 / 作曲</label>
+        <input type="text" id="edAuthor" placeholder="作者" maxlength="60">
+        <label>难度</label>
+        <select id="edDiff">
+          <option value="easy">Easy</option>
+          <option value="normal" selected>Normal</option>
+          <option value="hard">Hard</option>
+          <option value="expert">Expert</option>
+        </select>
+        <div class="row">
+          <div>
+            <label>BPM</label>
+            <input type="number" id="edBpm" value="120" min="40" max="400" step="0.1">
+          </div>
+          <div>
+            <label>偏移 ms</label>
+            <input type="number" id="edOffset" value="0" step="1">
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>时间轴缩放</label>
+            <input type="number" id="edZoom" value="0.15" min="0.05" max="0.4" step="0.01">
+          </div>
+          <div>
+            <label>默认流速</label>
+            <input type="number" id="edSpeed" value="3.4" min="0.8" max="6" step="0.1">
+          </div>
+        </div>
+        <label>网格吸附</label>
+        <select id="edSnap">
+          <option value="0">关闭（自由放置）</option>
+          <option value="1">1 拍（全拍）</option>
+          <option value="2">1/2 拍</option>
+          <option value="4" selected>1/4 拍</option>
+          <option value="8">1/8 拍</option>
+          <option value="16">1/16 拍</option>
+        </select>
+        <label>音乐文件</label>
+        <input type="file" id="edAudio" accept="audio/*,.mp3,.ogg,.wav,.m4a">
+        <label>封面图片（可选）</label>
+        <input type="file" id="edCover" accept="image/*">
+        <img class="cover-preview" id="edCoverPreview" alt="" style="display:none;">
+        <label>导入 osu! 铺面（.osz / .osu）</label>
+        <input type="file" id="edOsz" accept=".osz,.osu,application/zip">
+        <div class="editor-tools">
+          <button type="button" class="r4k-btn secondary" id="edSave">保存草稿</button>
+          <button type="button" class="r4k-btn secondary" id="edClear">清空 Note</button>
+          <button type="button" class="r4k-btn" id="edTest">测试游玩</button>
+          <button type="button" class="r4k-btn" id="edUpload">上传铺面</button>
+        </div>
+        <div class="msg-line" id="edMsg"></div>
+        <p class="editor-hint">
+          <b>空格</b>：播放 / 暂停（暂停处继续）· 红线为判定线<br>
+          <b>保存草稿</b>：本地自动/手动保存，防丢失<br>
+          <b>导入 OSZ</b>：识别 osu! mania 4K 铺面与音频<br>
+          <b>网格吸附</b> · 单击单点 · 拖动长条 · 点 Note 删除<br>
+          总分 <b>1,010,000</b>（长条头+尾各算一次）
+        </p>
+      </div>
+      <div class="editor-stage-wrap">
+        <div class="ed-toolbar">
+          <button type="button" class="r4k-btn" id="edPlayPause">▶ 播放（空格）</button>
+          <span class="ed-status" id="edStatus">已停止</span>
+          <span>· Note <span id="edNoteCount">0</span></span>
+          <span id="edSnapHint">· 吸附 1/4 拍</span>
+        </div>
+        <div class="editor-viewport" id="edViewport">
+          <div class="ed-judge-label">判定线</div>
+          <div class="ed-judge-line"></div>
+          <div class="editor-scroll" id="edScroll">
+            <div class="editor-canvas" id="edCanvas"></div>
+          </div>
+        </div>
+        <audio id="edAudioEl" style="display:none;"></audio>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="chart-modal-mask" id="chartModalMask">
+  <div class="chart-modal" id="chartModal">
+    <img id="cmCover" src="avatar.jpg" alt="">
+    <h3 id="cmTitle">曲名</h3>
+    <div class="meta" id="cmMeta"></div>
+    <div class="cm-rank">
+      <h4>排行榜</h4>
+      <div class="rank-list" id="cmRankList"><div class="rank-empty">加载中…</div></div>
+    </div>
+    <div class="actions">
+      <button type="button" class="r4k-btn" id="cmPlay">开始游玩</button>
+      <button type="button" class="r4k-btn secondary" id="cmEdit" style="display:none;">编辑铺面</button>
+      <button type="button" class="r4k-btn secondary" id="cmClose">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div class="user-peek-mask" id="userPeekMask">
+  <div class="user-peek">
+    <img id="upAvatar" src="avatar.jpg" alt="">
+    <h3 id="upName">用户</h3>
+    <p id="upBio"></p>
+    <div style="margin-top:14px;">
+      <a class="r4k-btn secondary" href="userlist.html" style="display:inline-block;text-decoration:none;">打开用户列表</a>
+      <button type="button" class="r4k-btn secondary" id="upClose" style="margin-left:8px;">关闭</button>
+    </div>
+  </div>
+</div>
+
+<footer>© 2026 QISH · 4K Rhythm</footer>
+
+<script>
+(function () {
+  const KEYS = { KeyD: 0, KeyF: 1, KeyJ: 2, KeyK: 3 };
+  const KEY_LABELS = ["D", "F", "J", "K"];
+  const MAX_SCORE = 1010000;
+  const JUDGE = { perfect: 45, great: 90, good: 140 };
+  const BASE_APPROACH = 1800; // ms at 1.0x speed
+  const HIT_LINE_FROM_BOTTOM = 56; // 与判定线对齐，按键在线下方
+  const BUCKET = "rhythm_bucket";
+  const TABLE = "public_rhythm_charts";
+  const SCORE_TABLE = "public_rhythm_scores";
+  const JUDGE_LINE_OFFSET = 48; // px from bottom of editor viewport
+
+  const sb = window.supabaseClient;
+  let currentUser = null;
+  let myNickname = "匿名用户";
+
+  let playChart = null;
+  let audio = null;
+  let playing = false;
+  let paused = false;
+  let rafId = null;
+  let notesState = [];
+  let score = 0, combo = 0, maxCombo = 0;
+  let counts = { perfect: 0, great: 0, good: 0, miss: 0 };
+  let totalHits = 0;
+  let perHit = 0;
+  let scrollSpeed = 3.4;
+  let lastResult = null; // 结算成绩，用于上传排行榜
+  let myAvatarUrl = "avatar.jpg";
+  let keyDown = [false, false, false, false];
+
+  // 编辑器
+  let edNotes = []; // {t, l, end?} end 存在则为长条
+  let edAudioUrl = null;
+  let edCoverFile = null;
+  let edCoverUrl = null;
+  let edAudioFile = null;
+  let pxPerMs = 0.15;
+  let edPlaying = false;
+  let edRaf = null;
+  let drawHold = null; // {l, t0}
+
+  // ---------- tabs ----------
+  document.querySelectorAll(".r4k-tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".r4k-tab").forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".r4k-panel").forEach((p) => p.classList.remove("active"));
+      btn.classList.add("active");
+      const id = "panel" + btn.dataset.tab.charAt(0).toUpperCase() + btn.dataset.tab.slice(1);
+      const panel = document.getElementById(id);
+      if (panel) panel.classList.add("active");
+      if (btn.dataset.tab === "list") loadCharts();
+      if (btn.dataset.tab === "editor") {
+        rebuildTimeline();
+        setTimeout(() => {
+          const sc = document.getElementById("edScroll");
+          if (sc) sc.scrollTop = sc.scrollHeight;
+        }, 50);
+      }
+    });
+  });
+  function switchTab(name) {
+    const btn = document.querySelector('.r4k-tab[data-tab="' + name + '"]');
+    if (btn) btn.click();
+  }
+
+  function escapeHtml(s) {
+    const d = document.createElement("div");
+    d.textContent = s || "";
+    return d.innerHTML;
+  }
+
+  // ---------- 曲库 ----------
+  function normalizeChart(row) {
+    let notes = row.notes;
+    if (typeof notes === "string") {
+      try { notes = JSON.parse(notes); } catch (_) { notes = []; }
+    }
+    if (notes && notes.notes) notes = notes.notes;
+    if (!Array.isArray(notes)) notes = [];
+    notes = notes.map((n) => {
+      const o = { t: Number(n.t), l: Number(n.l) };
+      if (n.end != null && Number(n.end) > o.t) o.end = Number(n.end);
+      return o;
+    }).filter((n) => !isNaN(n.t) && n.l >= 0 && n.l <= 3);
+    notes.sort((a, b) => a.t - b.t);
+    return {
+      id: row.id,
+      user_id: row.user_id || null,
+      nickname: row.nickname || "",
+      title: row.title || "未命名",
+      author: row.author || "",
+      difficulty: row.difficulty || "Normal",
+      bpm: Number(row.bpm) || 120,
+      offset: Number(row.offset_ms) || 0,
+      notes,
+      audioUrl: row.audio_url || "",
+      coverUrl: row.cover_url || "",
+      speed: 1.5,
+      created_at: row.created_at || null
+    };
+  }
+
+  function countHits(notes) {
+    let c = 0;
+    notes.forEach((n) => { c += 1; if (n.end != null) c += 1; });
+    return c;
+  }
+
+  async function loadCharts() {
+    const list = document.getElementById("chartList");
+    const empty = document.getElementById("chartEmpty");
+    list.innerHTML = "";
+    if (!sb) {
+      empty.style.display = "block";
+      empty.textContent = "Supabase 未就绪";
+      return;
+    }
+    const { data, error } = await sb.from(TABLE).select("*").order("created_at", { ascending: false }).limit(100);
+    if (error) {
+      empty.style.display = "block";
+      empty.innerHTML = "读取铺面失败：" + error.message +
+        "<br><small>请确认已创建表 public_rhythm_charts</small>";
+      return;
+    }
+    if (!data || !data.length) {
+      empty.style.display = "block";
+      empty.textContent = "暂无铺面，去「铺面编辑」创建并上传吧～";
+      return;
+    }
+    empty.style.display = "none";
+        data.forEach((row) => {
+      const chart = normalizeChart(row);
+      const card = document.createElement("div");
+      card.className = "chart-card";
+      const diff = (chart.difficulty || "normal").toLowerCase();
+      card.innerHTML =
+        '<img class="chart-cover" src="' + (chart.coverUrl || "avatar.jpg") + '" alt="" onerror="this.src=\'avatar.jpg\'">' +
+        '<div class="chart-info">' +
+          '<div class="chart-title">' + escapeHtml(chart.title) + '</div>' +
+          '<div class="chart-meta">' + escapeHtml(chart.author || "未知") +
+            ' · BPM ' + chart.bpm +
+            ' · ' + countHits(chart.notes) + ' hits<br>by ' + escapeHtml(row.nickname || "用户") +
+          '</div>' +
+          '<span class="chart-diff ' + diff + '">' + escapeHtml(chart.difficulty) + '</span>' +
+        '</div>';
+      card.onclick = () => openChartDetail(chart);
+      list.appendChild(card);
+    });
+  }
+
+
+  function renderRankList(el, rows) {
+    if (!el) return;
+    if (!rows || !rows.length) {
+      el.innerHTML = '<div class="rank-empty">暂无成绩<br>打完可上传</div>';
+      return;
+    }
+    el.innerHTML = rows.map((r, i) => {
+      const rkCls = i === 0 ? "top1" : i === 1 ? "top2" : i === 2 ? "top3" : "";
+      const av = r.avatar_url || "avatar.jpg";
+      const name = escapeHtml(r.nickname || "用户");
+      const sc = Math.round(Number(r.score) || 0).toLocaleString();
+      const acc = (Number(r.accuracy) || 0).toFixed(2);
+      const uid = r.user_id || "";
+      return '<div class="rank-item">' +
+        '<span class="rk ' + rkCls + '">' + (i + 1) + '</span>' +
+        '<img class="rank-avatar" src="' + av + '" data-uid="' + uid + '" alt="" title="' + name + '" onerror="this.src=\'avatar.jpg\'">' +
+        '<div class="rank-info">' +
+        '<div class="rank-score">' + sc + '</div>' +
+        '<div class="rank-acc">' + acc + '%</div>' +
+        '<div class="rank-name">' + name + (r.grade ? (' · ' + escapeHtml(r.grade)) : '') + '</div>' +
+        '</div></div>';
+    }).join("");
+    el.querySelectorAll(".rank-avatar").forEach((img) => {
+      img.onclick = (e) => {
+        e.stopPropagation();
+        openUserPeek(img.dataset.uid, img.src, img.parentElement.querySelector(".rank-name")?.textContent);
+      };
+    });
+  }
+
+  async function fetchLeaderboard(chartId, targetEl) {
+    if (!targetEl) return;
+    if (!chartId || !sb) {
+      targetEl.innerHTML = '<div class="rank-empty">暂无</div>';
+      return;
+    }
+    targetEl.innerHTML = '<div class="rank-empty">加载中…</div>';
+    const { data, error } = await sb.from(SCORE_TABLE)
+      .select("user_id, nickname, avatar_url, score, accuracy, grade, max_combo, created_at")
+      .eq("chart_id", chartId)
+      .order("score", { ascending: false })
+      .limit(30);
+    if (error) {
+      targetEl.innerHTML = '<div class="rank-empty">排行榜未就绪<br><small>' + escapeHtml(error.message) + '</small></div>';
+      return;
+    }
+    // 每人只保留最高分
+    const best = new Map();
+    (data || []).forEach((r) => {
+      const prev = best.get(r.user_id);
+      if (!prev || Number(r.score) > Number(prev.score)) best.set(r.user_id, r);
+    });
+    const rows = Array.from(best.values()).sort((a, b) => Number(b.score) - Number(a.score)).slice(0, 20);
+    renderRankList(targetEl, rows);
+  }
+
+  async function openUserPeek(userId, fallbackAvatar, fallbackName) {
+    const mask = document.getElementById("userPeekMask");
+    document.getElementById("upAvatar").src = fallbackAvatar || "avatar.jpg";
+    document.getElementById("upName").textContent = fallbackName || "用户";
+    document.getElementById("upBio").textContent = "加载中…";
+    mask.classList.add("show");
+    if (!userId || !sb) {
+      document.getElementById("upBio").textContent = "";
+      return;
+    }
+    try {
+      const { data } = await sb.from("public_user_list")
+        .select("user_id, nickname, avatar_url, bio")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (data) {
+        document.getElementById("upAvatar").src = data.avatar_url || fallbackAvatar || "avatar.jpg";
+        document.getElementById("upName").textContent = data.nickname || fallbackName || "用户";
+        document.getElementById("upBio").textContent = data.bio || "这个人很懒，什么都没写";
+      } else {
+        document.getElementById("upBio").textContent = "未在用户列表中找到更多资料";
+      }
+    } catch (_) {
+      document.getElementById("upBio").textContent = "";
+    }
+  }
+
+  async function submitScore() {
+    const msg = document.getElementById("scoreUploadMsg");
+    if (!msg) return;
+    if (!lastResult) { msg.textContent = "没有可上传的成绩"; msg.style.color = "#f87171"; return; }
+    if (!sb) { msg.textContent = "Supabase 未就绪"; msg.style.color = "#f87171"; return; }
+
+    // 重新确认登录态（避免页面停留过久 session 丢失 / currentUser 未赋值）
+    let uid = currentUser && currentUser.id;
+    try {
+      const { data: sessWrap } = await sb.auth.getSession();
+      const sess = sessWrap && sessWrap.session;
+      if (sess && sess.user) {
+        uid = sess.user.id;
+        currentUser = sess.user;
+      }
+    } catch (_) {}
+    if (!uid) {
+      msg.innerHTML = '请先登录后再上传 · <a href="auth.html" style="color:#93c5fd">去登录</a>';
+      msg.style.color = "#f87171";
+      return;
+    }
+    if (!playChart || !playChart.id) {
+      msg.textContent = "测试铺面无法上传，请从曲库选择铺面游玩";
+      msg.style.color = "#f87171";
+      return;
+    }
+
+    msg.textContent = "上传中…";
+    msg.style.color = "#93c5fd";
+    try {
+      let avatar = myAvatarUrl || "avatar.jpg";
+      try {
+        const { data: u } = await sb.from("public_user_list")
+          .select("avatar_url, nickname")
+          .eq("user_id", uid)
+          .limit(1);
+        if (u && u[0]) {
+          if (u[0].avatar_url) avatar = u[0].avatar_url;
+          if (u[0].nickname) myNickname = u[0].nickname;
+        }
+      } catch (_) {}
+
+      const payload = {
+        chart_id: playChart.id,
+        user_id: uid,
+        nickname: myNickname || "匿名用户",
+        avatar_url: avatar,
+        score: Math.round(Number(lastResult.score) || 0),
+        accuracy: Number(lastResult.accuracy) || 0,
+        max_combo: Number(lastResult.maxCombo) || 0,
+        grade: lastResult.grade || "CLEAR",
+        perfect: Number(lastResult.perfect) || 0,
+        great: Number(lastResult.great) || 0,
+        good: Number(lastResult.good) || 0,
+        miss: Number(lastResult.miss) || 0
+      };
+
+      const { data: existRows, error: selErr } = await sb.from(SCORE_TABLE)
+        .select("id, score")
+        .eq("chart_id", playChart.id)
+        .eq("user_id", uid)
+        .limit(1);
+      if (selErr) {
+        const m = selErr.message || "";
+        if (/schema cache|does not exist|Could not find/i.test(m)) {
+          throw new Error("排行榜表未创建：请在 Supabase 执行 rhythm4k_supabase.sql 中的 public_rhythm_scores 段");
+        }
+        if (/permission|policy|RLS/i.test(m)) {
+          throw new Error("无权限读取排行榜（检查 RLS 是否允许登录用户读写自己的成绩）");
+        }
+        throw selErr;
+      }
+      const exist = existRows && existRows[0];
+
+      if (exist && Number(exist.score) >= payload.score) {
+        msg.textContent = "已有更高或相同成绩，未覆盖";
+        msg.style.color = "#fbbf24";
+      } else if (exist) {
+        const { error } = await sb.from(SCORE_TABLE).update({
+          nickname: payload.nickname,
+          avatar_url: payload.avatar_url,
+          score: payload.score,
+          accuracy: payload.accuracy,
+          max_combo: payload.max_combo,
+          grade: payload.grade,
+          perfect: payload.perfect,
+          great: payload.great,
+          good: payload.good,
+          miss: payload.miss
+        }).eq("id", exist.id);
+        if (error) throw error;
+        msg.textContent = "✅ 已更新个人最佳";
+        msg.style.color = "#34d399";
+      } else {
+        const { error } = await sb.from(SCORE_TABLE).insert(payload);
+        if (error) {
+          const m = error.message || "";
+          if (/schema cache|does not exist|Could not find/i.test(m)) {
+            throw new Error("排行榜表未创建：请在 Supabase 执行 SQL 创建 public_rhythm_scores");
+          }
+          if (/permission|policy|row-level/i.test(m)) {
+            throw new Error("无权限写入（请为 public_rhythm_scores 配置 insert/update 策略）");
+          }
+          throw error;
+        }
+        msg.textContent = "✅ 成绩已上传";
+        msg.style.color = "#34d399";
+      }
+      fetchLeaderboard(playChart.id, document.getElementById("playRankList"));
+    } catch (err) {
+      console.error(err);
+      msg.textContent = "上传失败：" + (err.message || String(err));
+      msg.style.color = "#f87171";
+    }
+  }
+
+
+  let detailChart = null;
+  function openChartDetail(chart) {
+    detailChart = chart;
+    document.getElementById("cmCover").src = chart.coverUrl || "avatar.jpg";
+    document.getElementById("cmTitle").textContent = chart.title || "未命名";
+    const hits = countHits(chart.notes || []);
+    document.getElementById("cmMeta").innerHTML =
+      "作者 / 作曲：" + escapeHtml(chart.author || "未知") + "<br>" +
+      "难度：" + escapeHtml(chart.difficulty || "-") + " · BPM " + (chart.bpm || "-") + "<br>" +
+      "Note / Hits：" + (chart.notes ? chart.notes.length : 0) + " / " + hits + "<br>" +
+      "偏移：" + (chart.offset || 0) + " ms<br>" +
+      "上传：" + escapeHtml(chart.nickname || "用户") +
+      (chart.created_at ? (" · " + new Date(chart.created_at).toLocaleString()) : "");
+    const editBtn = document.getElementById("cmEdit");
+    const isOwner = currentUser && chart.user_id && currentUser.id === chart.user_id;
+    editBtn.style.display = isOwner ? "" : "none";
+    document.getElementById("chartModalMask").classList.add("show");
+    fetchLeaderboard(chart.id, document.getElementById("cmRankList"));
+  }
+  function closeChartDetail() {
+    document.getElementById("chartModalMask").classList.remove("show");
+  }
+  function startChartFromDetail() {
+    if (!detailChart) return;
+    playChart = detailChart;
+    document.getElementById("playTitle").textContent = playChart.title;
+    document.getElementById("playSub").textContent =
+      (playChart.author || "") + " · " + playChart.difficulty + " · " + countHits(playChart.notes) + " hits";
+    const po = document.getElementById("playOffset");
+    if (po) {
+      po.value = String(playChart.offset || 0);
+      document.getElementById("playOffsetVal").textContent = String(playChart.offset || 0);
+    }
+    closeChartDetail();
+    switchTab("play");
+    stopPlay(true);
+    fetchLeaderboard(playChart.id, document.getElementById("playRankList"));
+  }
+  async function editChartFromDetail() {
+    if (!detailChart || !currentUser || detailChart.user_id !== currentUser.id) {
+      alert("只有上传者可以编辑");
+      return;
+    }
+    // 载入到编辑器
+    document.getElementById("edTitle").value = detailChart.title || "";
+    document.getElementById("edAuthor").value = detailChart.author || "";
+    document.getElementById("edDiff").value = (detailChart.difficulty || "normal").toLowerCase();
+    document.getElementById("edBpm").value = detailChart.bpm || 120;
+    document.getElementById("edOffset").value = detailChart.offset || 0;
+    edNotes = (detailChart.notes || []).map((n) => {
+      const o = { t: n.t, l: n.l };
+      if (n.end != null) o.end = n.end;
+      return o;
+    });
+    window._editingChartId = detailChart.id;
+    window._editingAudioUrl = detailChart.audioUrl || "";
+    window._editingCoverUrl = detailChart.coverUrl || "";
+    if (detailChart.audioUrl) {
+      if (edAudioUrl && edAudioUrl.startsWith("blob:")) URL.revokeObjectURL(edAudioUrl);
+      edAudioUrl = detailChart.audioUrl;
+      edAudioFile = null; // 可沿用原音频 URL
+      const audioEl = document.getElementById("edAudioEl");
+      audioEl.src = edAudioUrl;
+      audioEl.onloadedmetadata = () => rebuildTimeline();
+    }
+    if (detailChart.coverUrl) {
+      const img = document.getElementById("edCoverPreview");
+      img.src = detailChart.coverUrl;
+      img.style.display = "block";
+      edCoverFile = null;
+    }
+    closeChartDetail();
+    switchTab("editor");
+    rebuildTimeline();
+    setEdMsg("正在编辑已上传铺面，保存将更新原记录（可不重新选音频）", true);
+    const upBtn = document.getElementById("edUpload");
+    if (upBtn) upBtn.textContent = "更新铺面";
+  }
+
+// ---------- 流速 ----------
+  document.getElementById("playSpeed").addEventListener("input", (e) => {
+    scrollSpeed = parseFloat(e.target.value) || 3.4;
+    document.getElementById("playSpeedVal").textContent = scrollSpeed.toFixed(1) + "x";
+  });
+  document.getElementById("playOffset").addEventListener("input", (e) => {
+    document.getElementById("playOffsetVal").textContent = String(e.target.value);
+  });
+  document.getElementById("cmClose").onclick = closeChartDetail;
+  document.getElementById("chartModalMask").addEventListener("click", (e) => {
+    if (e.target.id === "chartModalMask") closeChartDetail();
+  });
+  document.getElementById("cmPlay").onclick = startChartFromDetail;
+  document.getElementById("cmEdit").onclick = () => editChartFromDetail();
+
+  document.getElementById("noteThick").addEventListener("input", (e) => {
+    noteThick = Number(e.target.value) || 16;
+    document.getElementById("noteThickVal").textContent = noteThick + "px";
+    saveNoteStyle();
+  });
+  for (let i = 0; i < 4; i++) {
+    (function (idx) {
+      document.getElementById("noteColor" + idx).addEventListener("input", (e) => {
+        noteColors[idx] = e.target.value;
+        saveNoteStyle();
+        applyKeyColors();
+      });
+    })(i);
+  }
+  document.getElementById("noteStyleReset").onclick = () => {
+    noteThick = 16;
+    noteColors = ["#3b82f6", "#6366f1", "#8b5cf6", "#ec4899"];
+    document.getElementById("noteThick").value = "16";
+    document.getElementById("noteThickVal").textContent = "16px";
+    for (let i = 0; i < 4; i++) document.getElementById("noteColor" + i).value = noteColors[i];
+    const po = document.getElementById("playOffset");
+    if (po) { po.value = "0"; document.getElementById("playOffsetVal").textContent = "0"; }
+    saveNoteStyle();
+    applyKeyColors();
+  };
+  function approachMs() {
+    return BASE_APPROACH / Math.max(0.5, scrollSpeed);
+  }
+
+  // Note 外观（厚度 / 四轨颜色）
+  const NOTE_STYLE_KEY = "qish_rhythm4k_note_style";
+  let noteThick = 16;
+  let noteColors = ["#3b82f6", "#6366f1", "#8b5cf6", "#ec4899"];
+
+  function loadNoteStyle() {
+    try {
+      const raw = localStorage.getItem(NOTE_STYLE_KEY);
+      if (!raw) return;
+      const o = JSON.parse(raw);
+      if (o.thick) noteThick = Math.max(8, Math.min(36, Number(o.thick) || 16));
+      if (Array.isArray(o.colors) && o.colors.length === 4) noteColors = o.colors.slice();
+    } catch (_) {}
+    const thickEl = document.getElementById("noteThick");
+    if (thickEl) {
+      thickEl.value = String(noteThick);
+      document.getElementById("noteThickVal").textContent = noteThick + "px";
+    }
+    for (let i = 0; i < 4; i++) {
+      const c = document.getElementById("noteColor" + i);
+      if (c) c.value = noteColors[i];
+    }
+    applyKeyColors();
+  }
+  function saveNoteStyle() {
+    try {
+      localStorage.setItem(NOTE_STYLE_KEY, JSON.stringify({ thick: noteThick, colors: noteColors }));
+    } catch (_) {}
+  }
+  function applyNoteElStyle(el, lane, isBody) {
+    if (!el) return;
+    const c = noteColors[lane] || "#3b82f6";
+    el.style.height = (isBody ? undefined : noteThick + "px");
+    if (!isBody) {
+      el.style.background = "linear-gradient(180deg, " + lighten(c, 30) + ", " + c + ")";
+      el.style.boxShadow = "0 0 10px " + c + "88";
+    } else {
+      el.style.background = "linear-gradient(180deg, " + c + "dd, " + c + "88)";
+      el.style.boxShadow = "0 0 12px " + c + "55";
+    }
+    el.style.borderRadius = Math.max(4, Math.floor(noteThick / 3)) + "px";
+  }
+  function lighten(hex, amt) {
+    try {
+      const n = hex.replace("#", "");
+      const num = parseInt(n.length === 3 ? n.split("").map((x) => x + x).join("") : n, 16);
+      let r = (num >> 16) + amt, g = ((num >> 8) & 0xff) + amt, b = (num & 0xff) + amt;
+      r = Math.min(255, Math.max(0, r));
+      g = Math.min(255, Math.max(0, g));
+      b = Math.min(255, Math.max(0, b));
+      return "#" + (r << 16 | g << 8 | b).toString(16).padStart(6, "0");
+    } catch (_) {
+      return hex;
+    }
+  }
+  function formatTime(sec) {
+    if (!isFinite(sec) || sec < 0) sec = 0;
+    sec = Math.ceil(sec);
+    const m = Math.floor(sec / 60);
+    const s = String(sec % 60).padStart(2, "0");
+    return m + ":" + s;
+  }
+  function updateRemainTime() {
+    const el = document.getElementById("hudTime");
+    if (!el || !audio) {
+      if (el) el.textContent = "剩余 --:--";
+      return;
+    }
+    const dur = audio.duration;
+    if (!isFinite(dur) || dur <= 0) {
+      el.textContent = "剩余 --:--";
+      return;
+    }
+    const left = Math.max(0, dur - audio.currentTime);
+    el.textContent = "剩余 " + formatTime(left);
+  }
+
+  // ---------- 游玩 ----------
+  function getPlayOffset() {
+    const el = document.getElementById("playOffset");
+    if (el) return Number(el.value) || 0;
+    return playChart ? (playChart.offset || 0) : 0;
+  }
+  function getMusicTime() {
+    if (!audio) return 0;
+    return audio.currentTime * 1000 + getPlayOffset();
+  }
+
+  function clearNotesDOM() {
+    document.querySelectorAll(".note").forEach((n) => n.remove());
+  }
+
+  function prepareNotes() {
+    visibleStart = 0;
+    lastTimeUpdate = 0;
+    endCheckT = 0;
+    cachePlayDom();
+    clearNotesDOM();
+    notesState = (playChart.notes || []).map((n) => ({
+      t: n.t,
+      l: n.l,
+      end: n.end != null ? n.end : null,
+      headHit: false,
+      tailHit: false,
+      holding: false,
+      elHead: null,
+      elBody: null
+    }));
+    totalHits = countHits(playChart.notes);
+    perHit = totalHits > 0 ? MAX_SCORE / totalHits : 0;
+    score = 0; combo = 0; maxCombo = 0;
+    counts = { perfect: 0, great: 0, good: 0, miss: 0 };
+    keyDown = [false, false, false, false];
+    updateHud();
+    document.getElementById("resultMask").classList.remove("show");
+  }
+
+  function updateHud() {
+    document.getElementById("hudScore").textContent = Math.round(score).toLocaleString();
+    document.getElementById("hudCombo").textContent = "COMBO " + combo;
+    updateRemainTime();
+  }
+
+  function showJudge(text, color) {
+    const el = document.getElementById("judgeFlash");
+    el.textContent = text;
+    el.style.color = color || "#fff";
+    el.classList.remove("show");
+    void el.offsetWidth;
+    el.classList.add("show");
+    // combo 在评级下方，同款动效
+    const cf = document.getElementById("comboFlash");
+    if (cf && combo > 0 && text !== "MISS") {
+      cf.textContent = combo + " COMBO";
+      cf.style.color = "#93c5fd";
+      cf.classList.remove("show");
+      void cf.offsetWidth;
+      cf.classList.add("show");
+    } else if (cf && text === "MISS") {
+      cf.textContent = "";
+      cf.classList.remove("show");
+    }
+  }
+  function showGradeBanner(text, cls) {
+    const el = document.getElementById("gradeBanner");
+    if (!el) return;
+    el.textContent = text;
+    el.className = "grade-banner " + (cls || "") + " show";
+    void el.offsetWidth;
+    el.classList.remove("show");
+    void el.offsetWidth;
+    el.classList.add("show");
+  }
+  function applyKeyColors() {
+    document.querySelectorAll(".key-btn").forEach((btn) => {
+      const lane = Number(btn.dataset.lane);
+      const c = noteColors[lane] || "#3b82f6";
+      btn.style.background = "linear-gradient(180deg, " + lighten(c, 25) + ", " + c + ")";
+      btn.style.borderColor = c;
+    });
+  }
+
+  function applyJudge(diff) {
+    let mult = 0, label = "MISS", color = "#94a3b8";
+    if (diff <= JUDGE.perfect) { mult = 1; label = "PERFECT"; color = "#fbbf24"; counts.perfect++; }
+    else if (diff <= JUDGE.great) { mult = 0.7; label = "GREAT"; color = "#34d399"; counts.great++; }
+    else if (diff <= JUDGE.good) { mult = 0.4; label = "GOOD"; color = "#60a5fa"; counts.good++; }
+    else { counts.miss++; combo = 0; showJudge("MISS", color); updateHud(); return false; }
+    score = Math.min(MAX_SCORE, score + perHit * mult);
+    combo++;
+    if (combo > maxCombo) maxCombo = combo;
+    showJudge(label, color);
+    updateHud();
+    return true;
+  }
+
+  function judgeHead(lane) {
+    if (!playing || paused || !playChart) return;
+    const now = getMusicTime();
+    let best = null, bestDiff = 9999;
+    for (const n of notesState) {
+      if (n.headHit || n.l !== lane) continue;
+      const diff = Math.abs(n.t - now);
+      if (diff < bestDiff) { bestDiff = diff; best = n; }
+    }
+    if (!best || bestDiff > JUDGE.good) return;
+    best.headHit = true;
+    if (best.end != null) best.holding = true;
+    if (best.elHead) { best.elHead.remove(); best.elHead = null; }
+    applyJudge(bestDiff);
+  }
+
+  // 长条尾：不需要松手。按住到 end 时刻自动判定；提前松手才 Miss
+  function completeHoldTail(n, perfect) {
+    if (n.tailHit) return;
+    n.tailHit = true;
+    n.holding = false;
+    if (n.elBody) { n.elBody.remove(); n.elBody = null; }
+    if (perfect) {
+      // 自动收尾按 Perfect 计分
+      score = Math.min(MAX_SCORE, score + perHit);
+      counts.perfect++;
+      combo++;
+      if (combo > maxCombo) maxCombo = combo;
+      showJudge("PERFECT", "#fbbf24");
+      updateHud();
+    } else {
+      counts.miss++;
+      combo = 0;
+      showJudge("MISS", "#94a3b8");
+      updateHud();
+    }
+  }
+
+  function judgeTail(lane) {
+    // 仅处理「提前松手」；到达结尾不要求抬键
+    if (!playing || paused || !playChart) return;
+    const now = getMusicTime();
+    for (const n of notesState) {
+      if (n.l !== lane || n.end == null || !n.headHit || n.tailHit) continue;
+      if (!n.holding) continue;
+      // 已过结尾：松手无所谓，若还未自动收尾则补一次成功
+      if (now >= n.end) {
+        completeHoldTail(n, true);
+        return;
+      }
+      // 结尾前松手 → Miss
+      n.holding = false;
+      completeHoldTail(n, false);
+      return;
+    }
+  }
+
+  function processMisses(now) {
+    for (const n of notesState) {
+      if (!n.headHit && now - n.t > JUDGE.good) {
+        n.headHit = true;
+        n.holding = false;
+        if (n.elHead) { n.elHead.remove(); n.elHead = null; }
+        if (n.elBody) { n.elBody.remove(); n.elBody = null; }
+        if (n.end != null) n.tailHit = true;
+        counts.miss += n.end != null ? 2 : 1;
+        combo = 0;
+        updateHud();
+        showJudge("MISS", "#94a3b8");
+      } else if (n.headHit && n.end != null && !n.tailHit && n.holding && now >= n.end) {
+        // 按住到结尾：自动收尾，无需松手
+        completeHoldTail(n, true);
+      } else if (n.headHit && n.end != null && !n.tailHit && now - n.end > JUDGE.good) {
+        // 结尾后仍未按住（中途已松或从未进入 hold）
+        completeHoldTail(n, false);
+      } else if (n.holding && !keyDown[n.l] && now < n.end - JUDGE.good) {
+        // 提前松手：长条失败
+        n.holding = false;
+        completeHoldTail(n, false);
+      }
+    }
+  }
+
+  // 缓存轨道 DOM，避免每帧 querySelector
+  let laneEls = null;
+  let stageEl = null;
+  let stageH = 0;
+  let lastTimeUpdate = 0;
+  let visibleStart = 0;
+  let endCheckT = 0;
+
+  function cachePlayDom() {
+    stageEl = document.getElementById("playStage");
+    laneEls = [
+      document.querySelector('.lane[data-lane="0"]'),
+      document.querySelector('.lane[data-lane="1"]'),
+      document.querySelector('.lane[data-lane="2"]'),
+      document.querySelector('.lane[data-lane="3"]')
+    ];
+    stageH = stageEl ? stageEl.clientHeight : 0;
+  }
+
+  function gameLoop() {
+    if (!playing) return;
+    if (paused) {
+      rafId = requestAnimationFrame(gameLoop);
+      return;
+    }
+    if (!stageEl || !laneEls) cachePlayDom();
+    const h = stageH || (stageEl && stageEl.clientHeight) || 0;
+    const hitY = h - HIT_LINE_FROM_BOTTOM;
+    const now = getMusicTime();
+    const ap = approachMs();
+    const invAp = hitY / ap;
+    const halfTh = noteThick * 0.5;
+    const apIn = ap + 300;
+    const apOut = -JUDGE.good - 80;
+
+    processMisses(now);
+
+    // 剩余时间约每 200ms 更新一次，减轻 DOM 写入
+    if (now - lastTimeUpdate > 200) {
+      lastTimeUpdate = now;
+      updateRemainTime();
+    }
+
+    // 只遍历可能进入视野的 note（notes 已按时间排序）
+    const nlen = notesState.length;
+    // 推进 visibleStart：已完全结束的 note 跳过
+    while (visibleStart < nlen) {
+      const n0 = notesState[visibleStart];
+      const done = n0.headHit && (n0.end == null || n0.tailHit);
+      const past = (n0.end != null ? n0.end : n0.t) < now - JUDGE.good - 200;
+      if (done && past) visibleStart++;
+      else break;
+    }
+
+    for (let i = visibleStart; i < nlen; i++) {
+      const n = notesState[i];
+      // 后面的 note 还远未进入视野
+      if (n.t - now > apIn + 100 && (n.end == null || n.t - now > apIn + 100)) break;
+
+      const laneEl = laneEls[n.l];
+      if (!laneEl) continue;
+
+      if (!n.headHit) {
+        const dt = n.t - now;
+        if (dt <= apIn && dt >= apOut) {
+          const y = (1 - dt / ap) * hitY - halfTh;
+          if (!n.elHead) {
+            const el = document.createElement("div");
+            el.className = "note hold-head l" + n.l;
+            applyNoteElStyle(el, n.l, false);
+            laneEl.appendChild(el);
+            n.elHead = el;
+          }
+          n.elHead.style.transform = "translate3d(0," + y + "px,0)";
+          n.elHead.style.height = noteThick + "px";
+        } else if (n.elHead) {
+          n.elHead.remove();
+          n.elHead = null;
+        }
+      }
+
+      if (n.end != null && !n.tailHit) {
+        const yHead = n.headHit ? hitY - halfTh : (1 - (n.t - now) / ap) * hitY;
+        const yEnd = (1 - (n.end - now) / ap) * hitY;
+        const top = yHead < yEnd ? yHead : yEnd;
+        const bottom = (yHead > yEnd ? yHead : yEnd) + noteThick;
+        const relevant = (n.end - now) > apOut - 20 && (n.t - now) < apIn + 100;
+        if (relevant && bottom >= -40 && top <= h + 40) {
+          const drawTop = top;
+          const drawH = Math.max(noteThick, Math.abs(yHead - yEnd) + halfTh);
+          if (!n.elBody) {
+            const el = document.createElement("div");
+            el.className = "note hold-body l" + n.l;
+            applyNoteElStyle(el, n.l, true);
+            laneEl.appendChild(el);
+            n.elBody = el;
+          }
+          n.elBody.style.transform = "translate3d(0," + drawTop + "px,0)";
+          n.elBody.style.height = drawH + "px";
+          n.elBody.style.opacity = n.holding ? "1" : "0.8";
+        } else if (n.elBody) {
+          n.elBody.remove();
+          n.elBody = null;
+        }
+      }
+    }
+
+    if (now - endCheckT > 100) {
+      endCheckT = now;
+      let allDone = true;
+      for (let i = 0; i < nlen; i++) {
+        const n = notesState[i];
+        if (!n.headHit || (n.end != null && !n.tailHit)) { allDone = false; break; }
+      }
+      if (allDone && audio) {
+        const last = notesState[nlen - 1];
+        const lastT = last ? (last.end != null ? last.end : last.t) : 0;
+        if (audio.ended || now > lastT + 1500) {
+          endPlay();
+          return;
+        }
+      }
+    }
+    rafId = requestAnimationFrame(gameLoop);
+  }
+
+  async function startPlay() {
+    if (!playChart || !playChart.notes.length) {
+      alert("请先选择铺面，或在编辑器放置 Note 后测试");
+      return;
+    }
+    if (playing && paused) {
+      paused = false;
+      try { await audio.play(); } catch (_) {}
+      return;
+    }
+    if (playing && !paused) {
+      paused = true;
+      if (audio) audio.pause();
+      return;
+    }
+    stopPlay(true);
+    prepareNotes();
+    if (!audio) audio = new Audio();
+    const src = playChart.audioBlobUrl || playChart.audioUrl;
+    if (!src) { alert("没有音频"); return; }
+    audio.src = src;
+    audio.currentTime = 0;
+    try { await audio.play(); } catch (e) {
+      alert("请先点击页面后再开始：" + (e.message || ""));
+      return;
+    }
+    playing = true;
+    paused = false;
+    cachePlayDom();
+    rafId = requestAnimationFrame(gameLoop);
+  }
+
+  function stopPlay(silent) {
+    playing = false;
+    paused = false;
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    if (audio) { try { audio.pause(); } catch (_) {} }
+    clearNotesDOM();
+    if (!silent) document.getElementById("resultMask").classList.remove("show");
+  }
+
+  function endPlay() {
+    playing = false;
+    paused = false;
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    if (audio) { try { audio.pause(); } catch (_) {} }
+    const acc = totalHits ? ((counts.perfect + counts.great * 0.7 + counts.good * 0.4) / totalHits) * 100 : 0;
+    let grade = "CLEAR";
+    let bannerCls = "";
+    if (counts.miss === 0 && counts.good === 0 && counts.great === 0) {
+      grade = "ALL PERFECT";
+      bannerCls = "ap";
+      showGradeBanner("ALL PERFECT", "ap");
+    } else if (counts.miss === 0) {
+      grade = "FULL COMBO";
+      bannerCls = "fc";
+      showGradeBanner("FULL COMBO", "fc");
+    } else if (acc < 50) grade = "FAILED";
+    document.getElementById("resultGrade").textContent = grade;
+    document.getElementById("resultScore").textContent = Math.round(score).toLocaleString() + " / 1,010,000";
+    document.getElementById("resultStats").innerHTML =
+      "Perfect " + counts.perfect + " · Great " + counts.great + " · Good " + counts.good + " · Miss " + counts.miss +
+      "<br>Max Combo " + maxCombo + " · Accuracy " + acc.toFixed(2) + "%";
+    lastResult = {
+      score: score, accuracy: acc, maxCombo: maxCombo, grade: grade,
+      perfect: counts.perfect, great: counts.great, good: counts.good, miss: counts.miss
+    };
+    const sum = document.getElementById("scoreUploadMsg");
+    if (sum) sum.textContent = "";
+    // 稍晚再出结算，先看 AP/FC 飘字
+    setTimeout(() => {
+      document.getElementById("resultMask").classList.add("show");
+    }, grade === "ALL PERFECT" || grade === "FULL COMBO" ? 700 : 0);
+  }
+
+  document.getElementById("btnStart").onclick = () => startPlay();
+  document.getElementById("btnStop").onclick = () => stopPlay();
+  document.getElementById("btnRetry").onclick = () => { stopPlay(true); startPlay(); };
+  document.getElementById("btnBackList").onclick = () => { stopPlay(); switchTab("list"); };
+  document.getElementById("btnSubmitScore").onclick = () => submitScore();
+  document.getElementById("upClose").onclick = () => document.getElementById("userPeekMask").classList.remove("show");
+  document.getElementById("userPeekMask").addEventListener("click", (e) => {
+    if (e.target.id === "userPeekMask") e.currentTarget.classList.remove("show");
+  });
+
+  // 键盘 DFJK + 空格
+  window.addEventListener("keydown", (e) => {
+    if (e.code === "Space") {
+      const tag = (e.target && e.target.tagName) || "";
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+      e.preventDefault();
+      const editorOn = document.getElementById("panelEditor").classList.contains("active");
+      const playOn = document.getElementById("panelPlay").classList.contains("active");
+      if (editorOn) toggleEdPlay();
+      else if (playOn) startPlay();
+      return;
+    }
+    if (e.repeat) return;
+    const lane = KEYS[e.code];
+    if (lane === undefined) return;
+    e.preventDefault();
+    keyDown[lane] = true;
+    const btn = document.querySelector('.key-btn[data-lane="' + lane + '"]');
+    if (btn) btn.classList.add("pressed");
+    const laneEl = document.querySelector('.lane[data-lane="' + lane + '"]');
+    if (laneEl) laneEl.classList.add("active");
+    judgeHead(lane);
+  });
+  window.addEventListener("keyup", (e) => {
+    const lane = KEYS[e.code];
+    if (lane === undefined) return;
+    keyDown[lane] = false;
+    const btn = document.querySelector('.key-btn[data-lane="' + lane + '"]');
+    if (btn) btn.classList.remove("pressed");
+    const laneEl = document.querySelector('.lane[data-lane="' + lane + '"]');
+    if (laneEl) laneEl.classList.remove("active");
+    judgeTail(lane);
+  });
+
+  document.querySelectorAll(".key-btn").forEach((btn) => {
+    const lane = Number(btn.dataset.lane);
+    const down = (e) => {
+      e.preventDefault();
+      keyDown[lane] = true;
+      btn.classList.add("pressed");
+      const laneEl = document.querySelector('.lane[data-lane="' + lane + '"]');
+      if (laneEl) laneEl.classList.add("active");
+      judgeHead(lane);
+    };
+    const up = () => {
+      keyDown[lane] = false;
+      btn.classList.remove("pressed");
+      const laneEl = document.querySelector('.lane[data-lane="' + lane + '"]');
+      if (laneEl) laneEl.classList.remove("active");
+      judgeTail(lane);
+    };
+    btn.addEventListener("mousedown", down);
+    btn.addEventListener("mouseup", up);
+    btn.addEventListener("mouseleave", up);
+    btn.addEventListener("touchstart", down, { passive: false });
+    btn.addEventListener("touchend", up);
+    btn.addEventListener("touchcancel", up);
+  });
+
+  // ========== 编辑器 ==========
+  function setEdMsg(text, ok) {
+    const el = document.getElementById("edMsg");
+    el.textContent = text || "";
+    el.style.color = ok ? "#16a34a" : "#dc2626";
+  }
+
+  function getDurationMs() {
+    const audioEl = document.getElementById("edAudioEl");
+    if (audioEl && audioEl.duration && isFinite(audioEl.duration)) {
+      return Math.max(audioEl.duration * 1000, 8000);
+    }
+    if (edNotes.length) {
+      const last = edNotes[edNotes.length - 1];
+      return Math.max((last.end || last.t) + 5000, 10000);
+    }
+    return 60000;
+  }
+
+  function tToY(t) {
+    return t * pxPerMs;
+  }
+  function yToT(y) {
+    return Math.max(0, y / pxPerMs);
+  }
+
+  function rebuildTimeline() {
+    pxPerMs = Number(document.getElementById("edZoom").value) || 0.15;
+    const bpm = Number(document.getElementById("edBpm").value) || 120;
+    const canvas = document.getElementById("edCanvas");
+    const durationMs = getDurationMs();
+    const height = Math.ceil(durationMs * pxPerMs) + 120;
+    canvas.style.height = height + "px";
+    canvas.innerHTML = "";
+
+    const timeCol = document.createElement("div");
+    timeCol.className = "editor-time-col";
+    canvas.appendChild(timeCol);
+
+    for (let i = 0; i < 4; i++) {
+      const col = document.createElement("div");
+      col.className = "editor-lane-col";
+      col.dataset.lane = String(i);
+      canvas.appendChild(col);
+      bindLaneEdit(col);
+    }
+
+    const beatMs = 60000 / bpm;
+    const snapDiv = getSnapDivision(); // 0 | 1 | 2 | 4 | 8 | 16
+    // 网格线密度：至少画到 1/4，若吸附更细则画更细
+    const gridDiv = Math.max(4, snapDiv || 4);
+    const step = beatMs / gridDiv;
+    for (let i = 0; i * step <= durationMs + 0.001; i++) {
+      const t = i * step;
+      const y = tToY(t);
+      const beatIndex = t / beatMs;
+      const near = (x) => Math.abs(x - Math.round(x)) < 0.02;
+      let cls = "beat-line";
+      if (near(beatIndex)) cls += " major";
+      else if (near(beatIndex * 2)) cls += " half";
+      else cls += " sub";
+      const line = document.createElement("div");
+      line.className = cls;
+      line.style.bottom = y + "px";
+      line.style.left = "52px";
+      line.style.right = "0";
+      canvas.appendChild(line);
+      if (near(beatIndex)) {
+        const lab = document.createElement("div");
+        lab.className = "beat-label";
+        lab.style.bottom = y + "px";
+        lab.textContent = (t / 1000).toFixed(1) + "s";
+        timeCol.appendChild(lab);
+      }
+    }
+    updateSnapHint();
+
+    // playhead
+    const ph = document.createElement("div");
+    ph.className = "ed-playhead";
+    ph.id = "edPlayhead";
+    ph.style.bottom = "0px";
+    canvas.appendChild(ph);
+
+    renderEdNotes();
+    const sc = document.getElementById("edScroll");
+    if (sc && !edPlaying) {
+      requestAnimationFrame(() => { sc.scrollTop = sc.scrollHeight; });
+    }
+  }
+
+  function bindLaneEdit(col) {
+    col.addEventListener("mousedown", (e) => {
+      if (e.target.classList.contains("ed-note")) return;
+      e.preventDefault();
+      const canvas = document.getElementById("edCanvas");
+      const rect = canvas.getBoundingClientRect();
+      // t 从 canvas 底部向上：bottom CSS
+      const t = snapTime(yToT(canvas.offsetHeight - (e.clientY - rect.top)));
+      const lane = Number(col.dataset.lane);
+      drawHold = { l: lane, t0: t, el: null };
+
+      const move = (ev) => {
+        if (!drawHold) return;
+        const t2 = snapTime(yToT(canvas.offsetHeight - (ev.clientY - rect.top)));
+        const tStart = Math.min(drawHold.t0, t2);
+        const tEnd = Math.max(drawHold.t0, t2);
+        if (!drawHold.el) {
+          drawHold.el = document.createElement("div");
+          drawHold.el.className = "ed-note hold l" + lane;
+          drawHold.el.style.pointerEvents = "none";
+          col.appendChild(drawHold.el);
+        }
+        const h = Math.max(12, (tEnd - tStart) * pxPerMs);
+        drawHold.el.style.bottom = (tStart * pxPerMs) + "px";
+        drawHold.el.style.height = h + "px";
+      };
+      const up = (ev) => {
+        document.removeEventListener("mousemove", move);
+        document.removeEventListener("mouseup", up);
+        if (!drawHold) return;
+        const t2 = snapTime(yToT(canvas.offsetHeight - ((ev.clientY || e.clientY) - rect.top)));
+        const tStart = Math.min(drawHold.t0, t2);
+        const tEnd = Math.max(drawHold.t0, t2);
+        if (drawHold.el) drawHold.el.remove();
+        if (tEnd - tStart < 40) {
+          addEdNote(tStart, lane, null);
+        } else {
+          addEdNote(tStart, lane, tEnd);
+        }
+        drawHold = null;
+      };
+      document.addEventListener("mousemove", move);
+      document.addEventListener("mouseup", up);
+    });
+  }
+
+  function getSnapDivision() {
+    const v = Number(document.getElementById("edSnap").value);
+    if (!v || v < 0) return 0;
+    return v;
+  }
+
+  function snapTime(t) {
+    const bpm = Number(document.getElementById("edBpm").value) || 120;
+    const div = getSnapDivision();
+    if (!div) return Math.max(0, t); // 关闭吸附
+    const beatMs = 60000 / bpm;
+    const snap = beatMs / div;
+    return Math.max(0, Math.round(t / snap) * snap);
+  }
+
+  function updateSnapHint() {
+    const el = document.getElementById("edSnapHint");
+    if (!el) return;
+    const div = getSnapDivision();
+    if (!div) el.textContent = "· 吸附已关闭";
+    else if (div === 1) el.textContent = "· 吸附 1 拍";
+    else el.textContent = "· 吸附 1/" + div + " 拍";
+  }
+
+  function addEdNote(t, l, end) {
+    // 去重
+    edNotes = edNotes.filter((n) => !(n.l === l && Math.abs(n.t - t) < 8));
+    const note = { t, l };
+    if (end != null && end - t >= 40) note.end = end;
+    edNotes.push(note);
+    edNotes.sort((a, b) => a.t - b.t);
+    renderEdNotes();
+    saveDraft(true);
+  }
+
+  function renderEdNotes() {
+    const canvas = document.getElementById("edCanvas");
+    if (!canvas) return;
+    canvas.querySelectorAll(".ed-note").forEach((n) => n.remove());
+    const cols = canvas.querySelectorAll(".editor-lane-col");
+    edNotes.forEach((n, idx) => {
+      const col = cols[n.l];
+      if (!col) return;
+      const el = document.createElement("div");
+      el.className = "ed-note l" + n.l + (n.end != null ? " hold" : "");
+      el.style.bottom = (n.t * pxPerMs) + "px";
+      if (n.end != null) {
+        el.style.height = Math.max(12, (n.end - n.t) * pxPerMs) + "px";
+      } else {
+        el.style.height = "12px";
+      }
+      el.title = KEY_LABELS[n.l] + " @ " + Math.round(n.t) + "ms" + (n.end != null ? " → " + Math.round(n.end) + "ms" : "") + "（点击删除）";
+      el.onclick = (e) => {
+        e.stopPropagation();
+        edNotes.splice(idx, 1);
+        renderEdNotes();
+      };
+      col.appendChild(el);
+    });
+    document.getElementById("edNoteCount").textContent = String(edNotes.length);
+  }
+
+  function edPlayWatch() {
+    if (!edPlaying) return;
+    const audioEl = document.getElementById("edAudioEl");
+    if (audioEl.ended) {
+      edPlaying = false;
+      document.getElementById("edStatus").textContent = "已结束 · 可空格从头";
+      document.getElementById("edPlayPause").textContent = "▶ 播放（空格）";
+      // 结束后回到开头，方便再听；日常暂停不改 currentTime
+      try { audioEl.currentTime = 0; } catch (_) {}
+      return;
+    }
+    const t = Math.floor(audioEl.currentTime);
+    const m = Math.floor(t / 60);
+    const s = String(t % 60).padStart(2, "0");
+    document.getElementById("edStatus").textContent = "播放中 " + m + ":" + s;
+    edRaf = requestAnimationFrame(edPlayWatch);
+  }
+
+  function toggleEdPlay() {
+    const audioEl = document.getElementById("edAudioEl");
+    if (!audioEl.src) {
+      setEdMsg("请先选择音乐或导入 OSZ", false);
+      return;
+    }
+    if (edPlaying) {
+      // 暂停：停在当前位置，下次从这里继续
+      audioEl.pause();
+      edPlaying = false;
+      if (edRaf) { cancelAnimationFrame(edRaf); edRaf = null; }
+      const t = Math.floor(audioEl.currentTime);
+      const m = Math.floor(t / 60);
+      const s = String(t % 60).padStart(2, "0");
+      document.getElementById("edStatus").textContent = "已暂停 " + m + ":" + s;
+      document.getElementById("edPlayPause").textContent = "▶ 继续（空格）";
+      saveDraft(true);
+    } else {
+      audioEl.play().then(() => {
+        edPlaying = true;
+        document.getElementById("edPlayPause").textContent = "⏸ 暂停（空格）";
+        edPlayWatch();
+      }).catch((e) => setEdMsg("播放失败：" + (e.message || ""), false));
+    }
+  }
+
+  // ---------- 本地草稿 ----------
+  const DRAFT_KEY = "qish_rhythm4k_draft_v1";
+
+  function saveDraft(silent) {
+    try {
+      const data = {
+        title: document.getElementById("edTitle").value,
+        author: document.getElementById("edAuthor").value,
+        difficulty: document.getElementById("edDiff").value,
+        bpm: document.getElementById("edBpm").value,
+        offset: document.getElementById("edOffset").value,
+        zoom: document.getElementById("edZoom").value,
+        speed: document.getElementById("edSpeed").value,
+        snap: document.getElementById("edSnap").value,
+        notes: edNotes,
+        savedAt: Date.now()
+      };
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+      if (!silent) setEdMsg("草稿已保存到本机 " + new Date().toLocaleTimeString(), true);
+    } catch (e) {
+      if (!silent) setEdMsg("保存失败：" + (e.message || ""), false);
+    }
+  }
+
+  function loadDraft() {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return false;
+      const data = JSON.parse(raw);
+      if (!data || !Array.isArray(data.notes)) return false;
+      if (data.title != null) document.getElementById("edTitle").value = data.title;
+      if (data.author != null) document.getElementById("edAuthor").value = data.author;
+      if (data.difficulty) document.getElementById("edDiff").value = data.difficulty;
+      if (data.bpm != null) document.getElementById("edBpm").value = data.bpm;
+      if (data.offset != null) document.getElementById("edOffset").value = data.offset;
+      if (data.zoom != null) document.getElementById("edZoom").value = data.zoom;
+      if (data.speed != null) document.getElementById("edSpeed").value = data.speed;
+      if (data.snap != null) document.getElementById("edSnap").value = data.snap;
+      edNotes = data.notes.map((n) => {
+        const o = { t: Number(n.t), l: Number(n.l) };
+        if (n.end != null) o.end = Number(n.end);
+        return o;
+      }).filter((n) => !isNaN(n.t) && n.l >= 0 && n.l <= 3);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // ---------- OSZ / OSU 导入 ----------
+  function parseOsuText(text) {
+    const lines = text.replace(/\r/g, "").split("\n");
+    let section = "";
+    const meta = {
+      title: "", artist: "", creator: "", version: "",
+      mode: 0, circleSize: 4, audioFilename: "", previewTime: 0
+    };
+    const timing = [];
+    const hitObjects = [];
+
+    for (let raw of lines) {
+      const line = raw.trim();
+      if (!line || line.startsWith("//")) continue;
+      if (line.startsWith("[") && line.endsWith("]")) {
+        section = line.slice(1, -1).toLowerCase();
+        continue;
+      }
+      if (section === "general" || section === "metadata" || section === "difficulty") {
+        const eq = line.indexOf(":");
+        if (eq < 0) continue;
+        const key = line.slice(0, eq).trim().toLowerCase();
+        const val = line.slice(eq + 1).trim();
+        if (key === "mode") meta.mode = parseInt(val, 10) || 0;
+        else if (key === "circlesize") meta.circleSize = parseFloat(val) || 4;
+        else if (key === "audiofilename") meta.audioFilename = val;
+        else if (key === "title") meta.title = val;
+        else if (key === "titleunicode" && !meta.title) meta.title = val;
+        else if (key === "artist") meta.artist = val;
+        else if (key === "artistunicode" && !meta.artist) meta.artist = val;
+        else if (key === "creator") meta.creator = val;
+        else if (key === "version") meta.version = val;
+        else if (key === "previewtime") meta.previewTime = parseInt(val, 10) || 0;
+      } else if (section === "timingpoints") {
+        // time,beatLength,...
+        const p = line.split(",");
+        if (p.length >= 2) {
+          const time = parseFloat(p[0]);
+          const beatLength = parseFloat(p[1]);
+          if (!isNaN(time) && !isNaN(beatLength) && beatLength > 0) {
+            timing.push({ time, beatLength });
+          }
+        }
+      } else if (section === "hitobjects") {
+        hitObjects.push(line);
+      }
+    }
+    return { meta, timing, hitObjects };
+  }
+
+  function osuColumn(x, keyCount) {
+    const col = Math.floor((Number(x) * keyCount) / 512);
+    return Math.max(0, Math.min(keyCount - 1, col));
+  }
+
+  function convertOsuToNotes(parsed) {
+    const keyCount = Math.round(parsed.meta.circleSize) || 4;
+    if (parsed.meta.mode !== 3) {
+      // 非 mania：尝试按 x 映射到 4 轨（简谱转换，仅作兼容）
+    }
+    const keys = keyCount >= 4 ? 4 : keyCount;
+    // 若是 5/6/7/8K，只取中间 4 轨或按比例压到 4
+    const notes = [];
+    for (const line of parsed.hitObjects) {
+      const parts = line.split(",");
+      if (parts.length < 5) continue;
+      const x = parseFloat(parts[0]);
+      const time = parseInt(parts[2], 10);
+      const type = parseInt(parts[3], 10);
+      if (isNaN(time) || isNaN(x)) continue;
+      let lane;
+      if (keyCount === 4) {
+        lane = osuColumn(x, 4);
+      } else if (keyCount > 4) {
+        // 压缩到 4K：按比例映射
+        const raw = osuColumn(x, keyCount);
+        lane = Math.min(3, Math.floor(raw * 4 / keyCount));
+      } else {
+        lane = Math.min(3, osuColumn(x, keyCount));
+      }
+      const isHold = (type & 128) === 128;
+      if (isHold) {
+        // end time in parts[5] before first :
+        let end = time;
+        if (parts[5]) {
+          const endStr = parts[5].split(":")[0];
+          end = parseInt(endStr, 10);
+        }
+        if (!isNaN(end) && end > time) {
+          notes.push({ t: time, l: lane, end: end });
+        } else {
+          notes.push({ t: time, l: lane });
+        }
+      } else {
+        notes.push({ t: time, l: lane });
+      }
+    }
+    notes.sort((a, b) => a.t - b.t);
+    // BPM from first positive timing point
+    let bpm = 120;
+    for (const tp of parsed.timing) {
+      if (tp.beatLength > 0) {
+        bpm = 60000 / tp.beatLength;
+        break;
+      }
+    }
+    return { notes, bpm, keyCount };
+  }
+
+  async function importOszFile(file) {
+    setEdMsg("正在解析 " + file.name + " …", true);
+    try {
+      const name = (file.name || "").toLowerCase();
+      let osuTexts = [];
+      let audioBlob = null;
+      let audioName = "";
+
+      if (name.endsWith(".osu")) {
+        const text = await file.text();
+        osuTexts.push({ name: file.name, text });
+      } else {
+        // .osz = zip
+        if (typeof JSZip === "undefined") throw new Error("JSZip 未加载，无法解压 OSZ");
+        const zip = await JSZip.loadAsync(file);
+        const files = Object.keys(zip.files);
+        for (const path of files) {
+          const f = zip.files[path];
+          if (f.dir) continue;
+          const base = path.split("/").pop();
+          const low = base.toLowerCase();
+          if (low.endsWith(".osu")) {
+            const text = await f.async("string");
+            osuTexts.push({ name: base, text });
+          }
+        }
+        // 先解析找 AudioFilename，再在 zip 里取音频
+        if (!osuTexts.length) throw new Error("压缩包内没有 .osu 文件");
+      }
+
+      // 优先选 mode=3 且 CS=4 的难度
+      let best = null;
+      let bestScore = -1;
+      const parsedList = osuTexts.map((o) => ({ name: o.name, parsed: parseOsuText(o.text) }));
+      for (const item of parsedList) {
+        const m = item.parsed.meta;
+        let score = 0;
+        if (m.mode === 3) score += 100;
+        if (Math.round(m.circleSize) === 4) score += 50;
+        if (Math.round(m.circleSize) >= 4 && Math.round(m.circleSize) <= 8) score += 20;
+        if (item.parsed.hitObjects.length > 0) score += 10;
+        if (score > bestScore) { bestScore = score; best = item; }
+      }
+      if (!best) throw new Error("未找到可用难度");
+
+      const converted = convertOsuToNotes(best.parsed);
+      if (!converted.notes.length) throw new Error("该难度没有 HitObject");
+
+      // 音频
+      const audioFileName = best.parsed.meta.audioFilename;
+      if (name.endsWith(".osz") || file.type === "application/zip" || file.type === "application/x-zip-compressed") {
+        const zip = await JSZip.loadAsync(file);
+        let found = null;
+        const want = (audioFileName || "").toLowerCase();
+        for (const path of Object.keys(zip.files)) {
+          if (zip.files[path].dir) continue;
+          const base = path.split("/").pop();
+          const low = base.toLowerCase();
+          if (want && low === want) { found = path; break; }
+          if (!found && (low.endsWith(".mp3") || low.endsWith(".ogg") || low.endsWith(".wav") || low.endsWith(".m4a"))) {
+            found = path;
+          }
+        }
+        if (found) {
+          audioBlob = await zip.files[found].async("blob");
+          audioName = found.split("/").pop();
+        }
+      }
+
+      // 填表单
+      const meta = best.parsed.meta;
+      document.getElementById("edTitle").value = meta.title || best.name.replace(/\.osu$/i, "");
+      document.getElementById("edAuthor").value = meta.artist || meta.creator || "";
+      document.getElementById("edBpm").value = String(Math.round(converted.bpm * 100) / 100);
+      // 难度名
+      const ver = (meta.version || "").toLowerCase();
+      if (ver.includes("easy") || ver.includes("cup")) document.getElementById("edDiff").value = "easy";
+      else if (ver.includes("hard") || ver.includes("rain")) document.getElementById("edDiff").value = "hard";
+      else if (ver.includes("expert") || ver.includes("insane") || ver.includes("overdose")) document.getElementById("edDiff").value = "expert";
+      else document.getElementById("edDiff").value = "normal";
+
+      edNotes = converted.notes;
+      if (audioBlob) {
+        if (edAudioUrl) URL.revokeObjectURL(edAudioUrl);
+        edAudioUrl = URL.createObjectURL(audioBlob);
+        edAudioFile = new File([audioBlob], audioName || "audio.mp3", { type: audioBlob.type || "audio/mpeg" });
+        const audioEl = document.getElementById("edAudioEl");
+        audioEl.src = edAudioUrl;
+        audioEl.onloadedmetadata = () => rebuildTimeline();
+      }
+
+      rebuildTimeline();
+      saveDraft(true);
+      const modeHint = meta.mode === 3 ? "mania " + Math.round(meta.circleSize) + "K→4K" : "mode" + meta.mode + "（已映射到 4 轨）";
+      setEdMsg("✅ 已导入「" + (meta.version || best.name) + "」· " + edNotes.length + " notes · " + modeHint, true);
+    } catch (err) {
+      console.error(err);
+      setEdMsg("导入失败：" + (err.message || String(err)), false);
+    }
+  }
+
+  document.getElementById("edPlayPause").onclick = toggleEdPlay;
+  document.getElementById("edBpm").addEventListener("change", () => { rebuildTimeline(); saveDraft(true); });
+  document.getElementById("edZoom").addEventListener("change", rebuildTimeline);
+  document.getElementById("edSnap").addEventListener("change", () => {
+    updateSnapHint();
+    rebuildTimeline();
+    saveDraft(true);
+  });
+  document.getElementById("edSave").onclick = () => saveDraft(false);
+  document.getElementById("edOsz").addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) importOszFile(file);
+    e.target.value = "";
+  });
+  document.getElementById("edClear").onclick = () => {
+    if (confirm("确定清空所有 Note？")) {
+      edNotes = [];
+      renderEdNotes();
+      saveDraft(true);
+    }
+  };
+  // 自动保存草稿（每 20 秒）
+  setInterval(() => {
+    if (edNotes.length || document.getElementById("edTitle").value) saveDraft(true);
+  }, 20000);
+  ["edTitle", "edAuthor", "edDiff", "edOffset", "edSpeed"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("change", () => saveDraft(true));
+  });
+
+  document.getElementById("edAudio").onchange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    edAudioFile = file;
+    if (edAudioUrl) URL.revokeObjectURL(edAudioUrl);
+    edAudioUrl = URL.createObjectURL(file);
+    const audioEl = document.getElementById("edAudioEl");
+    audioEl.src = edAudioUrl;
+    audioEl.onloadedmetadata = () => rebuildTimeline();
+    setEdMsg("已加载音频：" + file.name, true);
+  };
+
+  document.getElementById("edCover").onchange = (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    edCoverFile = file;
+    if (edCoverUrl) URL.revokeObjectURL(edCoverUrl);
+    edCoverUrl = URL.createObjectURL(file);
+    const img = document.getElementById("edCoverPreview");
+    img.src = edCoverUrl;
+    img.style.display = "block";
+  };
+
+  document.getElementById("edTest").onclick = () => {
+    if (!edNotes.length) { setEdMsg("请先放置 Note", false); return; }
+    if (!edAudioUrl) { setEdMsg("请先选择音乐", false); return; }
+    if (edPlaying) toggleEdPlay();
+    scrollSpeed = Number(document.getElementById("edSpeed").value) || 3.4;
+    document.getElementById("playSpeed").value = scrollSpeed;
+    document.getElementById("playSpeedVal").textContent = scrollSpeed.toFixed(1) + "x";
+    playChart = {
+      title: document.getElementById("edTitle").value.trim() || "测试曲",
+      author: document.getElementById("edAuthor").value.trim() || "",
+      difficulty: document.getElementById("edDiff").value,
+      bpm: Number(document.getElementById("edBpm").value) || 120,
+      offset: Number(document.getElementById("edOffset").value) || 0,
+      notes: edNotes.map((n) => {
+        const o = { t: n.t, l: n.l };
+        if (n.end != null) o.end = n.end;
+        return o;
+      }),
+      audioBlobUrl: edAudioUrl,
+      audioUrl: edAudioUrl,
+      speed: scrollSpeed
+    };
+    document.getElementById("playTitle").textContent = playChart.title + "（测试）";
+    document.getElementById("playSub").textContent = countHits(playChart.notes) + " hits · BPM " + playChart.bpm;
+    switchTab("play");
+    setTimeout(() => startPlay(), 200);
+  };
+
+  document.getElementById("edUpload").onclick = async () => {
+    setEdMsg("");
+    if (!sb) { setEdMsg("Supabase 未就绪", false); return; }
+    if (!currentUser) { setEdMsg("请先登录", false); return; }
+    const title = document.getElementById("edTitle").value.trim();
+    if (!title) { setEdMsg("请填写曲名", false); return; }
+    if (!edNotes.length) { setEdMsg("请放置 Note", false); return; }
+    const editingId = window._editingChartId || null;
+    if (!edAudioFile && !window._editingAudioUrl) { setEdMsg("请选择音乐文件", false); return; }
+    setEdMsg(editingId ? "更新中…" : "上传中…", true);
+    try {
+      const uid = currentUser.id;
+      const ts = Date.now();
+      let audioPublicUrl = window._editingAudioUrl || "";
+      if (edAudioFile) {
+        const ext = (edAudioFile.name.split(".").pop() || "mp3").toLowerCase().replace(/[^a-z0-9]/g, "") || "mp3";
+        const path = uid + "/audio_" + ts + "." + ext;
+        const { error: upErr } = await sb.storage.from(BUCKET).upload(path, edAudioFile, {
+          cacheControl: "3600", upsert: false, contentType: edAudioFile.type || undefined
+        });
+        if (upErr) throw new Error("音频上传失败：" + upErr.message);
+        audioPublicUrl = sb.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
+      }
+
+      let coverPublicUrl = window._editingCoverUrl || null;
+      if (edCoverFile) {
+        const cext = (edCoverFile.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+        const cpath = uid + "/cover_" + ts + "." + cext;
+        const { error: cErr } = await sb.storage.from(BUCKET).upload(cpath, edCoverFile, {
+          cacheControl: "3600", upsert: false, contentType: edCoverFile.type || undefined
+        });
+        if (cErr) throw new Error("封面上传失败：" + cErr.message);
+        coverPublicUrl = sb.storage.from(BUCKET).getPublicUrl(cpath).data.publicUrl;
+      }
+
+      const notesPayload = edNotes.map((n) => {
+        const o = { t: Math.round(n.t), l: n.l };
+        if (n.end != null) o.end = Math.round(n.end);
+        return o;
+      });
+
+      const payload = {
+        nickname: myNickname,
+        title,
+        author: document.getElementById("edAuthor").value.trim() || "",
+        difficulty: document.getElementById("edDiff").value,
+        bpm: Number(document.getElementById("edBpm").value) || 120,
+        offset_ms: Number(document.getElementById("edOffset").value) || 0,
+        notes: notesPayload,
+        audio_url: audioPublicUrl,
+        cover_url: coverPublicUrl,
+        note_count: countHits(notesPayload)
+      };
+
+      if (editingId) {
+        const { error: upErr2 } = await sb.from(TABLE).update(payload).eq("id", editingId).eq("user_id", uid);
+        if (upErr2) throw new Error("更新失败：" + upErr2.message);
+        setEdMsg("✅ 铺面已更新", true);
+      } else {
+        payload.user_id = uid;
+        const { error: insErr } = await sb.from(TABLE).insert(payload);
+        if (insErr) throw new Error("保存失败：" + insErr.message);
+        setEdMsg("✅ 上传成功", true);
+      }
+      window._editingChartId = null;
+      const upBtn = document.getElementById("edUpload");
+      if (upBtn) upBtn.textContent = "上传铺面";
+      loadCharts();
+    } catch (err) {
+      console.error(err);
+      setEdMsg(err.message || String(err), false);
+    }
+  };
+
+  async function initAuth() {
+    const t0 = Date.now();
+    while (!window.QISH && Date.now() - t0 < 4000) await new Promise((r) => setTimeout(r, 30));
+    if (window.QISH && sb) {
+      const r = await QISH.updateAuthNav({ supabase: sb });
+      if (r && r.user) {
+        currentUser = r.user;
+        myNickname = r.nickname || "匿名用户";
+        if (r.avatarUrl) myAvatarUrl = r.avatarUrl;
+        else if (r.avatar_url) myAvatarUrl = r.avatar_url;
+      }
+      sb.auth.onAuthStateChange(async (event) => {
+        if (event === "INITIAL_SESSION") return;
+        const r2 = await QISH.updateAuthNav({ supabase: sb });
+        currentUser = r2 && r2.user ? r2.user : null;
+        myNickname = (r2 && r2.nickname) || "匿名用户";
+      });
+    }
+  }
+
+  initAuth().then(() => {
+    loadNoteStyle();
+    loadCharts();
+    const restored = loadDraft();
+    rebuildTimeline();
+    updateSnapHint();
+    if (restored) {
+      setEdMsg("已恢复本机草稿（" + edNotes.length + " notes）· 可点「保存草稿」手动存", true);
+    }
+  });
+})();
+</script>
+</body>
+</html>
