@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>成员相册</title>
     <script>
-    (function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="color"||t==="custom")?t:"color");}catch(e){document.documentElement.setAttribute("data-theme","color");}})();
+    (function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="color"||t==="aqua"||t==="custom")?t:"color");}catch(e){document.documentElement.setAttribute("data-theme","color");}})();
     </script>
     <style>
 :root {
@@ -96,6 +96,147 @@ body::before {
     transition: opacity 0.6s ease, transform 0.08s ease;
     opacity: 0;
     z-index: 1;
+}
+
+/* 相册内嵌鼠标光球样式（本页未引入 style.css） */
+.mouse-glow {
+    position: fixed;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.35) 28%, transparent 55%),
+        rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    border: 1.5px solid rgba(255, 255, 255, 0.65);
+    box-shadow:
+        0 4px 16px rgba(15, 23, 42, 0.12),
+        inset 0 1px 2px rgba(255, 255, 255, 0.7);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 9990;
+    will-change: transform, left, top;
+}
+.mouse-glow.mouse-glow-adsorb {
+    border-color: rgba(255, 255, 255, 0.85);
+    background:
+        radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.5) 30%, transparent 60%),
+        rgba(255, 255, 255, 0.4);
+    mix-blend-mode: soft-light;
+}
+.mouse-trail-svg {
+    position: fixed;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 9988;
+}
+.mouse-click-ring {
+    position: fixed;
+    width: 12px; height: 12px;
+    margin-left: -6px; margin-top: -6px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.75);
+    pointer-events: none;
+    z-index: 9991;
+    animation: mouseRingOut 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.mouse-click-splash {
+    position: fixed;
+    width: 8px; height: 8px;
+    margin-left: -4px; margin-top: -4px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 9991;
+    animation: mouseSplashOut 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes mouseRingOut {
+    0% { transform: scale(0.4); opacity: 0.9; }
+    100% { transform: scale(4.5); opacity: 0; }
+}
+@keyframes mouseSplashOut {
+    0% { transform: scale(0.5); opacity: 1; }
+    100% { transform: scale(3.2); opacity: 0; }
+}
+
+/* 大边框：橡皮绳 + 鼠标内凹 */
+.elastic-frame {
+    position: relative;
+    --dent-x: 50%;
+    --dent-y: 50%;
+    --dent-s: 0;
+    --pull-x: 0px;
+    --pull-y: 0px;
+    transition:
+        transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.35s ease,
+        border-color 0.3s ease;
+    /* no rubber transform */
+}
+.elastic-frame::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 3;
+    /* 边框高光，在鼠标处被“咬”出内凹 */
+    background:
+        radial-gradient(
+            circle 56px at var(--dent-x) var(--dent-y),
+            transparent 0%,
+            transparent calc(22px + var(--dent-s) * 18px),
+            rgba(255, 255, 255, 0.28) calc(28px + var(--dent-s) * 10px),
+            transparent calc(42px + var(--dent-s) * 20px)
+        );
+    opacity: calc(0.08 + var(--dent-s) * 0.28);
+    mix-blend-mode: soft-light;
+    transition: opacity 0.2s ease;
+}
+.elastic-frame::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    z-index: 2;
+    /* 内侧阴影随鼠标凹陷 */
+    box-shadow:
+        inset
+            calc((var(--dent-x) - 50%) * 0.18)
+            calc((var(--dent-y) - 50%) * 0.18)
+            calc(12px + var(--dent-s) * 28px)
+            rgba(0, 0, 0, calc(0.03 + var(--dent-s) * 0.06));
+    transition: box-shadow 0.15s ease;
+}
+.elastic-frame.is-near {
+    border-color: rgba(255, 255, 255, 0.65);
+}
+35%  { transform: translate(calc(var(--pull-x) * -0.35), calc(var(--pull-y) * -0.35)) scale(0.97); }
+    65%  { transform: translate(calc(var(--pull-x) * 0.12), calc(var(--pull-y) * 0.12)) scale(1.02); }
+    100% { transform: translate(0, 0) scale(1); }
+}
+html[data-theme="dark"] body.album-page .elastic-frame::before {
+    background:
+        radial-gradient(
+            circle 56px at var(--dent-x) var(--dent-y),
+            transparent 0%,
+            transparent calc(22px + var(--dent-s) * 18px),
+            rgba(148, 163, 184, 0.45) calc(28px + var(--dent-s) * 14px),
+            transparent calc(42px + var(--dent-s) * 20px)
+        );
+}
+html[data-theme="light"] body.album-page .elastic-frame::before {
+    background:
+        radial-gradient(
+            circle 56px at var(--dent-x) var(--dent-y),
+            transparent 0%,
+            transparent calc(22px + var(--dent-s) * 18px),
+            rgba(59, 130, 246, 0.35) calc(28px + var(--dent-s) * 14px),
+            transparent calc(42px + var(--dent-s) * 20px)
+        );
 }
 
 .page-wrapper {
@@ -344,6 +485,8 @@ body::before {
 </style>
 </head>
 <body class="album-page">
+    <!-- 与全站一致的鼠标光球（common.js initMouseGlow） -->
+    <div class="mouse-glow" id="glow"></div>
     <div class="trail-light" id="trailLight"></div>
 
     <div class="page-wrapper">
@@ -355,7 +498,7 @@ body::before {
 
         <div class="page-title">成员相册</div>
 
-        <div class="upload-box">
+        <div class="upload-box elastic-frame" id="uploadBox">
             <h3>上传照片（登录成员可用）</h3>
             <input type="file" id="photoInput" accept="image/*">
             <button class="file-btn" id="selectBtn">选择图片文件</button>
@@ -498,25 +641,35 @@ async function loadAlbum(){
         return;
     }
 
+    function escapeHtml(s) {
+        return String(s == null ? "" : s)
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    }
+
     data.forEach(item=>{
         const div = document.createElement("div");
-        div.className="photo-card";
+        div.className="photo-card elastic-frame";
+        const safeUrl = item.photo_url || "";
+        const safeNick = escapeHtml(item.nickname || "匿名用户");
+        const safeId = escapeHtml(item.id);
+        const safeOwner = escapeHtml(item.user_id);
         let delHtml = "";
         if(user && (user.id === item.user_id || isAdmin)){
-            delHtml = `<button class="del-btn" data-rid="${item.id}" data-purl="${item.photo_url}" data-owner="${item.user_id}">删除照片</button>`;
+            delHtml = `<button type="button" class="del-btn" data-rid="${safeId}" data-owner="${safeOwner}">删除照片</button>`;
         }
         div.innerHTML=`
             <div class="img-wrap">
-                <img src="${item.photo_url}" loading="lazy">
+                <img src="${escapeHtml(safeUrl)}" alt="" loading="lazy">
             </div>
             <div class="card-info">
-                <div class="card-name">${item.nickname||"匿名用户"}</div>
+                <div class="card-name">${safeNick}</div>
                 <div>${formatDate(item.upload_at)}</div>
                 ${delHtml}
             </div>
         `;
         div.querySelector(".img-wrap").onclick = ()=>{
-            modalImage.src = item.photo_url;
+            modalImage.src = safeUrl;
             photoModal.classList.add("active");
         };
         const delBtn = div.querySelector(".del-btn");
@@ -524,13 +677,13 @@ async function loadAlbum(){
             delBtn.onclick = async (ev)=>{
                 ev.stopPropagation();
                 const rid = delBtn.dataset.rid;
-                const purl = delBtn.dataset.purl;
                 const oid = delBtn.dataset.owner;
-                await deletePhoto(rid, purl, oid);
+                await deletePhoto(rid, safeUrl, oid);
             };
         }
         albumContainer.appendChild(div);
     });
+    if (window.__albumBindElastic) window.__albumBindElastic();
 }
 
 uploadBtn.onclick = async ()=>{
@@ -574,36 +727,121 @@ uploadBtn.onclick = async ()=>{
     fileNameTip.innerText = "";
     loadAlbum();
 };
-// 鼠标移动拖尾光效
-const trailLight = document.getElementById("trailLight");
-let mouseX = window.innerWidth / 2;
-let mouseY = window.innerHeight / 2;
-let trailX = mouseX;
-let trailY = mouseY;
+// —— 相册页鼠标光晕 + 大边框内凹 / 橡皮绳 ——
+(function albumMouseFX() {
+    const trailLight = document.getElementById("trailLight");
+    let mouseX = window.innerWidth / 2;
+    let mouseY = window.innerHeight / 2;
+    let trailX = mouseX;
+    let trailY = mouseY;
+    let prevX = mouseX;
+    let prevY = mouseY;
+    let vx = 0;
+    let vy = 0;
 
-window.addEventListener("mousemove", (e) => {
-    mouseX = e.clientX;
-    mouseY = e.clientY;
+    window.addEventListener("mousemove", (e) => {
+        vx = e.clientX - prevX;
+        vy = e.clientY - prevY;
+        prevX = e.clientX;
+        prevY = e.clientY;
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        document.body.style.setProperty("--mouse-x", mouseX + "px");
+        document.body.style.setProperty("--mouse-y", mouseY + "px");
+        if (trailLight) {
+            trailLight.style.left = mouseX + "px";
+            trailLight.style.top = mouseY + "px";
+            trailLight.style.opacity = "1";
+        }
+    }, { passive: true });
 
-    document.body.style.setProperty("--mouse-x", mouseX + "px");
-    document.body.style.setProperty("--mouse-y", mouseY + "px");
+    window.addEventListener("mouseout", () => {
+        if (trailLight) trailLight.style.opacity = "0";
+    });
 
-    trailLight.style.left = mouseX + "px";
-    trailLight.style.top = mouseY + "px";
-    trailLight.style.opacity = "1";
-});
+    function animateTrail() {
+        trailX += (mouseX - trailX) * 0.1;
+        trailY += (mouseY - trailY) * 0.1;
+        if (trailLight) {
+            trailLight.style.transform =
+                "translate(-50%, -50%) translate(" +
+                ((trailX - mouseX) * 0.04).toFixed(2) + "px, " +
+                ((trailY - mouseY) * 0.04).toFixed(2) + "px)";
+        }
+        requestAnimationFrame(animateTrail);
+    }
+    animateTrail();
 
-window.addEventListener("mouseout", () => {
-    trailLight.style.opacity = "0";
-});
+    const EDGE = 48;
+    let frames = [];
 
-function animateTrail() {
-    trailX += (mouseX - trailX) * 0.08;
-    trailY += (mouseY - trailY) * 0.08;
-    trailLight.style.transform = `translate(-50%, -50%) translate(${(trailX - mouseX) * 0.05}px, ${(trailY - mouseY) * 0.05}px)`;
-    requestAnimationFrame(animateTrail);
-}
-animateTrail();
+    function refreshFrames() {
+        frames = Array.prototype.slice.call(document.querySelectorAll(".elastic-frame"));
+    }
+
+    function bindElastic() {
+        refreshFrames();
+        frames.forEach(function (el) {
+            if (el.__elasticBound) return;
+            el.__elasticBound = true;
+            // 已取消橡皮绳弹簧；仅保留轻微边框内凹
+            el.addEventListener("mouseleave", function () {
+                el.style.setProperty("--dent-s", "0");
+                el.classList.remove("is-near");
+            });
+        });
+    }
+
+    function updateDents() {
+        if (!frames.length) refreshFrames();
+        for (var i = 0; i < frames.length; i++) {
+            var el = frames[i];
+            var r = el.getBoundingClientRect();
+            if (r.width < 8) continue;
+            var inside =
+                mouseX >= r.left && mouseX <= r.right &&
+                mouseY >= r.top && mouseY <= r.bottom;
+            var lx = mouseX - r.left;
+            var ly = mouseY - r.top;
+
+            if (inside) {
+                var minEdge = Math.min(lx, r.width - lx, ly, r.height - ly);
+                var near = minEdge < EDGE;
+                var strength = near ? (1 - minEdge / EDGE) : 0.18;
+                el.style.setProperty("--dent-x", ((lx / r.width) * 100).toFixed(2) + "%");
+                el.style.setProperty("--dent-y", ((ly / r.height) * 100).toFixed(2) + "%");
+                el.style.setProperty("--dent-s", strength.toFixed(3));
+                el.classList.toggle("is-near", near);
+            } else {
+                var cx = Math.max(r.left, Math.min(mouseX, r.right));
+                var cy = Math.max(r.top, Math.min(mouseY, r.bottom));
+                var d = Math.hypot(mouseX - cx, mouseY - cy);
+                if (d < EDGE * 1.2) {
+                    var s = 1 - d / (EDGE * 1.2);
+                    el.style.setProperty("--dent-x", (((cx - r.left) / r.width) * 100).toFixed(2) + "%");
+                    el.style.setProperty("--dent-y", (((cy - r.top) / r.height) * 100).toFixed(2) + "%");
+                    el.style.setProperty("--dent-s", (s * 0.9).toFixed(3));
+                    el.classList.add("is-near");
+                } else {
+                    el.style.setProperty("--dent-s", "0");
+                    el.classList.remove("is-near");
+                }
+            }
+        }
+        requestAnimationFrame(updateDents);
+    }
+
+    window.__albumBindElastic = bindElastic;
+    bindElastic();
+    requestAnimationFrame(updateDents);
+
+    function ensureGlow() {
+        if (window.QISH && typeof window.QISH.initMouseGlow === "function") {
+            try { window.QISH.initMouseGlow(); } catch (_) {}
+        }
+    }
+    setTimeout(ensureGlow, 80);
+})();
 window.onload = loadAlbum;
 </script>
 <script>

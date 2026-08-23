@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>登录注册 - QISH</title>
     <script>
-(function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="color"||t==="custom")?t:"color");}catch(e){document.documentElement.setAttribute("data-theme","color");}})();
+(function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="color"||t==="custom")?t:"color");}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();
 </script>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
@@ -256,6 +256,45 @@ toggleBtn.addEventListener('click', ()=>{
     msgBox.innerText = '';
 });
 
+/** 把 session 写入主 key + 备份 key，并同步到 SDK 内存（防止跳转后 getSession 为空） */
+async function persistSessionHard(sb, session) {
+    if (!session || !session.access_token) return false;
+    try {
+        localStorage.setItem("qish-auth-v1", JSON.stringify(session));
+        localStorage.setItem("qish-auth-backup-v1", JSON.stringify({
+            access_token: session.access_token,
+            refresh_token: session.refresh_token || "",
+            expires_at: session.expires_at || null,
+            expires_in: session.expires_in || null,
+            token_type: session.token_type || "bearer",
+            user: session.user || null
+        }));
+    } catch (e) {
+        console.warn("[QISH] 写入 localStorage 失败", e);
+    }
+    try {
+        if (session.refresh_token) {
+            var setRes = await sb.auth.setSession({
+                access_token: session.access_token,
+                refresh_token: session.refresh_token
+            });
+            if (setRes && setRes.data && setRes.data.session) {
+                try {
+                    localStorage.setItem("qish-auth-v1", JSON.stringify(setRes.data.session));
+                } catch (_) {}
+                return true;
+            }
+        }
+    } catch (e) {
+        console.warn("[QISH] setSession 失败，已保留本地 session", e);
+    }
+    try {
+        var check = await sb.auth.getSession();
+        if (check && check.data && check.data.session) return true;
+    } catch (_) {}
+    return !!(session && session.user);
+}
+
 authForm.addEventListener('submit', async (e)=>{
     e.preventDefault();
     msgBox.innerText = '';
@@ -289,38 +328,40 @@ authForm.addEventListener('submit', async (e)=>{
             setLoading(false);
             return;
         }
-        msgBox.style.color='green';
-        if(isLoginMode){
+        msgBox.style.color = "green";
+        if (isLoginMode) {
             if (!(res.data && res.data.session)) {
                 msgBox.style.color = "red";
-                msgBox.innerText = "登录成功但会话未建立，请刷新后再试";
+                msgBox.innerText = "登录成功但会话未建立。若开启了邮箱确认，请先点邮件里的确认链接后再登录。";
                 setLoading(false);
                 return;
             }
-            msgBox.innerHTML = "登录成功！正在跳转…<br><a href=\"index.html\" style=\"color:inherit;font-weight:700;\">若未跳转请点这里进入首页</a>";
-            // 立即跳转（不再空等 getSession，避免卡住）
-            try { sessionStorage.setItem("qish_just_logged_in", "1"); } catch (_) {}
+            var ok = await persistSessionHard(sb, res.data.session);
+            if (!ok) {
+                msgBox.style.color = "red";
+                msgBox.innerText = "会话写入失败，请关闭无痕模式后重试，或检查浏览器是否禁用了本地存储";
+                setLoading(false);
+                return;
+            }
+            msgBox.innerHTML = '登录成功！正在跳转…<br><a href="index.html" style="color:inherit;font-weight:700;">若未跳转请点这里</a>';
             setTimeout(function () {
-                window.location.assign("index.html");
-            }, 150);
-            setTimeout(function () {
-                window.location.href = "index.html";
+                window.location.replace("index.html");
             }, 600);
-            setTimeout(function () {
-                window.location.replace("./index.html");
-            }, 1200);
-            return; // 保持 loading，等待离开页面
-        }else{
+            return;
+        } else {
             if (res.data && res.data.session) {
-                msgBox.innerHTML = "注册成功，已自动登录…<br><a href=\"index.html\" style=\"color:inherit;font-weight:700;\">点此进入首页</a>";
-                setTimeout(function () { window.location.assign("index.html"); }, 300);
+                await persistSessionHard(sb, res.data.session);
+                msgBox.innerHTML = '注册成功，已自动登录…<br><a href="index.html" style="color:inherit;font-weight:700;">点此进入首页</a>';
+                setTimeout(function () {
+                    window.location.replace("index.html");
+                }, 600);
                 return;
-            } else {
-                msgBox.innerText = "注册成功，请去邮箱点击确认邮件（查看垃圾箱），确认后即可登录";
-                setLoading(false);
             }
+            msgBox.innerText = "注册成功，请去邮箱点击确认邮件（查看垃圾箱），确认后即可登录";
+            setLoading(false);
         }
     } catch (err) {
+        console.error(err);
         msgBox.style.color = "red";
         msgBox.innerText = friendlyError(err && err.message ? err.message : String(err));
         setLoading(false);

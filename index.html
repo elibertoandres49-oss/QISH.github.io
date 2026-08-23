@@ -51,8 +51,8 @@
             box-shadow: 0 10px 28px rgba(96, 165, 250, 0.2);
         }
         .home-announce-icon {
-            width: 44px;
-            height: 44px;
+            width: 52px;
+            height: 52px;
             border-radius: 14px;
             background: linear-gradient(135deg, #60a5fa, #93c5fd);
             display: flex;
@@ -61,6 +61,14 @@
             font-size: 22px;
             flex-shrink: 0;
             box-shadow: 0 4px 14px rgba(96, 165, 250, 0.35);
+            overflow: hidden;
+            padding: 0;
+        }
+        .home-announce-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
         }
         .home-announce-info {
             flex: 1;
@@ -241,6 +249,316 @@
                 font-size: 38px;
             }
         }
+
+        /* ========== 访问统计板块 ========== */
+        .home-stats-card {
+            margin-top: 16px;
+            padding: 18px 20px;
+            border-radius: 18px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.28), rgba(147,197,253,0.18));
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+        .home-stats-card::before {
+            content: "";
+            position: absolute;
+            top: -40%;
+            right: -10%;
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(96,165,250,0.25), transparent 70%);
+            pointer-events: none;
+        }
+        .home-stats-card:hover {
+            transform: translateY(-3px);
+            background: linear-gradient(135deg, rgba(255,255,255,0.38), rgba(147,197,253,0.28));
+            box-shadow: 0 10px 28px rgba(59, 130, 246, 0.22);
+        }
+        .home-stats-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #34d399, #60a5fa);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            flex-shrink: 0;
+            box-shadow: 0 6px 18px rgba(52, 211, 153, 0.35);
+            z-index: 1;
+            overflow: hidden;
+            padding: 0;
+        }
+        .home-stats-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .home-stats-info {
+            flex: 1;
+            min-width: 0;
+            z-index: 1;
+        }
+        .home-stats-info h3 {
+            margin: 0 0 8px;
+            font-size: 15px;
+            color: #0f172a;
+            font-weight: 800;
+            border: none;
+        }
+        .home-stats-nums {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 18px;
+        }
+        .home-stats-num-item {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+        .home-stats-num-val {
+            font-size: 22px;
+            font-weight: 900;
+            color: #1d4ed8;
+            font-variant-numeric: tabular-nums;
+            line-height: 1.15;
+        }
+        .home-stats-num-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            letter-spacing: 0.02em;
+        }
+        .home-stats-arrow {
+            color: #3b82f6;
+            font-size: 18px;
+            font-weight: 700;
+            flex-shrink: 0;
+            z-index: 1;
+        }
+        [data-theme="dark"] .home-stats-card {
+            background: linear-gradient(135deg, rgba(30,41,59,0.75), rgba(59,130,246,0.15));
+            border-color: rgba(255,255,255,0.12);
+        }
+        [data-theme="dark"] .home-stats-info h3 { color: #f1f5f9; }
+        [data-theme="dark"] .home-stats-num-val { color: #93c5fd; }
+        [data-theme="dark"] .home-stats-num-label { color: #94a3b8; }
+
+        .stats-modal-mask {
+            position: fixed;
+            inset: 0;
+            z-index: 10002;
+            background: rgba(15, 23, 42, 0.35);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.35s ease, visibility 0.35s ease;
+        }
+        .stats-modal-mask.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .stats-modal-box {
+            width: min(440px, 94vw);
+            max-height: 88vh;
+            overflow-y: auto;
+            background: rgba(255, 255, 255, 0.42);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            border-radius: 28px;
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.25);
+            padding: 28px 24px 22px;
+            transform: translateY(24px) scale(0.92);
+            opacity: 0;
+            transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease;
+            position: relative;
+        }
+        .stats-modal-mask.show .stats-modal-box {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+        }
+        .stats-modal-close {
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.55);
+            color: #475569;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .stats-modal-close:hover {
+            background: rgba(255, 255, 255, 0.85);
+            transform: rotate(90deg);
+        }
+        .stats-modal-title {
+            margin: 0 0 6px;
+            font-size: 1.25em;
+            font-weight: 800;
+            color: #0f172a;
+            border: none;
+            text-align: center;
+        }
+        .stats-modal-sub {
+            text-align: center;
+            font-size: 12px;
+            color: #64748b;
+            margin-bottom: 18px;
+        }
+        .stats-hero {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 18px;
+        }
+        .stats-hero-item {
+            background: rgba(255,255,255,0.45);
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 16px;
+            padding: 14px 10px;
+            text-align: center;
+        }
+        .stats-hero-val {
+            font-size: 24px;
+            font-weight: 900;
+            color: #1d4ed8;
+            font-variant-numeric: tabular-nums;
+            line-height: 1.2;
+        }
+        .stats-hero-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        .stats-section {
+            margin-bottom: 16px;
+        }
+        .stats-section h4 {
+            margin: 0 0 10px;
+            font-size: 13px;
+            font-weight: 800;
+            color: #334155;
+            border: none;
+        }
+        .stats-bar-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .stats-bar-row {
+            display: grid;
+            grid-template-columns: 88px 1fr 36px;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+        .stats-bar-name {
+            color: #475569;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .stats-bar-track {
+            height: 8px;
+            border-radius: 999px;
+            background: rgba(148,163,184,0.25);
+            overflow: hidden;
+        }
+        .stats-bar-fill {
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #60a5fa, #34d399);
+            min-width: 4px;
+            transition: width 0.5s ease;
+        }
+        .stats-bar-fill.device { background: linear-gradient(90deg, #a78bfa, #60a5fa); }
+        .stats-bar-fill.source { background: linear-gradient(90deg, #f472b6, #fb923c); }
+        .stats-bar-cnt {
+            text-align: right;
+            font-weight: 800;
+            color: #1e293b;
+            font-variant-numeric: tabular-nums;
+        }
+        .stats-recent {
+            max-height: 160px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .stats-recent-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 12px;
+            background: rgba(255,255,255,0.4);
+            border: 1px solid rgba(255,255,255,0.4);
+            font-size: 12px;
+            color: #475569;
+        }
+        .stats-recent-item strong { color: #0f172a; font-weight: 700; }
+        .stats-empty {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 13px;
+            padding: 12px;
+        }
+        .stats-error {
+            text-align: center;
+            color: #dc2626;
+            font-size: 12px;
+            margin-top: 8px;
+            line-height: 1.5;
+        }
+        [data-theme="dark"] .stats-modal-box {
+            background: rgba(30, 41, 59, 0.92);
+            border-color: rgba(255,255,255,0.12);
+        }
+        [data-theme="dark"] .stats-modal-title { color: #f1f5f9; }
+        [data-theme="dark"] .stats-hero-item {
+            background: rgba(15,23,42,0.55);
+            border-color: rgba(255,255,255,0.1);
+        }
+        [data-theme="dark"] .stats-hero-val { color: #93c5fd; }
+        [data-theme="dark"] .stats-section h4 { color: #e2e8f0; }
+        [data-theme="dark"] .stats-bar-name { color: #cbd5e1; }
+        [data-theme="dark"] .stats-bar-cnt { color: #f1f5f9; }
+        [data-theme="dark"] .stats-recent-item {
+            background: rgba(15,23,42,0.5);
+            border-color: rgba(255,255,255,0.1);
+            color: #94a3b8;
+        }
+        [data-theme="dark"] .stats-recent-item strong { color: #f1f5f9; }
+        @media (max-width: 640px) {
+            .home-stats-num-val { font-size: 18px; }
+            .stats-hero-val { font-size: 20px; }
+            .stats-bar-row { grid-template-columns: 72px 1fr 32px; }
+        }
     </style>
 </head>
 <body>
@@ -263,8 +581,16 @@
     </div>
 </div>
 
+<!-- 左侧大立绘（主页显示） -->
+<div class="left-image" id="leftImage">
+    <img src="right-photo.png" alt="角色立绘" id="leftCharImg">
+    <div class="char-bubble" id="leftCharBubble" aria-hidden="true">
+        <span class="char-bubble-text">欢迎来到QISH小站~</span>
+    </div>
+</div>
+
 <div class="right-image" id="rightImage">
-    <img src="chibi-normal.png" alt="Q版小人" id="rightCharImg">
+    <img src="qishi-expr-normal.gif" alt="Q版小人" id="rightCharImg">
     <div class="char-bubble" id="charBubble" aria-hidden="true">
         <span class="char-bubble-text">欢迎来到QISH小站~</span>
     </div>
@@ -309,12 +635,41 @@
 
     <!-- 公告板块：点击弹出完整公告 -->
     <div class="home-announce-card" id="homeAnnounceCard" title="点击查看完整公告">
-        <div class="home-announce-icon">📢</div>
+        <div class="home-announce-icon"><img src="qishi-gif-01.gif" alt=""></div>
         <div class="home-announce-info">
             <h3>网站公告</h3>
             <p>点击查看最新公告与站内说明</p>
         </div>
         <span class="home-announce-arrow">›</span>
+    </div>
+
+    <!-- 新番时刻表入口 -->
+    <a class="home-announce-card" href="anime.html" title="进入新番时刻表" style="text-decoration:none;color:inherit;">
+        <div class="home-announce-icon" style="background:linear-gradient(135deg,#f472b6,#fb923c);box-shadow:0 4px 14px rgba(244,114,182,0.35);"><img src="qishi-gif-02.gif" alt=""></div>
+        <div class="home-announce-info">
+            <h3>新番时刻表</h3>
+            <p>本周放送 · 季度新番 · 本地追番标记</p>
+        </div>
+        <span class="home-announce-arrow">›</span>
+    </a>
+
+    <!-- 访问统计：点击查看详情 -->
+    <div class="home-stats-card" id="homeStatsCard" title="点击查看访问详情">
+        <div class="home-stats-icon"><img src="qishi-gif-15.gif" alt=""></div>
+        <div class="home-stats-info">
+            <h3>访问热度</h3>
+            <div class="home-stats-nums">
+                <div class="home-stats-num-item">
+                    <span class="home-stats-num-val" id="statsTotalVal">—</span>
+                    <span class="home-stats-num-label">总访问</span>
+                </div>
+                <div class="home-stats-num-item">
+                    <span class="home-stats-num-val" id="statsTodayVal">—</span>
+                    <span class="home-stats-num-label">今日访问</span>
+                </div>
+            </div>
+        </div>
+        <span class="home-stats-arrow">›</span>
     </div>
 </div>
 
@@ -342,6 +697,46 @@
                 <div class="time-modal-item-value" id="timeModalSeason">-</div>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- 访问统计详情弹窗 -->
+<div class="stats-modal-mask" id="statsModalMask">
+    <div class="stats-modal-box" role="dialog" aria-modal="true" aria-labelledby="statsModalTitle">
+        <button class="stats-modal-close" id="statsModalClose" aria-label="关闭">×</button>
+        <h2 class="stats-modal-title" id="statsModalTitle">访问统计</h2>
+        <p class="stats-modal-sub">个人小站热度 · 无第三方追踪</p>
+        <div class="stats-hero">
+            <div class="stats-hero-item">
+                <div class="stats-hero-val" id="statsModalTotal">0</div>
+                <div class="stats-hero-label">总访问</div>
+            </div>
+            <div class="stats-hero-item">
+                <div class="stats-hero-val" id="statsModalToday">0</div>
+                <div class="stats-hero-label">今日访问</div>
+            </div>
+            <div class="stats-hero-item">
+                <div class="stats-hero-val" id="statsModalUnique">0</div>
+                <div class="stats-hero-label">今日访客</div>
+            </div>
+        </div>
+        <div class="stats-section">
+            <h4>📱 设备分布</h4>
+            <div class="stats-bar-list" id="statsDeviceList"><div class="stats-empty">加载中…</div></div>
+        </div>
+        <div class="stats-section">
+            <h4>🔗 来源分布</h4>
+            <div class="stats-bar-list" id="statsSourceList"><div class="stats-empty">加载中…</div></div>
+        </div>
+        <div class="stats-section">
+            <h4>📄 热门页面</h4>
+            <div class="stats-bar-list" id="statsPageList"><div class="stats-empty">加载中…</div></div>
+        </div>
+        <div class="stats-section">
+            <h4>🕐 最近访问</h4>
+            <div class="stats-recent" id="statsRecentList"><div class="stats-empty">加载中…</div></div>
+        </div>
+        <div class="stats-error" id="statsErrorMsg"></div>
     </div>
 </div>
 
@@ -417,6 +812,267 @@
     });
 })();
 
+// ========== 访问统计板块 ==========
+(function initVisitStats() {
+    const card = document.getElementById("homeStatsCard");
+    const mask = document.getElementById("statsModalMask");
+    const closeBtn = document.getElementById("statsModalClose");
+    const totalEl = document.getElementById("statsTotalVal");
+    const todayEl = document.getElementById("statsTodayVal");
+    const errEl = document.getElementById("statsErrorMsg");
+    if (!card || !mask) return;
+
+    const DEVICE_LABEL = { desktop: "电脑", mobile: "手机", tablet: "平板" };
+    const PAGE_LABEL = {
+        "index.html": "首页",
+        "about.html": "关于我",
+        "chat.html": "聊天室",
+        "album.html": "相册",
+        "projects.html": "项目",
+        "userlist.html": "用户列表",
+        "profile.html": "个人资料",
+        "auth.html": "登录",
+        "rhythm4k.html": "4K音游"
+    };
+
+    function fmtNum(n) {
+        n = Number(n) || 0;
+        if (n >= 10000) return (n / 10000).toFixed(1).replace(/\.0$/, "") + "万";
+        return String(n);
+    }
+
+    function sortEntries(obj) {
+        return Object.keys(obj || {})
+            .map(function (k) { return { name: k, count: obj[k] || 0 }; })
+            .sort(function (a, b) { return b.count - a.count; });
+    }
+
+    function renderBars(containerId, entries, fillClass, nameMap) {
+        const box = document.getElementById(containerId);
+        if (!box) return;
+        if (!entries.length) {
+            box.innerHTML = '<div class="stats-empty">暂无数据</div>';
+            return;
+        }
+        const max = Math.max.apply(null, entries.map(function (e) { return e.count; })) || 1;
+        box.innerHTML = entries.slice(0, 8).map(function (e) {
+            const label = (nameMap && nameMap[e.name]) || e.name;
+            const pct = Math.round((e.count / max) * 100);
+            return (
+                '<div class="stats-bar-row">' +
+                  '<span class="stats-bar-name" title="' + label + '">' + label + "</span>" +
+                  '<div class="stats-bar-track"><div class="stats-bar-fill ' + (fillClass || "") + '" style="width:' + pct + '%"></div></div>' +
+                  '<span class="stats-bar-cnt">' + e.count + "</span>" +
+                "</div>"
+            );
+        }).join("");
+    }
+
+    function formatRecentTime(iso) {
+        try {
+            const d = new Date(iso);
+            const pad = function (n) { return String(n).padStart(2, "0"); };
+            return pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+        } catch (_) {
+            return "";
+        }
+    }
+
+    function applyStats(stats) {
+        if (!stats) return;
+        if (totalEl) totalEl.textContent = fmtNum(stats.total);
+        if (todayEl) todayEl.textContent = fmtNum(stats.today);
+        const mt = document.getElementById("statsModalTotal");
+        const md = document.getElementById("statsModalToday");
+        const mu = document.getElementById("statsModalUnique");
+        if (mt) mt.textContent = fmtNum(stats.total);
+        if (md) md.textContent = fmtNum(stats.today);
+        if (mu) mu.textContent = fmtNum(stats.uniqueToday);
+
+        renderBars("statsDeviceList", sortEntries(stats.devices).map(function (e) {
+            return { name: DEVICE_LABEL[e.name] || e.name, count: e.count };
+        }), "device");
+        renderBars("statsSourceList", sortEntries(stats.sources), "source");
+        renderBars("statsPageList", sortEntries(stats.pages), "", PAGE_LABEL);
+
+        const recentBox = document.getElementById("statsRecentList");
+        if (recentBox) {
+            const recent = stats.recent || [];
+            if (!recent.length) {
+                recentBox.innerHTML = '<div class="stats-empty">暂无最近记录</div>';
+            } else {
+                recentBox.innerHTML = recent.map(function (r) {
+                    const page = PAGE_LABEL[r.path] || r.path || "页面";
+                    const src = r.referrer_host || "直接访问";
+                    const dev = DEVICE_LABEL[r.device] || r.device || "";
+                    return (
+                        '<div class="stats-recent-item">' +
+                          "<span><strong>" + page + "</strong> · " + src + (dev ? " · " + dev : "") + "</span>" +
+                          "<span>" + formatRecentTime(r.created_at) + "</span>" +
+                        "</div>"
+                    );
+                }).join("");
+            }
+        }
+
+        if (errEl) {
+            if (stats.error) {
+                errEl.innerHTML = "读取失败：" + stats.error +
+                    "<br><small>请在 Supabase 创建表 public_site_visits 并开启 anon 的 SELECT/INSERT</small>";
+            } else {
+                errEl.textContent = "";
+            }
+        }
+    }
+
+    function getSb() {
+        return window.supabaseClient || window.__qish_sb || (typeof supabase !== "undefined" ? supabase : null);
+    }
+
+    /** 本页内置统计查询，不依赖 common.js 是否已更新 */
+    async function fetchStatsLocal(sb) {
+        const empty = { total: 0, today: 0, uniqueToday: 0, devices: {}, sources: {}, pages: {}, recent: [], error: null };
+        if (!sb || typeof sb.from !== "function") {
+            empty.error = "Supabase 客户端未初始化";
+            return empty;
+        }
+        try {
+            const start = new Date();
+            start.setHours(0, 0, 0, 0);
+            const todayIso = start.toISOString();
+            const TABLE = "public_site_visits";
+
+            const totalRes = await sb.from(TABLE).select("*", { count: "exact", head: true });
+            if (totalRes.error) {
+                empty.error = totalRes.error.message || String(totalRes.error);
+                return empty;
+            }
+            const todayRes = await sb.from(TABLE).select("*", { count: "exact", head: true }).gte("created_at", todayIso);
+            const recentRes = await sb
+                .from(TABLE)
+                .select("path,referrer_host,device,browser,created_at,visitor_key")
+                .order("created_at", { ascending: false })
+                .limit(1000);
+
+            const rows = recentRes.data || [];
+            const devices = {}, sources = {}, pages = {};
+            const uniqueSet = new Set();
+            const todayMs = start.getTime();
+            rows.forEach(function (r) {
+                devices[r.device || "desktop"] = (devices[r.device || "desktop"] || 0) + 1;
+                sources[r.referrer_host || "直接访问"] = (sources[r.referrer_host || "直接访问"] || 0) + 1;
+                pages[r.path || "index.html"] = (pages[r.path || "index.html"] || 0) + 1;
+                if (r.created_at && new Date(r.created_at).getTime() >= todayMs && r.visitor_key) {
+                    uniqueSet.add(r.visitor_key);
+                }
+            });
+            return {
+                total: totalRes.count || 0,
+                today: (todayRes && todayRes.count) || 0,
+                uniqueToday: uniqueSet.size,
+                devices: devices,
+                sources: sources,
+                pages: pages,
+                recent: rows.slice(0, 12),
+                error: null
+            };
+        } catch (e) {
+            empty.error = e && e.message ? e.message : String(e);
+            return empty;
+        }
+    }
+
+    async function recordVisitLocal(sb) {
+        if (!sb || typeof sb.from !== "function") return;
+        try {
+            const path = (location.pathname.split("/").pop() || "index.html").toLowerCase() || "index.html";
+            const dedupKey = "qish_visit_" + path;
+            try {
+                const last = parseInt(sessionStorage.getItem(dedupKey) || "0", 10);
+                if (last && Date.now() - last < 30 * 60 * 1000) return;
+                sessionStorage.setItem(dedupKey, String(Date.now()));
+            } catch (_) {}
+            let vid = "anon";
+            try {
+                vid = localStorage.getItem("qish_vid");
+                if (!vid) {
+                    vid = "v_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+                    localStorage.setItem("qish_vid", vid);
+                }
+            } catch (_) {}
+            const ua = navigator.userAgent || "";
+            let device = "desktop";
+            if (/iPad|Tablet/i.test(ua)) device = "tablet";
+            else if (/Mobile|Android.*Mobile|iPhone|iPod/i.test(ua)) device = "mobile";
+            let browser = "其他";
+            if (/MicroMessenger/i.test(ua)) browser = "微信";
+            else if (/Edg\//i.test(ua)) browser = "Edge";
+            else if (/Chrome\//i.test(ua)) browser = "Chrome";
+            else if (/Firefox\//i.test(ua)) browser = "Firefox";
+            else if (/Safari\//i.test(ua)) browser = "Safari";
+            let refHost = "直接访问";
+            const ref = document.referrer || "";
+            if (ref) {
+                try {
+                    const u = new URL(ref);
+                    refHost = u.hostname === location.hostname ? "站内跳转" : (u.hostname || "").replace(/^www\./, "") || "其他";
+                } catch (_) { refHost = "其他"; }
+            }
+            await sb.from("public_site_visits").insert({
+                path: path,
+                referrer: String(ref).slice(0, 500),
+                referrer_host: refHost,
+                device: device,
+                browser: browser,
+                visitor_key: vid,
+                page_title: String(document.title || "").slice(0, 120)
+            });
+        } catch (e) {
+            console.warn("[stats] record", e);
+        }
+    }
+
+    async function loadStats() {
+        const client = getSb();
+        if (!client) {
+            if (totalEl) totalEl.textContent = "—";
+            if (todayEl) todayEl.textContent = "—";
+            if (errEl) errEl.textContent = "Supabase 未加载，请刷新页面";
+            return null;
+        }
+        let stats;
+        if (window.QISH && typeof QISH.fetchVisitStats === "function") {
+            stats = await QISH.fetchVisitStats(client);
+        } else {
+            stats = await fetchStatsLocal(client);
+        }
+        applyStats(stats);
+        return stats;
+    }
+
+    function openModal() {
+        mask.classList.add("show");
+        document.body.style.overflow = "hidden";
+        loadStats();
+    }
+    function closeModal() {
+        mask.classList.remove("show");
+        document.body.style.overflow = "";
+    }
+
+    card.addEventListener("click", openModal);
+    if (closeBtn) closeBtn.addEventListener("click", closeModal);
+    mask.addEventListener("click", function (e) {
+        if (e.target === mask) closeModal();
+    });
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && mask.classList.contains("show")) closeModal();
+    });
+
+    window.__qishLoadVisitStats = loadStats;
+    window.__qishRecordVisit = recordVisitLocal;
+})();
+
 document.addEventListener("DOMContentLoaded", async () => {
     const client = window.supabaseClient || (typeof supabase !== "undefined" ? supabase : null);
     async function waitQ() {
@@ -438,6 +1094,18 @@ document.addEventListener("DOMContentLoaded", async () => {
         card.addEventListener("click", function () {
             if (window.QISH && typeof QISH.showAnnounce === "function") QISH.showAnnounce();
         });
+    }
+
+    // 写入本页访问 + 刷新统计（不依赖 common.js 新版本）
+    const sb = window.supabaseClient || client;
+    if (sb && typeof window.__qishRecordVisit === "function") {
+        window.__qishRecordVisit(sb).then(function () {
+            if (typeof window.__qishLoadVisitStats === "function") window.__qishLoadVisitStats();
+        });
+    }
+    if (typeof window.__qishLoadVisitStats === "function") {
+        setTimeout(function () { window.__qishLoadVisitStats(); }, 600);
+        setTimeout(function () { window.__qishLoadVisitStats(); }, 2000);
     }
 });
 </script>

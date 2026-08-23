@@ -86,6 +86,382 @@
             color: #555;
             font-size: 16px;
         }
+        [data-theme="dark"] .about-desc { color: #94a3b8; }
+
+        /* 时光轴 */
+        .timeline-section {
+            margin-top: 40px;
+            padding-top: 8px;
+        }
+        .timeline-section > h2 {
+            margin: 0 0 8px;
+            font-size: 1.45em;
+            font-weight: 800;
+            color: #0f172a;
+            border: none;
+        }
+        [data-theme="dark"] .timeline-section > h2 { color: #f1f5f9; }
+        .timeline-intro {
+            margin: 0 0 22px;
+            font-size: 14px;
+            color: #64748b;
+            line-height: 1.5;
+        }
+        [data-theme="dark"] .timeline-intro { color: #94a3b8; }
+
+        .timeline {
+            position: relative;
+            padding-left: 28px;
+            margin: 0;
+            list-style: none;
+        }
+        .timeline::before {
+            content: "";
+            position: absolute;
+            left: 7px;
+            top: 6px;
+            bottom: 6px;
+            width: 3px;
+            border-radius: 999px;
+            background: linear-gradient(180deg, #60a5fa, #a78bfa, #f472b6);
+            opacity: 0.85;
+        }
+        .tl-item {
+            position: relative;
+            margin-bottom: 22px;
+            padding: 16px 18px;
+            border-radius: 18px;
+            background: rgba(255,255,255,0.28);
+            border: 1px solid rgba(255,255,255,0.45);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .tl-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 32px rgba(59,130,246,0.15);
+        }
+        [data-theme="dark"] .tl-item {
+            background: rgba(30,41,59,0.55);
+            border-color: rgba(255,255,255,0.12);
+        }
+        .tl-item::before {
+            content: "";
+            position: absolute;
+            left: -25px;
+            top: 22px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #fff;
+            border: 3px solid #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
+            z-index: 1;
+        }
+        .tl-item.tag-stance::before { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139,92,246,0.25); }
+        .tl-item.tag-art::before { border-color: #ec4899; box-shadow: 0 0 0 3px rgba(236,72,153,0.25); }
+        .tl-item.tag-shot::before { border-color: #14b8a6; box-shadow: 0 0 0 3px rgba(20,184,166,0.25); }
+        .tl-item.tag-work::before { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.25); }
+
+        .tl-meta {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px 10px;
+            margin-bottom: 8px;
+        }
+        .tl-date {
+            font-size: 12px;
+            font-weight: 700;
+            color: #64748b;
+            letter-spacing: 0.3px;
+        }
+        [data-theme="dark"] .tl-date { color: #94a3b8; }
+        .tl-tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            background: rgba(59,130,246,0.15);
+            color: #1d4ed8;
+        }
+        .tl-tag.stance { background: rgba(139,92,246,0.18); color: #6d28d9; }
+        .tl-tag.art { background: rgba(236,72,153,0.18); color: #be185d; }
+        .tl-tag.shot { background: rgba(20,184,166,0.18); color: #0f766e; }
+        .tl-tag.work { background: rgba(59,130,246,0.15); color: #1d4ed8; }
+        [data-theme="dark"] .tl-tag.work { color: #93c5fd; background: rgba(59,130,246,0.25); }
+        [data-theme="dark"] .tl-tag.stance { color: #c4b5fd; background: rgba(139,92,246,0.28); }
+        [data-theme="dark"] .tl-tag.art { color: #f9a8d4; background: rgba(236,72,153,0.28); }
+        [data-theme="dark"] .tl-tag.shot { color: #5eead4; background: rgba(20,184,166,0.28); }
+
+        .tl-title {
+            margin: 0 0 6px;
+            font-size: 17px;
+            font-weight: 800;
+            color: #0f172a;
+            border: none;
+        }
+        [data-theme="dark"] .tl-title { color: #f1f5f9; }
+        .tl-body {
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.65;
+            color: #475569;
+        }
+        [data-theme="dark"] .tl-body { color: #cbd5e1; }
+
+        .tl-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .tl-gallery a, .tl-gallery span, .tl-gallery button.tl-thumb {
+            display: block;
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 1;
+            background: rgba(148,163,184,0.25);
+            border: 1px solid rgba(255,255,255,0.35);
+            padding: 0;
+            cursor: pointer;
+            width: 100%;
+        }
+        .tl-gallery img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.25s ease;
+        }
+        .tl-gallery a:hover img,
+        .tl-gallery button.tl-thumb:hover img { transform: scale(1.05); }
+
+        /* 本页图片预览（不新开标签） */
+        .tl-img-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 10050;
+            background: rgba(15, 23, 42, 0.72);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .tl-img-modal.show { display: flex; }
+        .tl-img-modal img {
+            max-width: min(92vw, 960px);
+            max-height: 88vh;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+            object-fit: contain;
+            background: rgba(0,0,0,0.2);
+        }
+        .tl-img-modal-close {
+            position: absolute;
+            top: 18px;
+            right: 22px;
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.9);
+            color: #0f172a;
+            font-size: 24px;
+            font-weight: 700;
+            cursor: pointer;
+            line-height: 1;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+            transition: transform 0.2s ease;
+        }
+        .tl-img-modal-close:hover { transform: scale(1.08) rotate(90deg); }
+        .tl-img-modal-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 44px;
+            height: 44px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.88);
+            color: #0f172a;
+            font-size: 22px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+        }
+        .tl-img-modal-nav.prev { left: 16px; }
+        .tl-img-modal-nav.next { right: 16px; }
+        .tl-img-modal-nav:hover { background: #fff; }
+        .tl-img-modal-nav:disabled { opacity: 0.35; cursor: default; }
+        @media (max-width: 640px) {
+            .tl-img-modal-nav { width: 38px; height: 38px; font-size: 18px; }
+            .tl-img-modal-nav.prev { left: 8px; }
+            .tl-img-modal-nav.next { right: 8px; }
+        }
+
+        .tl-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 18px;
+            position: relative;
+            z-index: 5;
+            pointer-events: auto;
+        }
+        .tl-filter {
+            border: 1px solid rgba(255,255,255,0.4);
+            background: rgba(255,255,255,0.35);
+            color: #334155;
+            border-radius: 999px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            pointer-events: auto;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+        .tl-filter:hover { background: rgba(255,255,255,0.5); }
+        .tl-filter.active {
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+            color: #fff !important;
+            border-color: transparent;
+            box-shadow: 0 4px 14px rgba(59,130,246,0.35);
+        }
+        [data-theme="dark"] .tl-filter {
+            color: #e2e8f0;
+            background: rgba(30,41,59,0.75);
+            border-color: rgba(255,255,255,0.15);
+        }
+        /* 用属性选择器，避免被其它 .hidden 样式覆盖 */
+        .tl-item[data-hide="1"] {
+            display: none !important;
+        }
+
+
+        .tl-admin-panel {
+            display: none;
+            margin: 0 0 20px;
+            padding: 16px 18px;
+            border-radius: 16px;
+            background: rgba(59,130,246,0.12);
+            border: 1px dashed rgba(59,130,246,0.45);
+        }
+        .tl-admin-panel.show { display: block; }
+        .tl-admin-panel h3 {
+            margin: 0 0 12px;
+            font-size: 15px;
+            border: none;
+            color: #1d4ed8;
+        }
+        [data-theme="dark"] .tl-admin-panel h3 { color: #93c5fd; }
+        .tl-admin-form {
+            display: grid;
+            gap: 10px;
+        }
+        .tl-admin-form label {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #475569;
+        }
+        [data-theme="dark"] .tl-admin-form label { color: #cbd5e1; }
+        .tl-admin-form input[type="text"],
+        .tl-admin-form input[type="date"],
+        .tl-admin-form select,
+        .tl-admin-form textarea {
+            padding: 8px 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(148,163,184,0.45);
+            background: rgba(255,255,255,0.7);
+            font-size: 14px;
+            color: #0f172a;
+            font-family: inherit;
+        }
+        [data-theme="dark"] .tl-admin-form input,
+        [data-theme="dark"] .tl-admin-form select,
+        [data-theme="dark"] .tl-admin-form textarea {
+            background: rgba(15,23,42,0.7);
+            color: #f1f5f9;
+            border-color: rgba(255,255,255,0.15);
+        }
+        .tl-admin-form textarea { min-height: 72px; resize: vertical; }
+        .tl-admin-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        @media (max-width: 520px) {
+            .tl-admin-row { grid-template-columns: 1fr; }
+        }
+        .tl-admin-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        .tl-btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            background: linear-gradient(135deg,#3b82f6,#60a5fa);
+            color: #fff;
+        }
+        .tl-btn.secondary {
+            background: rgba(255,255,255,0.35);
+            color: #0f172a;
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+        .tl-btn.danger {
+            background: linear-gradient(135deg,#ef4444,#f87171);
+        }
+        .tl-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .tl-admin-msg {
+            font-size: 12px;
+            min-height: 16px;
+            color: #64748b;
+        }
+        .tl-admin-msg.ok { color: #059669; }
+        .tl-admin-msg.err { color: #dc2626; }
+        .tl-item-del {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: none;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 700;
+            border: none;
+            border-radius: 999px;
+            background: rgba(239,68,68,0.9);
+            color: #fff;
+            cursor: pointer;
+            z-index: 2;
+        }
+        .tl-admin-on .tl-item-del { display: inline-block; }
+        .tl-empty {
+            text-align: center;
+            color: #64748b;
+            padding: 24px 12px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 640px) {
+            .timeline { padding-left: 22px; }
+            .tl-item::before { left: -21px; width: 12px; height: 12px; }
+            .tl-gallery { grid-template-columns: repeat(2, 1fr); }
+        }
     </style>
 </head>
 <body>
@@ -109,7 +485,7 @@
 </div>
 
 <div class="right-image" id="rightImage">
-    <img src="chibi-normal.png" alt="Q版小人" id="rightCharImg">
+    <img src="qishi-expr-normal.gif" alt="Q版小人" id="rightCharImg">
     <div class="char-bubble" id="charBubble" aria-hidden="true">
         <span class="char-bubble-text">欢迎来到QISH小站~</span>
     </div>
@@ -163,23 +539,451 @@
             </span>
         </a>
     </div>
+
+    <!-- ========== 时光轴 ========== -->
+    <section class="timeline-section" id="timeline">
+        <h2>⏱ 时光轴</h2>
+        <p class="timeline-intro">记录作品、创作立场、插画与截图。登录管理员后可在此添加、上传图片与删除。</p>
+
+        <div class="tl-admin-panel" id="tlAdminPanel">
+            <h3>管理员 · 添加时光轴</h3>
+            <div class="tl-admin-form" id="tlAdminForm">
+                <div class="tl-admin-row">
+                    <label>标题
+                        <input type="text" id="tlTitle" placeholder="例如：新插画 / 新作品" maxlength="120">
+                    </label>
+                    <label>时间
+                        <input type="text" id="tlDate" placeholder="例如：2026-08 或 2026年夏" maxlength="40">
+                    </label>
+                </div>
+                <div class="tl-admin-row">
+                    <label>分类
+                        <select id="tlType">
+                            <option value="work">作品</option>
+                            <option value="stance">创作立场</option>
+                            <option value="art">插画</option>
+                            <option value="shot">截图</option>
+                        </select>
+                    </label>
+                    <label>图片（可多选）
+                        <input type="file" id="tlImages" accept="image/*" multiple>
+                    </label>
+                </div>
+                <label>正文
+                    <textarea id="tlBody" placeholder="写一点说明…" maxlength="2000"></textarea>
+                </label>
+                <div class="tl-admin-actions">
+                    <button type="button" class="tl-btn" id="tlSubmit">发布到时光轴</button>
+                    <span class="tl-admin-msg" id="tlAdminMsg"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="tl-filters" id="tlFilters">
+            <button type="button" class="tl-filter active" data-filter="all" onclick="window.qishTimelineFilter('all')">全部</button>
+            <button type="button" class="tl-filter" data-filter="work" onclick="window.qishTimelineFilter('work')">作品</button>
+            <button type="button" class="tl-filter" data-filter="stance" onclick="window.qishTimelineFilter('stance')">创作立场</button>
+            <button type="button" class="tl-filter" data-filter="art" onclick="window.qishTimelineFilter('art')">插画</button>
+            <button type="button" class="tl-filter" data-filter="shot" onclick="window.qishTimelineFilter('shot')">截图</button>
+        </div>
+
+        <ul class="timeline" id="timelineList">
+            <li class="tl-empty" id="tlLoading">加载中…</li>
+        </ul>
+    </section>
+</div>
+
+<!-- 时光轴图片本页预览 -->
+<div class="tl-img-modal" id="tlImgModal" aria-hidden="true">
+    <button type="button" class="tl-img-modal-close" id="tlImgModalClose" aria-label="关闭">×</button>
+    <button type="button" class="tl-img-modal-nav prev" id="tlImgModalPrev" aria-label="上一张">‹</button>
+    <img id="tlImgModalImg" src="" alt="预览">
+    <button type="button" class="tl-img-modal-nav next" id="tlImgModalNext" aria-label="下一张">›</button>
 </div>
 
 <footer>© 2026 QISH · </footer>
 
 <script>
-document.addEventListener("DOMContentLoaded", async () => {
-    const client = window.supabaseClient || (typeof supabase !== "undefined" ? supabase : null);
-    const t0 = Date.now();
-    while (!window.QISH && Date.now() - t0 < 4000) await new Promise(r => setTimeout(r, 30));
-    if (window.QISH && client) {
-        await QISH.updateAuthNav({ supabase: client });
-        client.auth.onAuthStateChange((event) => {
-            if (event === "INITIAL_SESSION") return;
-            QISH.updateAuthNav({ supabase: client });
-        });
+(function () {
+  var ADMIN_UIDS = ["8dbea2a6-e81e-4958-8c7a-3cbb47b2eb7d"];
+  var TABLE = "public_timeline";
+  var BUCKET = "timeline_bucket";
+  var TYPE_LABEL = { work: "作品", stance: "创作立场", art: "插画", shot: "截图" };
+  var currentFilter = "all";
+  var isAdmin = false;
+  var currentUser = null;
+  var sb = window.supabaseClient || null;
+
+  window.qishTimelineFilter = function (filter) {
+    currentFilter = filter || "all";
+    document.querySelectorAll("#tlFilters .tl-filter").forEach(function (b) {
+      b.classList.toggle("active", (b.getAttribute("data-filter") || "") === currentFilter);
+    });
+    document.querySelectorAll("#timelineList .tl-item").forEach(function (item) {
+      var type = item.getAttribute("data-type") || "";
+      var show = currentFilter === "all" || type === currentFilter;
+      if (show) {
+        item.removeAttribute("data-hide");
+        item.style.display = "";
+      } else {
+        item.setAttribute("data-hide", "1");
+        item.style.display = "none";
+      }
+    });
+  };
+
+  function setMsg(text, ok) {
+    var el = document.getElementById("tlAdminMsg");
+    if (!el) return;
+    el.textContent = text || "";
+    el.className = "tl-admin-msg" + (ok === true ? " ok" : ok === false ? " err" : "");
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s)
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  // ---------- 本页图片预览（不跳转） ----------
+  var lightboxUrls = [];
+  var lightboxIndex = 0;
+
+  function openTlLightbox(urls, index) {
+    lightboxUrls = Array.isArray(urls) ? urls.filter(Boolean) : [];
+    if (!lightboxUrls.length) return;
+    lightboxIndex = Math.max(0, Math.min(index || 0, lightboxUrls.length - 1));
+    var modal = document.getElementById("tlImgModal");
+    var img = document.getElementById("tlImgModalImg");
+    if (!modal || !img) return;
+    img.src = lightboxUrls[lightboxIndex];
+    modal.classList.add("show");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+    updateTlLightboxNav();
+  }
+
+  function closeTlLightbox() {
+    var modal = document.getElementById("tlImgModal");
+    var img = document.getElementById("tlImgModalImg");
+    if (modal) {
+      modal.classList.remove("show");
+      modal.setAttribute("aria-hidden", "true");
     }
-});
+    if (img) img.src = "";
+    document.body.style.overflow = "";
+  }
+
+  function updateTlLightboxNav() {
+    var prev = document.getElementById("tlImgModalPrev");
+    var next = document.getElementById("tlImgModalNext");
+    var multi = lightboxUrls.length > 1;
+    if (prev) {
+      prev.style.display = multi ? "" : "none";
+      prev.disabled = lightboxIndex <= 0;
+    }
+    if (next) {
+      next.style.display = multi ? "" : "none";
+      next.disabled = lightboxIndex >= lightboxUrls.length - 1;
+    }
+  }
+
+  function stepTlLightbox(delta) {
+    if (!lightboxUrls.length) return;
+    var next = lightboxIndex + delta;
+    if (next < 0 || next >= lightboxUrls.length) return;
+    lightboxIndex = next;
+    var img = document.getElementById("tlImgModalImg");
+    if (img) img.src = lightboxUrls[lightboxIndex];
+    updateTlLightboxNav();
+  }
+
+  function bindTlLightboxUI() {
+    var modal = document.getElementById("tlImgModal");
+    var closeBtn = document.getElementById("tlImgModalClose");
+    var prev = document.getElementById("tlImgModalPrev");
+    var next = document.getElementById("tlImgModalNext");
+    if (closeBtn) closeBtn.onclick = function (e) {
+      e.stopPropagation();
+      closeTlLightbox();
+    };
+    if (prev) prev.onclick = function (e) {
+      e.stopPropagation();
+      stepTlLightbox(-1);
+    };
+    if (next) next.onclick = function (e) {
+      e.stopPropagation();
+      stepTlLightbox(1);
+    };
+    if (modal) {
+      modal.onclick = function (e) {
+        if (e.target === modal) closeTlLightbox();
+      };
+    }
+    document.addEventListener("keydown", function (e) {
+      var m = document.getElementById("tlImgModal");
+      if (!m || !m.classList.contains("show")) return;
+      if (e.key === "Escape") closeTlLightbox();
+      else if (e.key === "ArrowLeft") stepTlLightbox(-1);
+      else if (e.key === "ArrowRight") stepTlLightbox(1);
+    });
+  }
+
+  function renderItems(rows) {
+    var list = document.getElementById("timelineList");
+    if (!list) return;
+    if (!rows || !rows.length) {
+      list.innerHTML = '<li class="tl-empty">暂无记录。管理员登录后可在上方添加。</li>';
+      return;
+    }
+    list.innerHTML = rows.map(function (r) {
+      var type = r.type || "work";
+      var tag = TYPE_LABEL[type] || type;
+      var imgs = Array.isArray(r.image_urls) ? r.image_urls : (r.image_urls ? [r.image_urls] : []);
+      var gallery = "";
+      if (imgs.length) {
+        gallery = '<div class="tl-gallery">' + imgs.map(function (url, idx) {
+          return (
+            '<button type="button" class="tl-thumb" data-gallery-idx="' + idx + '" title="点击预览">' +
+              '<img src="' + escapeHtml(url) + '" alt="" loading="lazy" onerror="this.parentNode.style.display=\'none\'">' +
+            "</button>"
+          );
+        }).join("") + "</div>";
+      }
+      var delBtn = isAdmin
+        ? '<button type="button" class="tl-item-del" data-id="' + escapeHtml(r.id) + '">删除</button>'
+        : "";
+      return (
+        '<li class="tl-item tag-' + escapeHtml(type) + '" data-type="' + escapeHtml(type) + '" data-id="' + escapeHtml(r.id) + '">' +
+        delBtn +
+        '<div class="tl-meta">' +
+          '<span class="tl-date">' + escapeHtml(r.event_date || "") + '</span>' +
+          '<span class="tl-tag ' + escapeHtml(type) + '">' + escapeHtml(tag) + '</span>' +
+        '</div>' +
+        '<h3 class="tl-title">' + escapeHtml(r.title || "未命名") + '</h3>' +
+        (r.body ? '<p class="tl-body">' + escapeHtml(r.body).replace(/\n/g, "<br>") + '</p>' : "") +
+        gallery +
+        "</li>"
+      );
+    }).join("");
+
+    // 本页预览：把该条记录的图片列表绑到按钮上
+    list.querySelectorAll(".tl-item").forEach(function (item, rowIdx) {
+      var row = rows[rowIdx];
+      if (!row) return;
+      var imgs = Array.isArray(row.image_urls) ? row.image_urls : (row.image_urls ? [row.image_urls] : []);
+      item.querySelectorAll(".tl-thumb").forEach(function (btn) {
+        btn.addEventListener("click", function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          var idx = parseInt(btn.getAttribute("data-gallery-idx") || "0", 10) || 0;
+          openTlLightbox(imgs, idx);
+        });
+      });
+    });
+
+    if (isAdmin) {
+      document.getElementById("timeline").classList.add("tl-admin-on");
+      list.querySelectorAll(".tl-item-del").forEach(function (btn) {
+        btn.addEventListener("click", function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          deleteItem(btn.getAttribute("data-id"));
+        });
+      });
+    } else {
+      document.getElementById("timeline").classList.remove("tl-admin-on");
+    }
+    window.qishTimelineFilter(currentFilter);
+  }
+
+  async function loadTimeline() {
+    var list = document.getElementById("timelineList");
+    if (!sb) {
+      if (list) list.innerHTML = '<li class="tl-empty">Supabase 未就绪</li>';
+      return;
+    }
+    var res = await sb.from(TABLE).select("*").order("sort_at", { ascending: false }).order("created_at", { ascending: false });
+    if (res.error) {
+      if (list) {
+        list.innerHTML = '<li class="tl-empty">读取失败：' + escapeHtml(res.error.message) +
+          '<br><small>请确认已创建表 public_timeline</small></li>';
+      }
+      return;
+    }
+    renderItems(res.data || []);
+  }
+
+  async function deleteItem(id) {
+    if (!isAdmin || !id) return;
+    if (!confirm("确定删除这条时光轴记录？")) return;
+    var res = await sb.from(TABLE).delete().eq("id", id);
+    if (res.error) {
+      alert("删除失败：" + res.error.message);
+      return;
+    }
+    loadTimeline();
+  }
+
+  async function submitItem() {
+    if (!isAdmin || !currentUser) {
+      setMsg("仅管理员可添加", false);
+      return;
+    }
+    var title = (document.getElementById("tlTitle").value || "").trim();
+    var eventDate = (document.getElementById("tlDate").value || "").trim();
+    var type = document.getElementById("tlType").value || "work";
+    var body = (document.getElementById("tlBody").value || "").trim();
+    var fileInput = document.getElementById("tlImages");
+    var files = fileInput && fileInput.files ? Array.from(fileInput.files) : [];
+
+    if (!title) {
+      setMsg("请填写标题", false);
+      return;
+    }
+    if (!eventDate) eventDate = new Date().toISOString().slice(0, 10);
+
+    setMsg("发布中…");
+    document.getElementById("tlSubmit").disabled = true;
+    try {
+      var urls = [];
+      for (var i = 0; i < files.length; i++) {
+        var file = files[i];
+        var ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+        var path = currentUser.id + "/" + Date.now() + "_" + i + "." + ext;
+        var up = await sb.storage.from(BUCKET).upload(path, file, {
+          cacheControl: "3600",
+          upsert: false,
+          contentType: file.type || undefined
+        });
+        if (up.error) throw new Error("图片上传失败：" + up.error.message);
+        var pub = sb.storage.from(BUCKET).getPublicUrl(path);
+        urls.push(pub.data.publicUrl);
+      }
+
+      var ins = await sb.from(TABLE).insert({
+        title: title,
+        body: body,
+        event_date: eventDate,
+        type: type,
+        image_urls: urls,
+        created_by: currentUser.id,
+        sort_at: new Date().toISOString()
+      });
+      if (ins.error) throw new Error(ins.error.message);
+
+      document.getElementById("tlTitle").value = "";
+      document.getElementById("tlBody").value = "";
+      document.getElementById("tlDate").value = "";
+      if (fileInput) fileInput.value = "";
+      setMsg("✅ 已发布", true);
+      loadTimeline();
+    } catch (err) {
+      console.error(err);
+      setMsg(err.message || String(err), false);
+    } finally {
+      document.getElementById("tlSubmit").disabled = false;
+    }
+  }
+
+  function applyAdminState(user) {
+    currentUser = user || null;
+    isAdmin = !!(currentUser && ADMIN_UIDS.indexOf(currentUser.id) >= 0);
+    var panel = document.getElementById("tlAdminPanel");
+    if (panel) panel.classList.toggle("show", isAdmin);
+    var timeline = document.getElementById("timeline");
+    if (timeline) {
+      if (isAdmin) timeline.classList.add("tl-admin-on");
+      else timeline.classList.remove("tl-admin-on");
+    }
+  }
+
+  async function initAuthAndAdmin() {
+    sb = window.supabaseClient || window.__qish_sb || sb;
+    if (!sb) {
+      console.warn("[about] Supabase 未就绪");
+      return;
+    }
+
+    // 优先用 common.js 的会话恢复（含 localStorage 备份），避免 getSession 过早返回 null
+    if (window.QISH && typeof QISH.waitForAuthSession === "function") {
+      try {
+        var session = await QISH.waitForAuthSession(sb, 5000);
+        if (session && session.user) {
+          applyAdminState(session.user);
+        }
+      } catch (e) {
+        console.warn("[about] waitForAuthSession", e);
+      }
+    }
+
+    if (window.QISH && typeof QISH.updateAuthNav === "function") {
+      try {
+        var r = await QISH.updateAuthNav({ supabase: sb });
+        if (r && r.user) {
+          applyAdminState(r.user);
+        } else if (!currentUser) {
+          // 再兜底读一次本地 session
+          try {
+            var sess2 = await sb.auth.getSession();
+            var u2 = sess2 && sess2.data && sess2.data.session && sess2.data.session.user;
+            if (u2) applyAdminState(u2);
+          } catch (_) {}
+        }
+      } catch (e) {
+        console.warn("[about] updateAuthNav", e);
+      }
+
+      if (!window.__qish_about_auth_listener) {
+        window.__qish_about_auth_listener = true;
+        sb.auth.onAuthStateChange(function (event) {
+          if (event === "INITIAL_SESSION") return;
+          QISH.updateAuthNav({ supabase: sb }).then(function (r2) {
+            applyAdminState(r2 && r2.user ? r2.user : null);
+            loadTimeline();
+          });
+        });
+      }
+    } else {
+      // QISH 未加载时的兜底
+      try {
+        var sess = await sb.auth.getSession();
+        var user = sess && sess.data && sess.data.session && sess.data.session.user;
+        applyAdminState(user);
+      } catch (_) {}
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", async function () {
+    var btn = document.getElementById("tlSubmit");
+    if (btn) btn.addEventListener("click", function (e) {
+      e.preventDefault();
+      submitItem();
+    });
+    bindTlLightboxUI();
+
+    // 等待 common.js
+    var t0 = Date.now();
+    while (!window.QISH && Date.now() - t0 < 5000) {
+      await new Promise(function (r) { setTimeout(r, 30); });
+    }
+    // 再等 supabase 客户端就绪
+    t0 = Date.now();
+    while (!window.supabaseClient && Date.now() - t0 < 3000) {
+      await new Promise(function (r) { setTimeout(r, 30); });
+    }
+    sb = window.supabaseClient || sb;
+
+    await initAuthAndAdmin();
+    await loadTimeline();
+
+    // 短延迟再同步一次登录态（防止 SDK 异步 restore 晚于首次渲染）
+    setTimeout(async function () {
+      await initAuthAndAdmin();
+      if (isAdmin) loadTimeline();
+    }, 800);
+  });
+})();
 </script>
 </body>
 </html>

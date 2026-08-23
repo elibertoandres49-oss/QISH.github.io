@@ -180,40 +180,125 @@ body.page-leaving {
     100% { background-position: 0% 50%; }
 }
 
-/* 鼠标拖尾 - 弹性拉伸 + 磨砂玻璃 */
+/* 鼠标光球 - iOS 玻璃水滴 */
 .mouse-glow {
     position: fixed;
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
-    
-    /* 磨砂玻璃效果 */
-    background: rgba(255, 255, 255, 0.18);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-    
-    /* 原来的渐变叠加（可选，增加一点颜色） */
-    background-image: radial-gradient(
-        circle,
-        rgba(219, 234, 254, 0.25) 0%,
-        rgba(147, 197, 253, 0.18) 45%,
-        rgba(224, 195, 252, 0.1) 70%,
-        transparent 100%
-    );
-    
+    background:
+        radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.35) 28%, transparent 55%),
+        radial-gradient(circle at 70% 75%, rgba(147, 197, 253, 0.35) 0%, transparent 50%),
+        rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(14px) saturate(1.4);
+    -webkit-backdrop-filter: blur(14px) saturate(1.4);
+    border: 1.5px solid rgba(255, 255, 255, 0.65);
+    box-shadow:
+        0 4px 16px rgba(15, 23, 42, 0.12),
+        0 0 0 1px rgba(255, 255, 255, 0.2),
+        inset 0 1px 2px rgba(255, 255, 255, 0.7),
+        inset 0 -2px 6px rgba(96, 165, 250, 0.15);
     pointer-events: none;
     transform: translate(-50%, -50%);
-    z-index: 0.5;
-    will-change: transform, left, top;
-    transition: border-radius 0.25s ease;
+    z-index: 9990;
+    will-change: transform, left, top, border-radius, opacity;
+    transition: border-radius 0.2s ease, opacity 0.2s ease, box-shadow 0.25s ease, filter 0.25s ease;
+    mix-blend-mode: plus-lighter;
 }
-/* 导航栏 - 玻璃磨砂 + 左上角头像 */
+.mouse-glow-ui {
+    mix-blend-mode: normal;
+}
+/* 吸附 UI：水滴浸入感 */
+.mouse-glow.mouse-glow-adsorb {
+    border-color: rgba(255, 255, 255, 0.55);
+    background:
+        radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.28) 30%, transparent 60%),
+        rgba(255, 255, 255, 0.2);
+    box-shadow:
+        0 4px 14px rgba(96, 165, 250, 0.12),
+        inset 0 1px 2px rgba(255, 255, 255, 0.45);
+    filter: none;
+    mix-blend-mode: normal;
+    opacity: 0.55;
+}
+.mouse-glow.mouse-glow-click {
+    filter: brightness(1.35);
+    box-shadow:
+        0 0 0 6px rgba(255, 255, 255, 0.25),
+        0 6px 20px rgba(96, 165, 250, 0.35);
+}
+
+/* 白色细线拖尾 */
+.mouse-trail-svg {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9988;
+    overflow: visible;
+    transition: opacity 0.35s ease;
+}
+.mouse-trail-svg path {
+    filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.25)); opacity: 0.85;
+}
+
+/* 点击涟漪 */
+.mouse-click-ring {
+    position: fixed;
+    width: 12px;
+    height: 12px;
+    margin-left: -6px;
+    margin-top: -6px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.75);
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);
+    pointer-events: none;
+    z-index: 9991;
+    animation: mouseRingOut 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.mouse-click-splash {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    margin-left: -4px;
+    margin-top: -4px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(147, 197, 253, 0.35) 45%, transparent 70%);
+    pointer-events: none;
+    z-index: 9991;
+    animation: mouseSplashOut 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes mouseRingOut {
+    0%   { transform: scale(0.4); opacity: 0.9; }
+    100% { transform: scale(4.5); opacity: 0; }
+}
+@keyframes mouseSplashOut {
+    0%   { transform: scale(0.5); opacity: 1; }
+    100% { transform: scale(3.2); opacity: 0; }
+}
+
+[data-theme="dark"] .mouse-glow {
+    background:
+        radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.7) 0%, rgba(148, 163, 184, 0.2) 30%, transparent 55%),
+        rgba(148, 163, 184, 0.15);
+    border-color: rgba(226, 232, 240, 0.4);
+}
+[data-theme="aqua"] .mouse-glow {
+    background:
+        radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.95) 0%, rgba(165, 243, 252, 0.4) 30%, transparent 55%),
+        rgba(125, 211, 252, 0.25);
+    border-color: rgba(255, 255, 255, 0.75);
+    box-shadow:
+        0 4px 18px rgba(14, 165, 233, 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+/* 导航栏 - iOS 磨砂顶栏 */
 nav {
     background: var(--nav-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(24px) saturate(1.4);
+    -webkit-backdrop-filter: blur(24px) saturate(1.4);
     border-bottom: 1px solid var(--nav-border);
     padding: 10px 24px;
     display: flex;
@@ -222,7 +307,10 @@ nav {
     position: sticky;
     top: 0;
     z-index: 100;
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    box-shadow:
+        0 4px 24px rgba(15, 23, 42, 0.06),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.2);
+    transition: background 0.35s ease, box-shadow 0.35s ease;
 }
 
 /* 左上角圆形头像 */
@@ -251,31 +339,50 @@ nav a {
     text-decoration: none;
     font-size: 15px;
     font-weight: 500;
-    padding: 7px 12px;
-    border-radius: 8px;
-    transition: background 0.2s ease, color 0.2s ease;
+    padding: 8px 14px;
+    border-radius: 999px;
+    transition:
+        background 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.45s cubic-bezier(0.34, 1.45, 0.64, 1),
+        box-shadow 0.4s ease,
+        color 0.25s ease;
 }
 
 nav a:hover {
-    background: rgba(255, 255, 255, 0.3);
+    background: rgba(255, 255, 255, 0.42);
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.1);
 }
-/* 内容区域 - 玻璃磨砂效果 */
+/* 内容区域 - iOS 气泡玻璃 */
 .container {
     max-width: 880px;
     margin: 36px auto;
     padding: 28px 32px;
     background: var(--card-bg);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    border-radius: 18px;
+    backdrop-filter: blur(22px) saturate(1.35);
+    -webkit-backdrop-filter: blur(22px) saturate(1.35);
+    border-radius: 28px;
     border: 1px solid var(--card-border);
-    box-shadow: var(--card-shadow);
+    box-shadow:
+        var(--card-shadow),
+        inset 0 1px 0 rgba(255, 255, 255, 0.55),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.08);
     position: relative;
     z-index: 10;
-    transition: box-shadow 0.25s ease, background 0.3s ease;
+    /* 移出：带回弹的「拉出」感 */
+    transition:
+        transform 0.55s cubic-bezier(0.34, 1.45, 0.64, 1),
+        box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+        border-color 0.4s ease,
+        background 0.4s ease,
+        filter 0.45s ease;
+    will-change: transform, box-shadow;
 }
+/* 移入：轻浮起 + 水纹光边（与下方涟漪样式一致，避免缩放弹抖） */
 .container:hover {
-    box-shadow: 0 10px 36px rgba(0, 0, 0, 0.12);
+    transform: translateY(-3px);
+    border-color: rgba(255, 255, 255, 0.75);
+    filter: saturate(1.06);
 }
 
 h1 {
@@ -298,18 +405,29 @@ p {
     color: var(--text-body);
 }
 
-/* 卡片 */
+/* 卡片 - iOS 气泡 */
 .card {
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 12px;
-    padding: 25px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.06);
-    transition: transform 0.25s;
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(16px) saturate(1.2);
+    -webkit-backdrop-filter: blur(16px) saturate(1.2);
+    border-radius: 22px;
+    padding: 22px 24px;
+    margin-bottom: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    box-shadow:
+        0 8px 28px rgba(15, 23, 42, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.65);
+    transition:
+        transform 0.5s cubic-bezier(0.34, 1.45, 0.64, 1),
+        box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+        border-color 0.35s ease,
+        background 0.35s ease;
 }
 
 .card:hover {
-    transform: translateY(-6px) scale(1.03);
+    transform: translateY(-3px);
+    background: rgba(255, 255, 255, 0.88);
+    border-color: rgba(255, 255, 255, 0.9);
 }
 
 /* 页脚 */
@@ -471,7 +589,7 @@ footer {
     right: 18px;
     transform: translateY(130%) scale(0.85);
     width: 148px;
-    z-index: 50;
+    z-index: 60; /* 高于大立绘，避免被挡住无法拖动 */
     opacity: 0;
     pointer-events: none;
     transition:
@@ -484,33 +602,42 @@ footer {
     opacity: 1;
     pointer-events: auto;
 }
-
-/* 缓慢漂移：右下角限定区域小范围飘 */
-.right-image.char-drifting {
-    animation: char-drift 16s ease-in-out infinite;
-}
-@keyframes char-drift {
-    0%, 100% { transform: translate(0, 0); }
-    20%      { transform: translate(-7px, -5px); }
-    40%      { transform: translate(5px, -9px); }
-    60%      { transform: translate(-4px, -6px); }
-    80%      { transform: translate(6px, -3px); }
+.right-image.dragging {
+    z-index: 400 !important;
+    animation: none !important; /* 拖动时停漂移，位置更跟手 */
 }
 
-/* 害羞状态：微微往右边躲闪 */
-.right-image.char-shy {
-    transform: translateX(14px) rotate(3deg);
-    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-/* 呼吸层（常驻空闲动画） */
+/* 漂移/呼吸/摇摆全部只作用在 .char-inner，避免与外层定位 transform 冲突导致卡顿 */
 .char-inner {
-    animation: char-breathe 3.2s ease-in-out infinite;
     transform-origin: center bottom;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    will-change: transform;
+    /* 默认轻微呼吸 */
+    animation: char-breathe 3.2s ease-in-out infinite;
 }
 @keyframes char-breathe {
-    0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-5px); }
+    0%, 100% { transform: translate3d(0, 0, 0); }
+    50%      { transform: translate3d(0, -5px, 0); }
+}
+
+/* 空闲漂移 + 呼吸（合并为一条动画，避免多段 transform 互相覆盖） */
+.right-image.char-drifting:not(.jump):not(.char-sway):not(.char-shy):not(.char-sleepy) .char-inner {
+    animation: char-idle 12s ease-in-out infinite;
+}
+@keyframes char-idle {
+    0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+    20%      { transform: translate3d(-6px, -6px, 0) rotate(-1.5deg); }
+    40%      { transform: translate3d(5px, -10px, 0) rotate(1.5deg); }
+    60%      { transform: translate3d(-4px, -5px, 0) rotate(-1deg); }
+    80%      { transform: translate3d(6px, -3px, 0) rotate(1deg); }
+}
+
+/* 害羞：只偏移内层，不动外层定位 */
+.right-image.char-shy .char-inner {
+    animation: none;
+    transform: translate3d(12px, 0, 0) rotate(3deg);
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .right-image img {
@@ -522,43 +649,39 @@ footer {
     cursor: pointer;
     filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.2));
     transform-origin: center bottom;
+    pointer-events: auto;
 }
 
-/* 点击弹动反馈 */
-.right-image.jump img {
-    animation: char-bounce 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+/* 点击弹动：只动内层，不打断外层，也不与 img 双重动画 */
+.right-image.jump .char-inner {
+    animation: char-bounce 0.45s cubic-bezier(0.22, 1, 0.36, 1) both !important;
 }
 @keyframes char-bounce {
-    0%   { transform: translateY(0) scale(1, 1); }
-    30%  { transform: translateY(-16px) scale(0.95, 1.06); }
-    60%  { transform: translateY(-5px) scale(1.04, 0.96); }
-    100% { transform: translateY(0) scale(1, 1); }
+    0%   { transform: translate3d(0, 0, 0) scale(1, 1); }
+    28%  { transform: translate3d(0, -18px, 0) scale(0.94, 1.08); }
+    55%  { transform: translate3d(0, -4px, 0) scale(1.05, 0.95); }
+    100% { transform: translate3d(0, 0, 0) scale(1, 1); }
 }
 
-/* 空闲小动作：左右轻微摇摆 */
-.right-image.char-sway img {
-    animation: char-sway 2.4s ease-in-out;
+/* 左右轻摇：只动内层 */
+.right-image.char-sway:not(.jump) .char-inner {
+    animation: char-sway 2.2s ease-in-out both !important;
 }
 @keyframes char-sway {
-    0%, 100% { transform: rotate(0deg); }
-    25%      { transform: rotate(-5deg); }
-    75%      { transform: rotate(5deg); }
+    0%   { transform: translate3d(0, 0, 0) rotate(0deg); }
+    20%  { transform: translate3d(0, -2px, 0) rotate(-6deg); }
+    50%  { transform: translate3d(0, 0, 0) rotate(6deg); }
+    80%  { transform: translate3d(0, -2px, 0) rotate(-4deg); }
+    100% { transform: translate3d(0, 0, 0) rotate(0deg); }
 }
 
-/* 犯困夜晚模式：垂头晃动 */
-.right-image.char-sleepy .char-inner {
-    animation: char-breathe-sleepy 4.8s ease-in-out infinite;
+/* 犯困：慢呼吸 + 轻微垂头（合并一条） */
+.right-image.char-sleepy:not(.jump):not(.char-sway) .char-inner {
+    animation: char-sleepy-idle 4.5s ease-in-out infinite;
 }
-.right-image.char-sleepy img {
-    animation: char-droop 2.4s ease-in-out infinite alternate;
-}
-@keyframes char-breathe-sleepy {
-    0%, 100% { transform: translateY(0); }
-    50%      { transform: translateY(-3px); }
-}
-@keyframes char-droop {
-    0%   { transform: rotate(-5deg) translateY(2px); }
-    100% { transform: rotate(-9deg) translateY(5px); }
+@keyframes char-sleepy-idle {
+    0%, 100% { transform: translate3d(0, 2px, 0) rotate(-4deg); }
+    50%      { transform: translate3d(0, -2px, 0) rotate(-7deg); }
 }
 
 /* 角色对话框 */
@@ -637,7 +760,7 @@ footer {
     }
 }
 
-/* 左侧角色立绘弹出（聊天室专用） */
+/* 左侧角色立绘（聊天室 / 首页） */
 .left-image {
     position: fixed;
     top: 50%;
@@ -646,7 +769,7 @@ footer {
     width: min(320px, 34vw);
     height: auto;
     max-height: 88vh;
-    z-index: 50;
+    z-index: 40; /* 低于右下角小人，避免挡住拖动 */
     opacity: 0;
     pointer-events: none;
     transition:
@@ -662,6 +785,9 @@ footer {
     opacity: 1;
     pointer-events: auto;
 }
+.left-image.dragging {
+    z-index: 400 !important;
+}
 .left-image img {
     width: 100%;
     height: auto;
@@ -673,20 +799,33 @@ footer {
     -webkit-user-drag: none;
     cursor: pointer;
     transform-origin: center bottom;
-    transition: transform 0.15s ease;
 }
 .left-image.jump img {
-    animation: char-jump 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    animation: char-jump 0.48s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+@keyframes char-jump {
+    0%   { transform: translateY(0) scale(1, 1); }
+    28%  { transform: translateY(-28px) scale(0.95, 1.08); }
+    55%  { transform: translateY(-6px) scale(1.04, 0.96); }
+    100% { transform: translateY(0) scale(1, 1); }
+}
+/* 首页大立绘稍小一点，不抢主内容 */
+body.home-page .left-image {
+    width: min(280px, 30vw);
+    left: 16px;
 }
 @media (max-width: 900px) {
     .left-image {
         width: min(220px, 28vw);
         left: 8px;
     }
+    body.home-page .left-image {
+        width: min(180px, 26vw);
+    }
 }
 @media (max-width: 640px) {
     .left-image {
-        display: none;
+        display: none; /* 小屏仍隐藏大立绘，保留 Q 版小人 */
     }
 }
 
@@ -1666,14 +1805,12 @@ footer {
     border-bottom-color: var(--accent);
 }
 
-/* 深色主题下鼠标光效更克制 */
-[data-theme="dark"] .mouse-glow,
+/* 浅色主题下光球略透，避免抢戏 */
 [data-theme="light"] .mouse-glow {
-    opacity: 0.55;
-}
-[data-theme="dark"] .mouse-glow {
-    background: var(--glow-bg);
-    border-color: rgba(167, 139, 250, 0.25);
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow:
+        0 4px 14px rgba(15, 23, 42, 0.1),
+        inset 0 1px 2px rgba(255, 255, 255, 0.85);
 }
 
 @media (max-width: 640px) {
@@ -1713,35 +1850,49 @@ footer {
     max-width: 100%;
     padding: 0 4px;
 }
+/* 退出登录：颜色跟随主题 accent */
 .nav-logout-btn {
-    background: linear-gradient(135deg, rgba(96, 165, 250, 0.85), rgba(147, 197, 253, 0.85));
+    background: var(--accent-grad);
     border: none;
     border-radius: 999px;
     padding: 7px 14px;
     cursor: pointer;
     font-size: 14px;
     font-weight: 600;
-    color: #fff !important;
+    color: var(--btn-text, #fff) !important;
     white-space: nowrap;
-    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
-    box-shadow: 0 4px 12px rgba(96, 165, 250, 0.3);
     line-height: 1.2;
+    box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 35%, transparent);
+    transition:
+        transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.35s ease,
+        filter 0.25s ease,
+        background 0.35s ease;
 }
 .nav-logout-btn:hover {
-    filter: brightness(1.06);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(96, 165, 250, 0.4);
+    filter: brightness(1.08) saturate(1.1);
+    transform: translateY(-3px) scale(1.05, 0.96);
+    box-shadow: 0 10px 24px color-mix(in srgb, var(--accent) 45%, transparent);
 }
 .nav-logout-btn:active {
-    transform: translateY(0);
+    transform: translateY(1px) scale(0.96, 1.06);
+    filter: brightness(0.95);
 }
 [data-theme="dark"] .nav-logout-btn {
-    background: linear-gradient(135deg, #3b82f6, #3b82f6);
     color: #fff !important;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
 }
 [data-theme="light"] .nav-logout-btn {
-    background: linear-gradient(135deg, #3b82f6, #60a5fa);
+    color: #fff !important;
+}
+[data-theme="aqua"] .nav-logout-btn {
+    background: linear-gradient(135deg, #0284c7, #22d3ee);
+    color: #fff !important;
+    box-shadow: 0 4px 16px rgba(14, 165, 233, 0.4);
+}
+[data-theme="color"] .nav-logout-btn,
+[data-theme="custom"] .nav-logout-btn {
+    background: linear-gradient(135deg, #2563eb, #60a5fa);
     color: #fff !important;
 }
 
@@ -1926,5 +2077,501 @@ footer {
     nav a {
         font-size: 11px;
         padding: 6px 6px;
+    }
+}
+
+/* ========== 水纹主题 Aqua ========== */
+[data-theme="aqua"] {
+    --bg-main: linear-gradient(165deg, #0284c7 0%, #0ea5e9 28%, #22d3ee 55%, #67e8f9 78%, #a5f3fc 100%);
+    --bg-size: 100% 100%;
+    --text-main: #0c4a6e;
+    --text-sub: #0369a1;
+    --text-body: #0f172a;
+    --nav-bg: rgba(224, 242, 254, 0.55);
+    --nav-border: rgba(14, 165, 233, 0.22);
+    --card-bg: rgba(255, 255, 255, 0.42);
+    --card-border: rgba(255, 255, 255, 0.55);
+    --card-shadow: 0 12px 40px rgba(14, 165, 233, 0.18);
+    --accent: #0284c7;
+    --accent-2: #22d3ee;
+    --accent-grad: linear-gradient(135deg, #0ea5e9, #22d3ee);
+    --btn-text: #fff;
+    --footer-color: #0369a1;
+    --glass-strong: rgba(255, 255, 255, 0.5);
+    --overlay-bg: rgba(8, 47, 73, 0.35);
+    --glow-bg: rgba(34, 211, 238, 0.2);
+}
+
+[data-theme="aqua"] body,
+html[data-theme="aqua"] body {
+    animation: none;
+    background: linear-gradient(165deg, #0369a1 0%, #0ea5e9 35%, #22d3ee 65%, #67e8f9 100%);
+    background-attachment: fixed;
+    color: var(--text-body);
+}
+
+/* 水纹流动层 */
+[data-theme="aqua"] body::before {
+    content: "";
+    position: fixed;
+    inset: -20%;
+    z-index: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 80% 50% at 20% 30%, rgba(165, 243, 252, 0.55) 0%, transparent 55%),
+        radial-gradient(ellipse 70% 45% at 80% 20%, rgba(34, 211, 238, 0.4) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 40% at 50% 80%, rgba(14, 165, 233, 0.45) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 35% at 10% 70%, rgba(125, 211, 252, 0.35) 0%, transparent 50%);
+    animation: aquaFlow 18s ease-in-out infinite alternate;
+    filter: blur(2px);
+}
+
+/* 波纹 / 焦散光 */
+[data-theme="aqua"] body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.55;
+    background:
+        repeating-linear-gradient(
+            100deg,
+            transparent 0px,
+            transparent 40px,
+            rgba(255, 255, 255, 0.04) 41px,
+            rgba(255, 255, 255, 0.07) 42px,
+            transparent 44px
+        ),
+        radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 0.18) 0%, transparent 28%),
+        radial-gradient(circle at 70% 60%, rgba(255, 255, 255, 0.12) 0%, transparent 32%);
+    background-size: 200% 200%, 100% 100%, 100% 100%;
+    animation: aquaRipple 12s linear infinite, aquaCaustic 9s ease-in-out infinite alternate;
+    mix-blend-mode: soft-light;
+}
+
+@keyframes aquaFlow {
+    0%   { transform: translate3d(0, 0, 0) scale(1); }
+    33%  { transform: translate3d(3%, -2%, 0) scale(1.04); }
+    66%  { transform: translate3d(-2%, 3%, 0) scale(1.02); }
+    100% { transform: translate3d(1%, -1%, 0) scale(1.05); }
+}
+
+@keyframes aquaRipple {
+    0%   { background-position: 0% 0%, 0 0, 0 0; }
+    100% { background-position: 100% 50%, 0 0, 0 0; }
+}
+
+@keyframes aquaCaustic {
+    0%   { opacity: 0.4; filter: hue-rotate(0deg); }
+    100% { opacity: 0.65; filter: hue-rotate(12deg); }
+}
+
+[data-theme="aqua"] .container {
+    background: rgba(255, 255, 255, 0.38);
+    border-color: rgba(255, 255, 255, 0.65);
+    box-shadow:
+        0 16px 48px rgba(3, 105, 161, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+[data-theme="aqua"] .container:hover {
+    background: rgba(255, 255, 255, 0.55);
+    box-shadow:
+        0 22px 56px rgba(3, 105, 161, 0.22),
+        0 0 0 1px rgba(165, 243, 252, 0.5),
+        inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+[data-theme="aqua"] nav {
+    background: rgba(224, 242, 254, 0.5);
+    border-bottom-color: rgba(14, 165, 233, 0.25);
+}
+[data-theme="aqua"] h1,
+[data-theme="aqua"] h2,
+[data-theme="aqua"] h3 {
+    color: #0c4a6e;
+}
+[data-theme="aqua"] footer {
+    color: #0369a1;
+}
+
+/* ========== 全局 iOS 气泡交互（通用表面） ========== */
+.userlist-card,
+.chat-header,
+.album-header,
+.anime-search-panel,
+.home-announce,
+.qm-announce-box,
+.user-modal-box,
+.time-modal-box,
+.search-pager {
+    transition:
+        transform 0.5s cubic-bezier(0.34, 1.45, 0.64, 1),
+        box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+        border-color 0.35s ease,
+        background 0.35s ease !important;
+}
+
+.userlist-card:hover,
+.anime-search-panel:hover,
+.home-announce:hover {
+    transform: translateY(-4px) scale(1.01);
+}
+
+/* 导航激活态气泡 */
+.nav-links a.nav-active,
+.panel-links a.nav-active {
+    background: rgba(255, 255, 255, 0.5) !important;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.1);
+    border-radius: 999px;
+}
+
+/* 侧栏链接气泡感 */
+.panel-links a {
+    border-radius: 14px !important;
+    transition:
+        transform 0.45s cubic-bezier(0.34, 1.45, 0.64, 1),
+        background 0.35s ease,
+        box-shadow 0.35s ease !important;
+}
+.panel-links a:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+}
+
+/* 暗色主题下卡片气泡微调 */
+[data-theme="dark"] .container {
+    box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.45),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+[data-theme="dark"] .container:hover {
+    box-shadow:
+        0 20px 52px rgba(0, 0, 0, 0.55),
+        0 0 0 1px rgba(96, 165, 250, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+[data-theme="dark"] .card {
+    background: rgba(30, 41, 59, 0.75);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+[data-theme="dark"] .card:hover {
+    background: rgba(40, 52, 72, 0.88);
+}
+
+/* 尊重减少动态偏好 */
+@media (prefers-reduced-motion: reduce) {
+    [data-theme="aqua"] body::before,
+    [data-theme="aqua"] body::after {
+        animation: none !important;
+    }
+    .container,
+    .card,
+    nav a,
+    .panel-links a {
+        transition: background 0.2s ease, box-shadow 0.2s ease !important;
+    }
+    .container:hover,
+    .card:hover,
+    nav a:hover {
+        transform: none !important;
+    }
+}
+
+/* ========== 水纹可见波浪层（由 common.js 注入 #qishAquaWaves） ========== */
+.qish-aqua-waves {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    overflow: hidden;
+}
+.qish-aqua-caustic {
+    position: absolute;
+    inset: -10%;
+    background:
+        radial-gradient(ellipse 50% 40% at 25% 35%, rgba(255,255,255,0.35) 0%, transparent 55%),
+        radial-gradient(ellipse 45% 35% at 75% 55%, rgba(165,243,252,0.3) 0%, transparent 50%),
+        radial-gradient(ellipse 40% 30% at 50% 80%, rgba(34,211,238,0.25) 0%, transparent 50%);
+    animation: aquaFlow 14s ease-in-out infinite alternate;
+    filter: blur(8px);
+}
+.qish-wave-svg {
+    position: absolute;
+    left: 0;
+    width: 200%;
+    height: 42%;
+    bottom: 0;
+    display: block;
+}
+.qish-wave-a {
+    bottom: -2%;
+    height: 48%;
+    animation: waveScroll 18s linear infinite;
+    opacity: 0.95;
+}
+.qish-wave-b {
+    bottom: 4%;
+    height: 40%;
+    animation: waveScroll 28s linear infinite reverse;
+    opacity: 0.75;
+}
+.qish-wave-c {
+    bottom: 10%;
+    height: 36%;
+    animation: waveScroll 22s linear infinite;
+    opacity: 0.65;
+    filter: blur(1px);
+}
+@keyframes waveScroll {
+    0%   { transform: translate3d(0, 0, 0); }
+    100% { transform: translate3d(-50%, 0, 0); }
+}
+.qish-aqua-bubbles {
+    position: absolute;
+    inset: 0;
+}
+.qish-aqua-bubbles span {
+    position: absolute;
+    bottom: -20px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.85), rgba(165,243,252,0.35));
+    box-shadow: 0 0 8px rgba(255,255,255,0.4);
+    animation: bubbleRise linear infinite;
+    opacity: 0.55;
+}
+@keyframes bubbleRise {
+    0%   { transform: translate3d(0, 0, 0) scale(0.6); opacity: 0; }
+    10%  { opacity: 0.6; }
+    90%  { opacity: 0.35; }
+    100% { transform: translate3d(12px, -110vh, 0) scale(1.1); opacity: 0; }
+}
+
+/* 确保主内容在波浪之上
+   注意：side-panel / left-image / right-image / overlay 必须保持 fixed，
+   若写成 relative 会进入文档流，出现整屏空白或立绘错位 */
+.container,
+footer {
+    position: relative;
+    z-index: 10;
+}
+nav {
+    z-index: 100;
+}
+.theme-switcher {
+    z-index: 9999;
+}
+.side-panel {
+    position: fixed !important;
+    z-index: 300;
+}
+.overlay {
+    position: fixed !important;
+}
+.left-image {
+    position: fixed !important;
+    z-index: 40;
+}
+.right-image {
+    position: fixed !important;
+    z-index: 60;
+}
+.mouse-glow {
+    position: fixed !important;
+}
+/* 防止水纹层撑开滚动高度 */
+html, body {
+    overflow-x: hidden;
+    max-width: 100%;
+}
+.qish-aqua-waves {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+    pointer-events: none !important;
+    contain: strict;
+}
+[data-theme="aqua"] body::before,
+[data-theme="aqua"] body::after {
+    position: fixed !important;
+    pointer-events: none !important;
+    /* 用 top/left/right/bottom 替代负 inset，避免极端环境下撑出滚动条 */
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* ========== 水纹涟漪（全站板块，替代史莱姆弹动） ========== */
+.container,
+.card,
+.userlist-card,
+.user-item,
+.chat-header,
+.album-header,
+.anime-search-panel,
+.home-announce,
+.home-time-card,
+.home-stats-card,
+.home-announce-card,
+.qm-announce-box,
+.user-modal-box,
+.time-modal-box,
+.search-pager,
+.season-card,
+.anime-card,
+.week-day-tab,
+.filter-chip,
+.panel-links a,
+.nav-links a,
+.theme-switcher-toggle,
+.theme-opt,
+.ym-seg,
+.ym-opt,
+.tag-chip,
+.anime-tag,
+.anime-btn,
+.search-query-pill,
+.pg-btn,
+.pg-go {
+    position: relative;
+    transition:
+        transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow 0.4s ease,
+        border-color 0.35s ease,
+        background 0.35s ease,
+        filter 0.3s ease;
+}
+
+/* 悬停：轻浮起 + 涟漪光圈扩散 */
+.container:hover,
+.card:hover,
+.userlist-card:hover,
+.anime-search-panel:hover,
+.home-announce:hover,
+.home-time-card:hover,
+.home-stats-card:hover,
+.home-announce-card:hover {
+    transform: translateY(-3px);
+    box-shadow:
+        0 12px 36px rgba(15, 23, 42, 0.1),
+        0 0 0 1px rgba(255, 255, 255, 0.45),
+        0 0 0 6px rgba(255, 255, 255, 0.04),
+        0 0 28px rgba(96, 165, 250, 0.12);
+    animation: uiRipplePulse 1.4s ease-out;
+}
+
+.user-item:hover,
+.season-card:hover,
+.anime-card:hover {
+    transform: translateY(-2px);
+    box-shadow:
+        0 10px 28px rgba(15, 23, 42, 0.1),
+        0 0 0 4px rgba(255, 255, 255, 0.05);
+    animation: uiRipplePulse 1.2s ease-out;
+}
+
+.week-day-tab:hover,
+.filter-chip:hover,
+.ym-seg:hover,
+.ym-opt:hover,
+.tag-chip:hover,
+.anime-tag:hover,
+.pg-btn:hover,
+.pg-go:hover,
+.theme-opt:hover,
+.nav-links a:hover,
+.panel-links a:hover {
+    box-shadow:
+        0 4px 14px rgba(15, 23, 42, 0.08),
+        0 0 0 3px rgba(255, 255, 255, 0.06);
+}
+
+/* 点击：水波从中心扩开 */
+.container:active,
+.card:active,
+.user-item:active,
+.season-card:active,
+.anime-card:active,
+.filter-chip:active,
+.panel-links a:active,
+.nav-links a:active,
+.anime-btn:active,
+.pg-btn:active,
+.theme-opt:active,
+.theme-switcher-toggle:active {
+    transform: translateY(0) scale(0.99);
+    box-shadow:
+        0 2px 10px rgba(15, 23, 42, 0.08),
+        0 0 0 10px rgba(255, 255, 255, 0.14);
+    transition-duration: 0.12s;
+}
+
+@keyframes uiRipplePulse {
+    0% {
+        box-shadow:
+            0 8px 24px rgba(15, 23, 42, 0.08),
+            0 0 0 0 rgba(255, 255, 255, 0.35),
+            0 0 0 0 rgba(96, 165, 250, 0.2);
+    }
+    60% {
+        box-shadow:
+            0 12px 32px rgba(15, 23, 42, 0.1),
+            0 0 0 12px rgba(255, 255, 255, 0.08),
+            0 0 0 22px rgba(96, 165, 250, 0.04);
+    }
+    100% {
+        box-shadow:
+            0 12px 36px rgba(15, 23, 42, 0.1),
+            0 0 0 1px rgba(255, 255, 255, 0.45),
+            0 0 0 6px rgba(255, 255, 255, 0.04),
+            0 0 28px rgba(96, 165, 250, 0.12);
+    }
+}
+
+/* 大卡片表面缓慢水光扫过 */
+
+.container:hover::after,
+.card:hover::after,
+.userlist-card:hover::after,
+.anime-search-panel:hover::after {
+    opacity: 1;
+    animation: uiWaterSheen 1.8s ease-in-out infinite;
+}
+
+[data-theme="dark"] .container:hover,
+[data-theme="dark"] .card:hover,
+[data-theme="dark"] .userlist-card:hover {
+    box-shadow:
+        0 14px 40px rgba(0, 0, 0, 0.45),
+        0 0 0 1px rgba(148, 163, 184, 0.2),
+        0 0 0 10px rgba(96, 165, 250, 0.06);
+}
+[data-theme="aqua"] .container:hover,
+[data-theme="aqua"] .card:hover {
+    box-shadow:
+        0 14px 40px rgba(3, 105, 161, 0.22),
+        0 0 0 1px rgba(165, 243, 252, 0.45),
+        0 0 0 12px rgba(34, 211, 238, 0.1),
+        0 0 32px rgba(14, 165, 233, 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .qish-aqua-waves,
+    .qish-wave-svg,
+    .qish-aqua-caustic,
+    .qish-aqua-bubbles span {
+        animation: none !important;
+        display: none !important;
+    }
+    .container:hover,
+    .card:hover,
+    .container::after,
+    .card::after {
+        animation: none !important;
     }
 }

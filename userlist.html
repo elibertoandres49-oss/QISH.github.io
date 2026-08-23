@@ -363,7 +363,7 @@
         }
     </style>
 </head>
-
+<body>
 <div class="side-panel" id="sidePanel">
     <div class="side-panel-content">
         <button class="close-btn" id="closePanel">×</button>
@@ -383,15 +383,13 @@
 </div>
 
 <div class="right-image" id="rightImage">
-    <img src="chibi-normal.png" alt="Q版小人" id="rightCharImg">
+    <img src="qishi-expr-normal.gif" alt="Q版小人" id="rightCharImg">
     <div class="char-bubble" id="charBubble" aria-hidden="true">
         <span class="char-bubble-text">欢迎来到QISH小站~</span>
     </div>
 </div>
 
 <div class="overlay" id="overlay"></div>
-
-<body>
 <div class="mouse-glow" id="glow"></div>
 
 <nav>
@@ -475,13 +473,19 @@ async function updateAuthNav() {
     }
 }
 
+let _userListLoadSeq = 0;
+
 async function loadUserList() {
+    const seq = ++_userListLoadSeq;
     userListBox.innerHTML = "";
 
     const { data, error } = await supabase
         .from("public_user_list")
         .select("user_id, nickname, avatar_url, bio")
         .order("created_at", { ascending: true });
+
+    // 并发加载时只采用最后一次结果，避免列表翻倍
+    if (seq !== _userListLoadSeq) return;
 
     if (error) {
         userListBox.innerHTML = `<p class="empty-tip">加载用户失败：${error.message}</p>`;
@@ -493,7 +497,18 @@ async function loadUserList() {
         return;
     }
 
+    // 按 user_id 去重（库中若有重复行也不翻倍）
+    const seen = new Set();
+    const uniqueRows = [];
     for (const row of data) {
+        const uid = row && row.user_id;
+        if (!uid || seen.has(uid)) continue;
+        seen.add(uid);
+        uniqueRows.push(row);
+    }
+
+    userListBox.innerHTML = "";
+    for (const row of uniqueRows) {
         const userItem = document.createElement("div");
         userItem.className = "user-item";
         userItem.dataset.userId = row.user_id;
@@ -662,15 +677,25 @@ document.addEventListener("keydown", (e) => {
     }
 });
 
-(async function init() {
+let _userListBootTimer = null;
+async function bootUserList() {
     await updateAuthNav();
     await loadUserList();
     await initPresenceListener();
-})();
+}
 
-supabase.auth.onAuthStateChange(() => {
-    init();
-});
+bootUserList();
+
+if (supabase) {
+    supabase.auth.onAuthStateChange(function (event) {
+        if (event === "INITIAL_SESSION") return;
+        // 防抖：短时间内多次 auth 事件只刷新一次，避免列表重复渲染
+        clearTimeout(_userListBootTimer);
+        _userListBootTimer = setTimeout(function () {
+            bootUserList();
+        }, 200);
+    });
+}
 </script>
 
 </body>

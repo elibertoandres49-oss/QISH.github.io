@@ -138,6 +138,57 @@
         .msg-img:hover {
             transform: scale(1.02);
         }
+        /* 新番分享卡片 */
+        .msg-anime-card {
+            display: flex;
+            gap: 12px;
+            align-items: stretch;
+            margin-top: 6px;
+            padding: 10px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.55);
+            border: 1px solid rgba(255,255,255,0.5);
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            max-width: 320px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .msg-anime-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59,130,246,0.2);
+        }
+        .msg-anime-card img {
+            width: 72px;
+            height: 96px;
+            object-fit: cover;
+            border-radius: 10px;
+            flex-shrink: 0;
+            background: #e2e8f0;
+        }
+        .msg-anime-meta {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            justify-content: center;
+        }
+        .msg-anime-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.35;
+        }
+        .msg-anime-sub {
+            font-size: 12px;
+            color: #64748b;
+        }
+        .msg-anime-go {
+            font-size: 12px;
+            font-weight: 700;
+            color: #2563eb;
+        }
         /* 文件消息卡片 */
         .msg-file-card {
             display: flex;
@@ -641,7 +692,7 @@
 </div>
 
 <div class="right-image" id="rightImage">
-    <img src="chibi-normal.png" alt="Q版小人" id="rightCharImg">
+    <img src="qishi-expr-normal.gif" alt="Q版小人" id="rightCharImg">
     <div class="char-bubble" id="charBubble" aria-hidden="true">
         <span class="char-bubble-text">欢迎来到QISH小站~</span>
     </div>
@@ -844,11 +895,33 @@ function appendMessage(item, isMine) {
 
     let bodyHtml = "";
 
-    if (msgType === "image" && item.file_url) {
+    // 识别新番分享：#qish_anime:ID 或 anime.html?id=
+    const animeMatch = (item.content || "").match(/#qish_anime:(\d+)/) ||
+        (item.content || "").match(/anime\.html\?id=(\d+)/) ||
+        (item.content || "").match(/bgm\.tv\/subject\/(\d+)/);
+    const animeId = animeMatch ? animeMatch[1] : null;
+    const animeTitleMatch = (item.content || "").match(/【([^】]+)】/);
+    const animeTitle = animeTitleMatch ? animeTitleMatch[1] : "新番推荐";
+    const animeScoreMatch = (item.content || "").match(/评分\s*([\d.]+)/);
+    const animeScore = animeScoreMatch ? animeScoreMatch[1] : "";
+
+    if (animeId) {
+        const cover = item.file_url || "";
+        bodyHtml = `
+            <div class="msg-content">📺 安利新番</div>
+            <a class="msg-anime-card" href="anime.html?id=${animeId}" title="点击查看详情">
+                ${cover ? `<img src="${cover}" alt="" loading="lazy">` : ""}
+                <div class="msg-anime-meta">
+                    <div class="msg-anime-title">${escapeHtml(animeTitle)}</div>
+                    <div class="msg-anime-sub">${animeScore ? "★ " + escapeHtml(animeScore) + " · " : ""}Bangumi</div>
+                    <div class="msg-anime-go">查看详情 ›</div>
+                </div>
+            </a>
+        `;
+    } else if (msgType === "image" && item.file_url) {
         bodyHtml = `
             ${item.content ? `<div class="msg-content">${escapeHtml(item.content)}</div>` : ""}
-            <img class="msg-img" src="${item.file_url}" alt="图片" loading="lazy"
-                 onclick="openImgModal('${item.file_url}')">
+            <img class="msg-img" src="${escapeHtml(item.file_url)}" alt="图片" loading="lazy" data-preview-url="${escapeHtml(item.file_url)}">
         `;
     } else if (msgType === "file" && item.file_url) {
         const icon = getFileIcon(item.file_name);
@@ -857,8 +930,8 @@ function appendMessage(item, isMine) {
             (item.file_url && /\.(mp3|wav|ogg|m4a|flac|aac)(\?|$)/i.test(item.file_url));
         const audioBtns = isAudio ? `
             <div class="msg-audio-actions">
-                <button type="button" class="msg-audio-btn add" data-url="${item.file_url}" data-name="${escapeHtml(item.file_name || '音频')}">🎵 加入播放</button>
-                <button type="button" class="msg-audio-btn together" data-url="${item.file_url}" data-name="${escapeHtml(item.file_name || '音频')}">🔊 一起听</button>
+                <button type="button" class="msg-audio-btn add" data-url="${escapeHtml(item.file_url)}" data-name="${escapeHtml(item.file_name || '音频')}">🎵 加入播放</button>
+                <button type="button" class="msg-audio-btn together" data-url="${escapeHtml(item.file_url)}" data-name="${escapeHtml(item.file_name || '音频')}">🔊 一起听</button>
             </div>
         ` : "";
         bodyHtml = `
@@ -869,7 +942,7 @@ function appendMessage(item, isMine) {
                     <div class="msg-file-name" title="${escapeHtml(item.file_name || '文件')}">${escapeHtml(item.file_name || '文件')}</div>
                     ${sizeStr ? `<div class="msg-file-size">${sizeStr}</div>` : ""}
                 </div>
-                <a class="msg-file-dl" href="${item.file_url}" download="${escapeHtml(item.file_name || 'download')}" target="_blank" rel="noopener">下载</a>
+                <a class="msg-file-dl" href="${escapeHtml(item.file_url)}" download="${escapeHtml(item.file_name || 'download')}" target="_blank" rel="noopener">下载</a>
             </div>
             ${audioBtns}
         `;
@@ -893,7 +966,7 @@ function appendMessage(item, isMine) {
     div.dataset.createdAt = item.created_at || "";
 
     div.innerHTML = `
-        <img class="msg-avatar" src="${avatarSrc}" alt="头像" onerror="this.src='${defaultAvatar}'">
+        <img class="msg-avatar" src="${escapeHtml(avatarSrc)}" alt="头像" onerror="this.src='${defaultAvatar}'">
         <div class="msg-bubble">
             <div class="msg-meta">
                 <span class="msg-nick">${escapeHtml(item.nickname || '匿名用户')}</span>
@@ -903,6 +976,12 @@ function appendMessage(item, isMine) {
             ${actionsHtml}
         </div>
     `;
+    div.querySelectorAll(".msg-img[data-preview-url]").forEach((img) => {
+        img.onclick = (ev) => {
+            ev.stopPropagation();
+            openImgModal(img.getAttribute("data-preview-url") || img.src);
+        };
+    });
     div.querySelectorAll(".msg-audio-btn.add").forEach((btn) => {
         btn.onclick = (ev) => {
             ev.stopPropagation();

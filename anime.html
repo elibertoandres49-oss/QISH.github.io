@@ -1,0 +1,1817 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新番时刻表 - QISH</title>
+    <script>
+    (function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="color"||t==="custom")?t:"color");}catch(e){document.documentElement.setAttribute("data-theme","color");}})();
+    </script>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
+    <script>
+        window.SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
+        window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
+        window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage, storageKey: "qish-auth-v1" }
+        });
+    </script>
+    <script src="common.js" defer></script>
+    <style>
+        .anime-wrap { max-width: 1480px; margin: 0 auto; padding: 0 12px 48px; }
+        .anime-header {
+            display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between;
+            gap: 14px; margin-bottom: 18px;
+        }
+        .anime-header h1 { margin: 0; font-size: 1.6rem; font-weight: 900; color: #0f172a; border: none; }
+        .anime-header p { margin: 6px 0 0; font-size: 13px; color: #64748b; }
+        [data-theme="dark"] .anime-header h1 { color: #f1f5f9; }
+        [data-theme="dark"] .anime-header p { color: #94a3b8; }
+
+        .anime-toolbar {
+            display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+            margin-bottom: 16px;
+        }
+        .anime-tabs {
+            display: inline-flex; padding: 4px; border-radius: 14px;
+            background: rgba(255,255,255,0.28); border: 1px solid rgba(255,255,255,0.4);
+            backdrop-filter: blur(12px);
+        }
+        .anime-tab {
+            border: none; background: transparent; padding: 8px 16px; border-radius: 11px;
+            font-size: 13px; font-weight: 700; color: #475569; cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .anime-tab.active {
+            background: linear-gradient(135deg, #60a5fa, #34d399);
+            color: #fff; box-shadow: 0 4px 14px rgba(96,165,250,0.35);
+        }
+        .season-nav {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 6px 8px; border-radius: 14px;
+            background: rgba(255,255,255,0.28); border: 1px solid rgba(255,255,255,0.4);
+        }
+        .season-nav button {
+            width: 32px; height: 32px; border: none; border-radius: 10px;
+            background: rgba(255,255,255,0.55); color: #1e40af; font-size: 16px; font-weight: 800;
+            cursor: pointer; transition: transform 0.15s;
+        }
+        .season-nav button:hover { transform: scale(1.06); }
+        .season-label { font-size: 14px; font-weight: 800; color: #0f172a; min-width: 110px; text-align: center; }
+        [data-theme="dark"] .season-label { color: #f1f5f9; }
+        .anime-filter {
+            margin-left: auto; display: flex; gap: 6px; flex-wrap: wrap;
+        }
+        .filter-chip {
+            border: 1px solid rgba(148,163,184,0.4); background: rgba(255,255,255,0.35);
+            padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;
+            color: #475569; cursor: pointer;
+        }
+        .filter-chip.active { background: rgba(59,130,246,0.2); border-color: #3b82f6; color: #1d4ed8; }
+
+        .anime-status {
+            font-size: 12px; color: #64748b; margin-bottom: 12px; min-height: 18px;
+        }
+
+        /* 周视图：按日切换，单列宽松列表（避免七列拥挤） */
+        .week-day-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding: 6px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.25);
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+        .week-day-tab {
+            flex: 1;
+            min-width: 72px;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 8px;
+            font-size: 13px;
+            font-weight: 800;
+            color: #475569;
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+            line-height: 1.35;
+        }
+        .week-day-tab small {
+            display: block;
+            font-size: 11px;
+            font-weight: 600;
+            opacity: 0.75;
+            margin-top: 2px;
+        }
+        .week-day-tab:hover { background: rgba(255,255,255,0.45); }
+        .week-day-tab.active {
+            background: linear-gradient(135deg, #60a5fa, #34d399);
+            color: #fff;
+            box-shadow: 0 6px 18px rgba(96,165,250,0.35);
+        }
+        .week-day-tab.today:not(.active) {
+            background: rgba(251,146,60,0.18);
+            color: #c2410c;
+        }
+        .week-day-tab.active.today {
+            background: linear-gradient(135deg, #f472b6, #fb923c);
+        }
+
+        .week-day-panel {
+            border-radius: 20px;
+            background: rgba(255,255,255,0.22);
+            border: 1px solid rgba(255,255,255,0.38);
+            backdrop-filter: blur(12px);
+            padding: 18px 16px 20px;
+            min-height: 280px;
+        }
+        .week-day-title {
+            margin: 0 0 16px;
+            font-size: 1.05rem;
+            font-weight: 900;
+            color: #0f172a;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .week-day-title .cnt {
+            font-size: 12px;
+            font-weight: 700;
+            color: #64748b;
+            background: rgba(148,163,184,0.2);
+            padding: 3px 10px;
+            border-radius: 999px;
+        }
+
+        .week-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .anime-card {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 16px;
+            padding: 14px 16px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.55);
+            border: 1px solid rgba(255,255,255,0.55);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-align: left;
+            width: 100%;
+            color: inherit;
+            font: inherit;
+            overflow: hidden;
+        }
+        .anime-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 28px rgba(59,130,246,0.18);
+            background: rgba(255,255,255,0.72);
+        }
+        .anime-card img {
+            width: 92px;
+            height: 122px;
+            object-fit: cover;
+            border-radius: 12px;
+            flex-shrink: 0;
+            display: block;
+            background: #e2e8f0;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+        }
+        .anime-card-meta {
+            min-width: 0;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .anime-card-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.45;
+            word-break: break-word;
+        }
+        .anime-card-sub {
+            font-size: 13px; color: #64748b;
+            display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center;
+        }
+        .anime-card-arrow {
+            flex-shrink: 0;
+            font-size: 20px;
+            font-weight: 700;
+            color: #94a3b8;
+            padding: 0 4px;
+        }
+        [data-theme="dark"] .week-day-panel {
+            background: rgba(30,41,59,0.55);
+            border-color: rgba(255,255,255,0.1);
+        }
+        [data-theme="dark"] .week-day-title { color: #f1f5f9; }
+        [data-theme="dark"] .week-day-tabs {
+            background: rgba(30,41,59,0.6);
+            border-color: rgba(255,255,255,0.12);
+        }
+
+        /* 搜索 / 年月筛选 */
+        .anime-search-panel {
+            margin-bottom: 14px;
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: rgba(255,255,255,0.28);
+            border: 1px solid rgba(255,255,255,0.4);
+            backdrop-filter: blur(12px);
+        }
+        .search-input-row {
+            display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+        }
+        .search-mode-tabs {
+            display: inline-flex; gap: 4px;
+        }
+        .search-input-row input {
+            flex: 1; min-width: 180px;
+            border: 1px solid rgba(148,163,184,0.4);
+            background: rgba(255,255,255,0.65);
+            border-radius: 12px;
+            padding: 10px 14px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #0f172a;
+            outline: none;
+        }
+        .search-input-row input:focus {
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 3px rgba(96,165,250,0.25);
+        }
+        .search-input-row button {
+            border: none;
+            border-radius: 12px;
+            padding: 10px 18px;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+            background: linear-gradient(135deg, #60a5fa, #34d399);
+            color: #fff;
+        }
+        .ym-picker-row {
+            margin-top: 12px;
+            display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+        }
+        .ym-picker-row .ym-label {
+            font-size: 12px; font-weight: 700; color: #64748b;
+        }
+        .ym-seg {
+            border: 1px solid rgba(148,163,184,0.45);
+            background: rgba(255,255,255,0.55);
+            border-radius: 10px;
+            padding: 7px 12px;
+            font-size: 14px;
+            font-weight: 800;
+            color: #1d4ed8;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.15s;
+        }
+        .ym-seg:hover { background: rgba(96,165,250,0.2); transform: translateY(-1px); }
+        .ym-seg.active { background: rgba(96,165,250,0.28); border-color: #3b82f6; }
+        .ym-text { font-size: 13px; font-weight: 700; color: #475569; }
+        .ym-dropdown {
+            display: none;
+            width: 100%;
+            margin-top: 8px;
+            padding: 10px;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.55);
+            border: 1px solid rgba(255,255,255,0.5);
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .ym-dropdown.show { display: flex; }
+        .ym-opt {
+            border: 1px solid rgba(148,163,184,0.35);
+            background: rgba(255,255,255,0.7);
+            border-radius: 10px;
+            padding: 6px 12px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #334155;
+            cursor: pointer;
+        }
+        .ym-opt:hover, .ym-opt.on {
+            background: linear-gradient(135deg, #60a5fa, #34d399);
+            color: #fff;
+            border-color: transparent;
+        }
+        .tag-chip-row {
+            margin-top: 10px;
+            display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+        }
+        .tag-chip-row .ym-label { margin-right: 4px; }
+        .tag-chip {
+            border: 1px solid rgba(244,114,182,0.35);
+            background: rgba(244,114,182,0.12);
+            color: #be185d;
+            border-radius: 999px;
+            padding: 5px 11px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .tag-chip:hover { background: rgba(244,114,182,0.25); }
+        [data-theme="dark"] .search-input-row input,
+        [data-theme="dark"] .ym-seg,
+        [data-theme="dark"] .ym-opt {
+            background: rgba(30,41,59,0.8);
+            color: #e2e8f0;
+            border-color: rgba(255,255,255,0.15);
+        }
+        [data-theme="dark"] .anime-search-panel {
+            background: rgba(30,41,59,0.65);
+            border-color: rgba(255,255,255,0.12);
+        }
+        .score-pill {
+            display: inline-flex; align-items: center; gap: 2px;
+            padding: 2px 7px; border-radius: 999px;
+            background: rgba(251,191,36,0.22); color: #b45309; font-weight: 800;
+            font-size: 11px;
+        }
+        .mark-dot {
+            width: 9px; height: 9px; border-radius: 50%; display: inline-block;
+        }
+        .mark-dot.want { background: #a78bfa; }
+        .mark-dot.watching { background: #34d399; }
+        .mark-dot.fav { background: #f472b6; }
+
+        /* 季度网格 */
+        .season-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 14px;
+        }
+        .season-card {
+            background: rgba(255,255,255,0.28);
+            border: 1px solid rgba(255,255,255,0.4);
+            border-radius: 16px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-align: left;
+            padding: 0;
+            font: inherit;
+            color: inherit;
+            width: 100%;
+        }
+        .season-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px rgba(59,130,246,0.2);
+        }
+        .season-card img {
+            width: 100%; aspect-ratio: 3/4; object-fit: cover; display: block; background: #e2e8f0;
+        }
+        .season-card-body { padding: 10px 12px 12px; }
+        .season-card-title {
+            font-size: 13px; font-weight: 800; color: #0f172a;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+            line-height: 1.35; min-height: 2.7em;
+        }
+        .season-card-sub {
+            margin-top: 6px; font-size: 11px; color: #64748b;
+            display: flex; justify-content: space-between; gap: 6px; align-items: center;
+        }
+
+        /* 弹窗 */
+        .anime-modal-mask {
+            position: fixed; inset: 0; z-index: 10020;
+            background: rgba(15,23,42,0.4);
+            backdrop-filter: blur(12px);
+            display: flex; align-items: center; justify-content: center;
+            padding: 16px;
+            opacity: 0; visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        .anime-modal-mask.show { opacity: 1; visibility: visible; }
+        .anime-modal {
+            width: min(520px, 96vw); max-height: 90vh; overflow-y: auto;
+            background: rgba(255,255,255,0.5);
+            border: 1px solid rgba(255,255,255,0.55);
+            border-radius: 24px;
+            backdrop-filter: blur(24px);
+            box-shadow: 0 24px 70px rgba(0,0,0,0.28);
+            padding: 0;
+            position: relative;
+            transform: translateY(16px) scale(0.96);
+            transition: transform 0.35s cubic-bezier(0.34,1.4,0.64,1);
+        }
+        .anime-modal-mask.show .anime-modal { transform: none; }
+        .anime-modal-close {
+            position: absolute; top: 12px; right: 12px; z-index: 2;
+            width: 34px; height: 34px; border-radius: 50%; border: none;
+            background: rgba(255,255,255,0.7); font-size: 18px; font-weight: 800;
+            cursor: pointer; color: #475569;
+        }
+        .anime-modal-hero {
+            display: flex; gap: 14px; padding: 22px 20px 12px;
+        }
+        .anime-modal-hero img {
+            width: 110px; height: 154px; object-fit: cover; border-radius: 14px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.18); flex-shrink: 0;
+        }
+        .anime-modal-hero h2 {
+            margin: 0 0 8px; font-size: 1.15rem; font-weight: 900; color: #0f172a; border: none;
+            line-height: 1.35;
+        }
+        .anime-modal-hero .jp { font-size: 12px; color: #64748b; margin-bottom: 8px; }
+        .anime-modal-body { padding: 0 20px 20px; }
+        .anime-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+        .anime-tag {
+            padding: 4px 11px; border-radius: 999px; font-size: 11px; font-weight: 700;
+            background: rgba(96,165,250,0.18); color: #1d4ed8;
+            border: none; cursor: pointer;
+            transition: transform 0.15s, background 0.15s;
+            font-family: inherit;
+        }
+        .anime-tag:hover {
+            transform: translateY(-1px);
+            background: rgba(96,165,250,0.32);
+        }
+        .anime-tag.year-tag {
+            background: rgba(244,114,182,0.18); color: #be185d;
+        }
+        .anime-tag.year-tag:hover { background: rgba(244,114,182,0.32); }
+        .search-bar-row {
+            display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+            margin-bottom: 12px;
+        }
+        .search-query-pill {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 8px 14px; border-radius: 999px;
+            background: rgba(255,255,255,0.4); border: 1px solid rgba(255,255,255,0.5);
+            font-size: 13px; font-weight: 700; color: #0f172a;
+        }
+        .search-query-pill button {
+            border: none; background: rgba(148,163,184,0.35); width: 22px; height: 22px;
+            border-radius: 50%; cursor: pointer; font-weight: 800; color: #475569;
+        }
+        /* 搜索分页 */
+        .search-pager {
+            display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+            gap: 8px; margin: 16px 0 8px; padding: 12px 14px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.32);
+            border: 1px solid rgba(255,255,255,0.45);
+        }
+        .search-pager .pg-btn {
+            border: 1px solid rgba(148,163,184,0.45);
+            background: rgba(255,255,255,0.7);
+            border-radius: 10px;
+            padding: 7px 14px;
+            font-size: 13px; font-weight: 800;
+            color: #1d4ed8; cursor: pointer;
+            transition: background 0.15s, transform 0.15s;
+        }
+        .search-pager .pg-btn:hover:not(:disabled) {
+            background: rgba(96,165,250,0.25);
+            transform: translateY(-1px);
+        }
+        .search-pager .pg-btn:disabled {
+            opacity: 0.4; cursor: not-allowed;
+        }
+        .search-pager .pg-info {
+            font-size: 13px; font-weight: 800; color: #334155;
+            padding: 0 6px;
+        }
+        .search-pager .pg-jump {
+            display: inline-flex; align-items: center; gap: 6px;
+            margin-left: 4px;
+        }
+        .search-pager .pg-jump input {
+            width: 56px;
+            border: 1px solid rgba(148,163,184,0.45);
+            background: rgba(255,255,255,0.75);
+            border-radius: 10px;
+            padding: 6px 8px;
+            font-size: 13px; font-weight: 700;
+            color: #0f172a; text-align: center; outline: none;
+        }
+        .search-pager .pg-jump input:focus {
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 3px rgba(96,165,250,0.22);
+        }
+        .search-pager .pg-jump .pg-go {
+            border: none;
+            border-radius: 10px;
+            padding: 7px 12px;
+            font-size: 12px; font-weight: 800;
+            cursor: pointer;
+            background: linear-gradient(135deg, #60a5fa, #34d399);
+            color: #fff;
+        }
+        [data-theme="dark"] .search-pager {
+            background: rgba(15,23,42,0.45);
+            border-color: rgba(255,255,255,0.1);
+        }
+        [data-theme="dark"] .search-pager .pg-btn,
+        [data-theme="dark"] .search-pager .pg-jump input {
+            background: rgba(30,41,59,0.8);
+            border-color: rgba(148,163,184,0.3);
+            color: #e2e8f0;
+        }
+        [data-theme="dark"] .search-pager .pg-info { color: #cbd5e1; }
+        .anime-summary {
+            font-size: 13px; line-height: 1.65; color: #334155;
+            white-space: pre-wrap; max-height: 180px; overflow-y: auto;
+            margin: 10px 0;
+        }
+        .anime-info-list {
+            font-size: 12px; color: #475569; line-height: 1.7;
+            background: rgba(255,255,255,0.4); border-radius: 12px; padding: 10px 12px;
+        }
+        .anime-info-list div { display: flex; gap: 8px; }
+        .anime-info-list .k { flex: 0 0 72px; font-weight: 700; color: #64748b; }
+        .anime-actions {
+            display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px;
+        }
+        .anime-btn {
+            border: none; border-radius: 12px; padding: 9px 14px;
+            font-size: 13px; font-weight: 800; cursor: pointer;
+            transition: transform 0.15s;
+        }
+        .anime-btn:hover { transform: translateY(-1px); }
+        .anime-btn.primary { background: linear-gradient(135deg,#60a5fa,#34d399); color: #fff; }
+        .anime-btn.ghost { background: rgba(255,255,255,0.55); color: #334155; border: 1px solid rgba(148,163,184,0.35); }
+        .anime-btn.active-want { background: #a78bfa; color: #fff; }
+        .anime-btn.active-watching { background: #34d399; color: #fff; }
+        .anime-btn.active-fav { background: #f472b6; color: #fff; }
+
+        .empty-tip, .loading-tip {
+            text-align: center; padding: 40px 16px; color: #94a3b8; font-size: 14px;
+        }
+
+        [data-theme="dark"] .week-col,
+        [data-theme="dark"] .season-card,
+        [data-theme="dark"] .anime-card {
+            background: rgba(30,41,59,0.55);
+            border-color: rgba(255,255,255,0.1);
+        }
+        [data-theme="dark"] .anime-card-title,
+        [data-theme="dark"] .season-card-title,
+        [data-theme="dark"] .anime-modal-hero h2 { color: #f1f5f9; }
+        [data-theme="dark"] .anime-modal {
+            background: rgba(30,41,59,0.92);
+            border-color: rgba(255,255,255,0.12);
+        }
+        [data-theme="dark"] .anime-summary { color: #cbd5e1; }
+        [data-theme="dark"] .anime-info-list {
+            background: rgba(15,23,42,0.5); color: #94a3b8;
+        }
+        [data-theme="dark"] .anime-tabs,
+        [data-theme="dark"] .season-nav {
+            background: rgba(30,41,59,0.7);
+            border-color: rgba(255,255,255,0.12);
+        }
+
+        @media (max-width: 640px) {
+            .anime-filter { margin-left: 0; width: 100%; }
+            .week-day-tab { min-width: 56px; padding: 10px 4px; font-size: 12px; }
+            .anime-card { gap: 12px; padding: 12px; }
+            .anime-card img { width: 76px; height: 100px; }
+            .anime-card-title { font-size: 14px; }
+            .anime-card-arrow { display: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="side-panel" id="sidePanel">
+    <div class="side-panel-content">
+        <button class="close-btn" id="closePanel">×</button>
+        <img src="avatar.jpg" alt="头像" class="panel-avatar" id="panelAvatar">
+        <h2 id="panelUsername">QISH</h2>
+        <p class="panel-desc">ovo</p>
+        <div class="panel-links" id="panelLinksBox">
+            <a href="index.html">首页</a>
+            <a href="about.html">关于我</a>
+            <a href="projects.html">我的项目</a>
+            <a href="userlist.html">用户列表</a>
+            <a href="profile.html">个人资料</a>
+            <a href="album.html">相册</a>
+            <a href="chat.html">聊天室</a>
+            <a href="auth.html">登录/注册</a>
+        </div>
+    </div>
+</div>
+
+<div class="right-image" id="rightImage">
+    <img src="qishi-expr-normal.gif" alt="Q版小人" id="rightCharImg">
+    <div class="char-bubble" id="charBubble" aria-hidden="true">
+        <span class="char-bubble-text">今晚看什么番呢~</span>
+    </div>
+</div>
+<div class="overlay" id="overlay"></div>
+<div class="mouse-glow" id="glow"></div>
+
+<nav>
+    <div class="nav-avatar-area">
+        <img src="avatar.jpg" alt="头像" class="nav-avatar" id="navAvatar">
+        <span class="nav-nickname" id="navNickname" style="display: none;"></span>
+    </div>
+    <div class="nav-links">
+        <a href="index.html">首页</a>
+        <a href="about.html">关于我</a>
+        <a href="projects.html">项目</a>
+        <a href="userlist.html">用户列表</a>
+        <a href="profile.html">个人资料</a>
+        <a href="album.html">相册</a>
+        <a href="chat.html">聊天室</a>
+        <span id="auth-nav"><a href="auth.html">登录/注册</a></span>
+    </div>
+</nav>
+
+<div class="container anime-wrap">
+    <div class="anime-header">
+        <div>
+            <h1>新番时刻表</h1>
+            <p>数据来自 Bangumi · 本地追番标记 · 约 90 分钟缓存</p>
+        </div>
+    </div>
+
+    <div class="anime-toolbar">
+        <div class="anime-tabs" role="tablist">
+            <button type="button" class="anime-tab active" data-view="week" id="tabWeek">周视图</button>
+            <button type="button" class="anime-tab" data-view="season" id="tabSeason">本季新番</button>
+        </div>
+        <div class="season-nav" id="seasonNav" style="display:none;">
+            <button type="button" id="seasonPrev" aria-label="上一季">‹</button>
+            <span class="season-label" id="seasonLabel">—</span>
+            <button type="button" id="seasonNext" aria-label="下一季">›</button>
+        </div>
+        <div class="anime-filter">
+            <button type="button" class="filter-chip active" data-filter="all">全部</button>
+            <button type="button" class="filter-chip" data-filter="watching">在看</button>
+            <button type="button" class="filter-chip" data-filter="want">想看</button>
+            <button type="button" class="filter-chip" data-filter="fav">收藏</button>
+        </div>
+    </div>
+
+    <!-- 搜索 + 年份/月份/季度 -->
+    <div class="anime-search-panel">
+        <div class="search-input-row">
+            <div class="search-mode-tabs" id="searchModeTabs">
+                <button type="button" class="filter-chip active" data-smode="name" id="modeName">名称搜索</button>
+                <button type="button" class="filter-chip" data-smode="tag" id="modeTag">标签搜索</button>
+            </div>
+            <input type="search" id="animeSearchInput" placeholder="输入番名，例如：孤独摇滚…" enterkeyhint="search" style="flex:1;min-width:160px;">
+            <button type="button" id="animeSearchBtn">搜索</button>
+        </div>
+        <div class="ym-picker-row">
+            <span class="ym-label">年份季度</span>
+            <button type="button" class="ym-seg" id="pickYearBtn" title="点击选择年份">2026</button>
+            <span class="ym-text">年</span>
+            <button type="button" class="ym-seg" id="pickMonthBtn" title="点击选择月份/季度">7</button>
+            <span class="ym-text">月</span>
+            <button type="button" class="ym-seg" id="pickSeasonBtn" title="点击选择季度">夏季</button>
+            <button type="button" class="ym-seg" id="applySeasonBtn" style="background:linear-gradient(135deg,#f472b6,#fb923c);color:#fff;border:none;">查看该季</button>
+        </div>
+        <div class="ym-dropdown" id="yearDrop"></div>
+        <div class="ym-dropdown" id="monthDrop"></div>
+        <div class="tag-chip-row" id="hotTagRow">
+            <span class="ym-label">快捷标签</span>
+        </div>
+    </div>
+
+    <div class="anime-status" id="animeStatus">加载中…</div>
+    <div id="animeMain"></div>
+</div>
+
+<div class="anime-modal-mask" id="animeModalMask">
+    <div class="anime-modal" role="dialog" aria-modal="true">
+        <button class="anime-modal-close" id="animeModalClose" aria-label="关闭">×</button>
+        <div class="anime-modal-hero">
+            <img id="modalCover" src="" alt="">
+            <div>
+                <h2 id="modalTitle">—</h2>
+                <div class="jp" id="modalJp"></div>
+                <div class="anime-card-sub" id="modalScoreRow"></div>
+            </div>
+        </div>
+        <div class="anime-modal-body">
+            <div class="anime-tags" id="modalTags"></div>
+            <div class="anime-summary" id="modalSummary">加载中…</div>
+            <div class="anime-info-list" id="modalInfo"></div>
+            <div class="anime-actions">
+                <button type="button" class="anime-btn ghost" id="btnWant">想看</button>
+                <button type="button" class="anime-btn ghost" id="btnWatching">在看</button>
+                <button type="button" class="anime-btn ghost" id="btnFav">收藏</button>
+                <button type="button" class="anime-btn ghost" id="btnShareChat">分享到聊天室</button>
+                <a class="anime-btn primary" id="btnBgm" href="#" target="_blank" rel="noopener">打开 Bangumi</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer>© 2026 QISH · 数据来源 Bangumi</footer>
+
+<script>
+(function () {
+    const CACHE_MS = 90 * 60 * 1000; // 90 分钟
+    const MARK_KEY = "qish_anime_marks_v1";
+    const UA_NOTE = "QISH personal anime board";
+    const BGM_BASE = "https://api.bgm.tv";
+    const PROXY_BASE = "/api/bgm"; // 若 server.js 代理可用则优先
+
+    const mainEl = document.getElementById("animeMain");
+    const statusEl = document.getElementById("animeStatus");
+    const seasonNav = document.getElementById("seasonNav");
+    const seasonLabel = document.getElementById("seasonLabel");
+
+    let view = "week"; // week | season | search
+    let filter = "all"; // all | want | watching | fav
+    let calendarData = null;
+    let seasonData = null;
+    let searchData = null;
+    let searchQuery = "";
+    let searchPage = 1;          // 当前页（从 1 开始）
+    let searchTotal = 0;         // API 返回的总条数
+    let searchPageSize = 24;     // 每页条数
+    let seasonInfo = getSeasonInfo(new Date());
+    let currentSubjectId = null;
+    let currentSubjectCache = null; // 详情缓存，用于分享
+    let selectedWeekDayId = null; // 1-7，默认今天
+    let pickYear = seasonInfo.year;
+    let pickMonth = seasonInfo.month; // 1|4|7|10
+
+    function syncPickerUI() {
+        var labels = { 1: "冬季", 4: "春季", 7: "夏季", 10: "秋季" };
+        var yBtn = document.getElementById("pickYearBtn");
+        var mBtn = document.getElementById("pickMonthBtn");
+        var sBtn = document.getElementById("pickSeasonBtn");
+        if (yBtn) yBtn.textContent = String(pickYear);
+        if (mBtn) mBtn.textContent = String(pickMonth);
+        if (sBtn) sBtn.textContent = labels[pickMonth] || "";
+    }
+
+    function buildYearDrop() {
+        var box = document.getElementById("yearDrop");
+        if (!box) return;
+        var nowY = new Date().getFullYear();
+        var html = "";
+        for (var y = nowY + 1; y >= nowY - 12; y--) {
+            html += '<button type="button" class="ym-opt' + (y === pickYear ? " on" : "") + '" data-y="' + y + '">' + y + "</button>";
+        }
+        box.innerHTML = html;
+        box.querySelectorAll(".ym-opt").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                pickYear = Number(btn.getAttribute("data-y"));
+                syncPickerUI();
+                closeDrops();
+                buildYearDrop();
+            });
+        });
+    }
+
+    function buildMonthDrop() {
+        var box = document.getElementById("monthDrop");
+        if (!box) return;
+        var opts = [
+            { m: 1, t: "1月 · 冬季" },
+            { m: 4, t: "4月 · 春季" },
+            { m: 7, t: "7月 · 夏季" },
+            { m: 10, t: "10月 · 秋季" }
+        ];
+        box.innerHTML = opts.map(function (o) {
+            return '<button type="button" class="ym-opt' + (o.m === pickMonth ? " on" : "") + '" data-m="' + o.m + '">' + o.t + "</button>";
+        }).join("");
+        box.querySelectorAll(".ym-opt").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                pickMonth = Number(btn.getAttribute("data-m"));
+                syncPickerUI();
+                closeDrops();
+                buildMonthDrop();
+            });
+        });
+    }
+
+    function closeDrops() {
+        var yd = document.getElementById("yearDrop");
+        var md = document.getElementById("monthDrop");
+        if (yd) yd.classList.remove("show");
+        if (md) md.classList.remove("show");
+        var yb = document.getElementById("pickYearBtn");
+        var mb = document.getElementById("pickMonthBtn");
+        var sb = document.getElementById("pickSeasonBtn");
+        if (yb) yb.classList.remove("active");
+        if (mb) mb.classList.remove("active");
+        if (sb) sb.classList.remove("active");
+    }
+
+    function applyPickedSeason() {
+        var labels = { 1: "冬季", 4: "春季", 7: "夏季", 10: "秋季" };
+        seasonInfo = {
+            year: pickYear,
+            month: pickMonth,
+            label: labels[pickMonth],
+            tag: pickYear + "年" + pickMonth + "月"
+        };
+        view = "season";
+        seasonData = null;
+        searchQuery = "";
+        searchData = null;
+        setActiveTab("season");
+        closeDrops();
+        loadSeason();
+    }
+
+    function fillHotTagsFromCalendar(data) {
+        var row = document.getElementById("hotTagRow");
+        if (!row || !Array.isArray(data)) return;
+        // 从日历条目 air_date 提取年份季度标签
+        var tagSet = {};
+        data.forEach(function (day) {
+            (day.items || []).forEach(function (it) {
+                if (it.air_date) {
+                    var p = String(it.air_date).split("-");
+                    if (p.length >= 2) {
+                        var y = parseInt(p[0], 10);
+                        var m = parseInt(p[1], 10);
+                        var sm = m <= 3 ? 1 : m <= 6 ? 4 : m <= 9 ? 7 : 10;
+                        if (y) tagSet[y + "年" + sm + "月"] = true;
+                    }
+                }
+            });
+        });
+        // 常见类型标签（可点搜索）
+        var extra = ["恋爱", "校园", "奇幻", "科幻", "日常", "战斗", "原创", "漫画改", "轻小说改"];
+        var yearTags = Object.keys(tagSet).sort().reverse().slice(0, 6);
+        var html = '<span class="ym-label">快捷标签</span>';
+        yearTags.forEach(function (t) {
+            html += '<button type="button" class="tag-chip" data-tag="' + t + '">' + t + "</button>";
+        });
+        extra.forEach(function (t) {
+            html += '<button type="button" class="tag-chip" data-tag="' + t + '">' + t + "</button>";
+        });
+        row.innerHTML = html;
+        row.querySelectorAll(".tag-chip").forEach(function (chip) {
+            chip.addEventListener("click", function () {
+                handleTagClick(chip.getAttribute("data-tag"));
+            });
+        });
+    }
+
+    function markLabel(m) {
+        if (m === "want") return "想看";
+        if (m === "watching") return "在看";
+        if (m === "fav") return "收藏";
+        return "";
+    }
+
+    const WEEK_CN = ["", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"];
+
+    function getSeasonInfo(d) {
+        const y = d.getFullYear();
+        const m = d.getMonth() + 1;
+        let sm;
+        if (m <= 3) sm = 1;
+        else if (m <= 6) sm = 4;
+        else if (m <= 9) sm = 7;
+        else sm = 10;
+        const labels = { 1: "冬季", 4: "春季", 7: "夏季", 10: "秋季" };
+        return { year: y, month: sm, label: labels[sm], tag: y + "年" + sm + "月" };
+    }
+
+    function shiftSeason(info, delta) {
+        let m = info.month + delta * 3;
+        let y = info.year;
+        while (m > 10) { m -= 12; y += 1; }
+        while (m < 1) { m += 12; y -= 1; }
+        const labels = { 1: "冬季", 4: "春季", 7: "夏季", 10: "秋季" };
+        return { year: y, month: m, label: labels[m], tag: y + "年" + m + "月" };
+    }
+
+    function loadMarks() {
+        try {
+            return JSON.parse(localStorage.getItem(MARK_KEY) || "{}") || {};
+        } catch (_) { return {}; }
+    }
+    function saveMarks(obj) {
+        try { localStorage.setItem(MARK_KEY, JSON.stringify(obj)); } catch (_) {}
+    }
+    function getMark(id) {
+        return loadMarks()[String(id)] || null;
+    }
+    function setMark(id, val) {
+        const o = loadMarks();
+        if (!val) delete o[String(id)];
+        else o[String(id)] = val;
+        saveMarks(o);
+    }
+
+    // v3：标签搜索改用 filter.tag + heat，作废旧缓存
+    function cacheGet(key) {
+        try {
+            const raw = localStorage.getItem("qish_bgm_cache_v3_" + key);
+            if (!raw) return null;
+            const obj = JSON.parse(raw);
+            if (!obj || !obj.t || Date.now() - obj.t > CACHE_MS) return null;
+            return obj.d;
+        } catch (_) { return null; }
+    }
+    function cacheSet(key, data) {
+        try {
+            localStorage.setItem("qish_bgm_cache_v3_" + key, JSON.stringify({ t: Date.now(), d: data }));
+        } catch (_) {}
+    }
+
+    async function fetchJson(pathOrUrl, options) {
+        options = options || {};
+        const method = (options.method || "GET").toUpperCase();
+        const body = options.body || null;
+        // 去掉绝对域名，统一成 /path，方便走本地代理（代理会带 Bangumi 要求的 UA）
+        let relPath = pathOrUrl;
+        if (/^https?:\/\/api\.bgm\.tv/i.test(pathOrUrl)) {
+            relPath = pathOrUrl.replace(/^https?:\/\/api\.bgm\.tv/i, "");
+        }
+        const isAbs = /^https?:/i.test(relPath);
+        const cacheKey = method + ":" + relPath + (body ? (":" + body) : "");
+        const hit = cacheGet(cacheKey);
+        if (hit) return { data: hit, fromCache: true };
+
+        // 1) 优先本地代理（解决 UA/403，支持 POST 名称搜索）
+        if (!isAbs) {
+            try {
+                const proxyHeaders = { "Accept": "application/json" };
+                if (body) proxyHeaders["Content-Type"] = "application/json";
+                const r = await fetch(PROXY_BASE + relPath, {
+                    method: method,
+                    headers: proxyHeaders,
+                    body: body || undefined
+                });
+                if (r.ok) {
+                    const data = await r.json();
+                    cacheSet(cacheKey, data);
+                    return { data: data, fromCache: false, via: "proxy" };
+                }
+            } catch (_) {}
+        }
+
+        // 2) 直连（部分环境可用；无自定义 UA）
+        const url = isAbs ? relPath : (BGM_BASE + relPath);
+        const headers = { "Accept": "application/json" };
+        if (body) headers["Content-Type"] = "application/json";
+        const r = await fetch(url, {
+            method: method,
+            headers: headers,
+            body: body || undefined
+        });
+        if (!r.ok) {
+            var errText = "";
+            try { errText = await r.text(); } catch (_) {}
+            throw new Error("HTTP " + r.status + (errText ? (": " + errText.slice(0, 80)) : ""));
+        }
+        const data = await r.json();
+        cacheSet(cacheKey, data);
+        return { data: data, fromCache: false, via: "direct" };
+    }
+
+    let searchMode = "name"; // name | tag
+
+    function normalizeSubjectList(list) {
+        return (list || []).map(function (it) {
+            return {
+                id: it.id,
+                name: it.name || "",
+                name_cn: it.name_cn || "",
+                images: it.images || {},
+                rating: it.rating || {},
+                air_date: it.air_date || it.date || ""
+            };
+        }).filter(function (it) { return it.id; });
+    }
+
+    /** 名称搜索：优先结果标题包含关键词 */
+    function rankByNameMatch(list, q) {
+        var key = String(q || "").toLowerCase().replace(/\s+/g, "");
+        if (!key) return list;
+        function score(it) {
+            var cn = String(it.name_cn || "").toLowerCase().replace(/\s+/g, "");
+            var jp = String(it.name || "").toLowerCase().replace(/\s+/g, "");
+            if (cn === key || jp === key) return 100;
+            if (cn.indexOf(key) === 0 || jp.indexOf(key) === 0) return 80;
+            if (cn.indexOf(key) >= 0 || jp.indexOf(key) >= 0) return 60;
+            return 0;
+        }
+        return list.slice().sort(function (a, b) {
+            return score(b) - score(a);
+        }).filter(function (it) {
+            // 名称模式：至少标题沾边；若全都不沾边则保留原列表（API 可能用了别名）
+            return true;
+        });
+    }
+
+    function coverOf(item) {
+        const imgs = item.images || {};
+        let src = imgs.common || imgs.medium || imgs.large || imgs.small || "";
+        if (src.indexOf("http://") === 0) src = "https://" + src.slice(7);
+        return src || "data:image/svg+xml," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="48" height="64"><rect fill="#e2e8f0" width="100%" height="100%"/></svg>');
+    }
+
+    function titleOf(item) {
+        return (item.name_cn && String(item.name_cn).trim()) || item.name || "未命名";
+    }
+
+    function scoreOf(item) {
+        const s = item.rating && (item.rating.score || item.rating.score === 0) ? item.rating.score : null;
+        if (s === null || s === undefined || s === 0) return "—";
+        return Number(s).toFixed(1);
+    }
+
+    function airText(item) {
+        if (item.air_date) {
+            const parts = String(item.air_date).split("-");
+            if (parts.length >= 3) return parts[1] + "-" + parts[2];
+            return item.air_date;
+        }
+        return "";
+    }
+
+    function passFilter(item) {
+        if (filter === "all") return true;
+        const m = getMark(item.id);
+        return m === filter;
+    }
+
+    function renderWeek(data) {
+        if (!Array.isArray(data)) {
+            mainEl.innerHTML = '<div class="empty-tip">日历数据异常</div>';
+            return;
+        }
+        // Bangumi weekday.id: 1=Mon ... 7=Sun
+        const today = new Date().getDay();
+        const todayId = today === 0 ? 7 : today;
+        if (selectedWeekDayId == null) selectedWeekDayId = todayId;
+
+        // 星期标签
+        let tabs = '<div class="week-day-tabs" role="tablist">';
+        data.forEach(function (day) {
+            const wid = day.weekday && day.weekday.id;
+            const isToday = wid === todayId;
+            const active = wid === selectedWeekDayId;
+            const name = (day.weekday && day.weekday.cn) || WEEK_CN[wid] || "";
+            const short = name.replace("星期", "");
+            const count = (day.items || []).filter(passFilter).length;
+            tabs += '<button type="button" class="week-day-tab' +
+                (active ? " active" : "") + (isToday ? " today" : "") +
+                '" data-wid="' + wid + '">' + short +
+                (isToday ? "<small>今天 · " + count + "</small>" : "<small>" + count + " 部</small>") +
+                "</button>";
+        });
+        tabs += "</div>";
+
+        const dayObj = data.find(function (d) {
+            return d.weekday && d.weekday.id === selectedWeekDayId;
+        }) || data[0];
+        const dayName = (dayObj.weekday && dayObj.weekday.cn) || "";
+        const items = (dayObj.items || []).filter(passFilter);
+        const isTodayPanel = dayObj.weekday && dayObj.weekday.id === todayId;
+
+        let panel = '<div class="week-day-panel">';
+        panel += '<h3 class="week-day-title">' + escapeHtml(dayName) +
+            (isTodayPanel ? " · 今天" : "") +
+            '<span class="cnt">' + items.length + " 部</span></h3>";
+
+        if (!items.length) {
+            panel += '<div class="empty-tip">这一天暂无放送（或被筛选过滤）</div>';
+        } else {
+            panel += '<div class="week-list">';
+            items.forEach(function (it) {
+                const mark = getMark(it.id);
+                panel += '<button type="button" class="anime-card" data-id="' + it.id + '">';
+                panel += '<img src="' + coverOf(it) + '" alt="" loading="lazy">';
+                panel += '<div class="anime-card-meta">';
+                panel += '<div class="anime-card-title">' + escapeHtml(titleOf(it)) + "</div>";
+                panel += '<div class="anime-card-sub">';
+                if (airText(it)) panel += "<span>📅 " + escapeHtml(airText(it)) + "</span>";
+                panel += '<span class="score-pill">★ ' + scoreOf(it) + "</span>";
+                if (mark) panel += '<span class="mark-dot ' + mark + '" title="' + markLabel(mark) + '"></span>';
+                if (mark) panel += "<span>" + markLabel(mark) + "</span>";
+                panel += "</div></div>";
+                panel += '<span class="anime-card-arrow">›</span>';
+                panel += "</button>";
+            });
+            panel += "</div>";
+        }
+        panel += "</div>";
+
+        mainEl.innerHTML = tabs + panel;
+
+        mainEl.querySelectorAll(".week-day-tab").forEach(function (tab) {
+            tab.addEventListener("click", function () {
+                selectedWeekDayId = Number(tab.getAttribute("data-wid"));
+                renderWeek(calendarData);
+            });
+        });
+        mainEl.querySelectorAll(".anime-card").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                openModal(Number(btn.getAttribute("data-id")));
+            });
+        });
+    }
+
+    function renderSeason(list) {
+        const items = (list || []).filter(passFilter);
+        if (!items.length) {
+            mainEl.innerHTML = '<div class="empty-tip">本季暂无条目（或被筛选过滤）</div>';
+            return;
+        }
+        let html = '<div class="season-grid">';
+        items.forEach(function (it) {
+            const mark = getMark(it.id);
+            html += '<button type="button" class="season-card" data-id="' + it.id + '">';
+            html += '<img src="' + coverOf(it) + '" alt="" loading="lazy">';
+            html += '<div class="season-card-body">';
+            html += '<div class="season-card-title">' + escapeHtml(titleOf(it)) + "</div>";
+            html += '<div class="season-card-sub">';
+            html += '<span class="score-pill">★ ' + scoreOf(it) + "</span>";
+            if (mark) html += '<span class="mark-dot ' + mark + '" title="' + markLabel(mark) + '"></span>';
+            else html += "<span></span>";
+            html += "</div></div></button>";
+        });
+        html += "</div>";
+        mainEl.innerHTML = html;
+        mainEl.querySelectorAll(".season-card").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                openModal(Number(btn.getAttribute("data-id")));
+            });
+        });
+    }
+
+    function escapeHtml(s) {
+        return String(s == null ? "" : s)
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    }
+
+    async function loadWeek() {
+        statusEl.textContent = "加载周历…";
+        mainEl.innerHTML = '<div class="loading-tip">正在从 Bangumi 获取日历…</div>';
+        try {
+            const res = await fetchJson("/calendar");
+            calendarData = res.data;
+            statusEl.textContent = (res.fromCache ? "缓存 · " : "") + "本周放送 · 按日浏览 · 点击查看详情";
+            fillHotTagsFromCalendar(calendarData);
+            renderWeek(calendarData);
+        } catch (e) {
+            statusEl.textContent = "加载失败";
+            mainEl.innerHTML = '<div class="empty-tip">无法获取日历：' + escapeHtml(e.message || e) +
+                '<br><small>可检查网络，或使用 server.js 代理</small></div>';
+        }
+    }
+
+    async function loadSeason() {
+        seasonLabel.textContent = seasonInfo.year + " " + seasonInfo.label;
+        statusEl.textContent = "加载 " + seasonInfo.tag + " …";
+        mainEl.innerHTML = '<div class="loading-tip">正在获取本季新番…</div>';
+        try {
+            const path = "/search/subject/" + encodeURIComponent(seasonInfo.tag) + "?type=2&responseGroup=small&max_results=40";
+            const res = await fetchJson(path);
+            const list = (res.data && res.data.list) || [];
+            seasonData = list;
+            statusEl.textContent = (res.fromCache ? "缓存 · " : "") + seasonInfo.tag + " · 共 " + list.length + " 部";
+            renderSeason(seasonData);
+        } catch (e) {
+            statusEl.textContent = "加载失败";
+            mainEl.innerHTML = '<div class="empty-tip">无法获取季度列表：' + escapeHtml(e.message || e) + "</div>";
+        }
+    }
+
+    function setActiveTab(which) {
+        document.getElementById("tabWeek").classList.toggle("active", which === "week");
+        document.getElementById("tabSeason").classList.toggle("active", which === "season" || which === "search");
+        seasonNav.style.display = which === "season" ? "inline-flex" : "none";
+    }
+
+    function refreshView() {
+        if (view === "week") {
+            if (calendarData) {
+                statusEl.textContent = "本周放送 · 点击条目查看详情";
+                renderWeek(calendarData);
+            } else loadWeek();
+        } else if (view === "search") {
+            if (searchData) renderSearch(searchData, searchQuery);
+            else if (searchQuery) loadSearch(searchQuery);
+        } else {
+            if (seasonData) renderSeason(seasonData);
+            else loadSeason();
+        }
+    }
+
+    function getSearchTotalPages() {
+        var total = Math.max(searchTotal || 0, (searchData && searchData.length) || 0);
+        if (total <= 0) return 1;
+        // Bangumi total 有时封顶 1000
+        return Math.max(1, Math.ceil(total / searchPageSize));
+    }
+
+    function buildPagerHtml() {
+        var totalPages = getSearchTotalPages();
+        var page = Math.min(Math.max(1, searchPage), totalPages);
+        var prevDisabled = page <= 1 ? " disabled" : "";
+        var nextDisabled = page >= totalPages ? " disabled" : "";
+        return '<div class="search-pager" id="searchPager">' +
+            '<button type="button" class="pg-btn" id="pgPrev"' + prevDisabled + '>‹ 上一页</button>' +
+            '<span class="pg-info">第 <strong>' + page + '</strong> / ' + totalPages + ' 页</span>' +
+            '<button type="button" class="pg-btn" id="pgNext"' + nextDisabled + '>下一页 ›</button>' +
+            '<span class="pg-jump">' +
+            '<span style="font-size:12px;font-weight:700;color:#64748b;">跳转到</span>' +
+            '<input type="number" id="pgJumpInput" min="1" max="' + totalPages +
+            '" value="' + page + '" inputmode="numeric">' +
+            '<span style="font-size:12px;font-weight:700;color:#64748b;">页</span>' +
+            '<button type="button" class="pg-go" id="pgJumpGo">前往</button>' +
+            '</span></div>';
+    }
+
+    function bindPagerEvents() {
+        var prev = document.getElementById("pgPrev");
+        var next = document.getElementById("pgNext");
+        var go = document.getElementById("pgJumpGo");
+        var input = document.getElementById("pgJumpInput");
+        if (prev) prev.addEventListener("click", function () {
+            if (searchPage > 1) loadSearch(searchQuery, searchMode, searchPage - 1);
+        });
+        if (next) next.addEventListener("click", function () {
+            if (searchPage < getSearchTotalPages()) loadSearch(searchQuery, searchMode, searchPage + 1);
+        });
+        function doJump() {
+            if (!input) return;
+            var n = parseInt(input.value, 10);
+            var max = getSearchTotalPages();
+            if (!n || isNaN(n)) n = 1;
+            n = Math.min(Math.max(1, n), max);
+            if (n !== searchPage) loadSearch(searchQuery, searchMode, n);
+            else input.value = String(n);
+        }
+        if (go) go.addEventListener("click", doJump);
+        if (input) input.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                doJump();
+            }
+        });
+    }
+
+    function renderSearch(list, q) {
+        const items = (list || []).filter(passFilter);
+        const totalPages = getSearchTotalPages();
+        let head = '<div class="search-bar-row"><div class="search-query-pill">搜索：' +
+            escapeHtml(q) + ' <button type="button" id="clearSearchBtn" title="返回">×</button></div></div>';
+        if (!items.length) {
+            mainEl.innerHTML = head + '<div class="empty-tip">没有匹配的条目</div>' +
+                (totalPages > 1 || searchPage > 1 ? buildPagerHtml() : "");
+        } else {
+            let html = head + '<div class="season-grid">';
+            items.forEach(function (it) {
+                const mark = getMark(it.id);
+                html += '<button type="button" class="season-card" data-id="' + it.id + '">';
+                html += '<img src="' + coverOf(it) + '" alt="" loading="lazy">';
+                html += '<div class="season-card-body">';
+                html += '<div class="season-card-title">' + escapeHtml(titleOf(it)) + "</div>";
+                html += '<div class="season-card-sub"><span class="score-pill">★ ' + scoreOf(it) + "</span>";
+                if (mark) html += '<span class="mark-dot ' + mark + '" title="' + markLabel(mark) + '"></span>';
+                else html += "<span></span>";
+                html += "</div></div></button>";
+            });
+            html += "</div>";
+            // 有多页或当前不在第 1 页时显示分页
+            if (totalPages > 1 || searchPage > 1 || searchTotal > searchPageSize) {
+                html += buildPagerHtml();
+            }
+            mainEl.innerHTML = html;
+            mainEl.querySelectorAll(".season-card").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                    openModal(Number(btn.getAttribute("data-id")));
+                });
+            });
+        }
+        bindPagerEvents();
+        var clr = document.getElementById("clearSearchBtn");
+        if (clr) clr.addEventListener("click", function () {
+            view = "season";
+            searchQuery = "";
+            searchData = null;
+            searchPage = 1;
+            searchTotal = 0;
+            setActiveTab("season");
+            loadSeason();
+        });
+    }
+
+    /** 解析标签输入：支持空格 / 逗号 / 顿号 分隔多个标签（与 Bangumi 多标签一致） */
+    function parseTagList(q) {
+        return String(q || "")
+            .split(/[\s,，、|/]+/)
+            .map(function (s) { return s.trim(); })
+            .filter(Boolean);
+    }
+
+    async function loadSearch(q, mode, page) {
+        mode = mode || searchMode;
+        // 关键词或模式变了则回到第 1 页
+        if (q !== searchQuery || mode !== searchMode) page = 1;
+        page = Math.max(1, parseInt(page, 10) || 1);
+        searchMode = mode;
+        searchQuery = q;
+        searchPage = page;
+        view = "search";
+        setActiveTab("search");
+        document.querySelectorAll("#searchModeTabs .filter-chip").forEach(function (c) {
+            c.classList.toggle("active", c.getAttribute("data-smode") === mode);
+        });
+        var input = document.getElementById("animeSearchInput");
+        if (input) {
+            input.value = q;
+            input.placeholder = mode === "tag"
+                ? "输入标签，例如：恋爱、校园、原创…（可多个）"
+                : "输入番名，例如：孤独摇滚…";
+        }
+        var modeLabel = mode === "tag" ? "标签" : "名称";
+        var offset = (page - 1) * searchPageSize;
+        statusEl.textContent = modeLabel + "搜索「" + q + "」· 第 " + page + " 页…";
+        mainEl.innerHTML = '<div class="loading-tip">正在' + modeLabel + "搜索第 " + page + " 页…</div>";
+        try {
+            var list = [];
+            var usedApi = "";
+            var totalHint = 0;
+            var errors = [];
+
+            if (mode === "tag") {
+                // —— 标签搜索（对齐 Bangumi 标签页）——
+                // POST /v0/search/subjects + filter.tag + sort=heat + offset 分页
+                var tags = parseTagList(q);
+                if (!tags.length) {
+                    mainEl.innerHTML = '<div class="empty-tip">请输入至少一个标签</div>';
+                    statusEl.textContent = "标签搜索";
+                    return;
+                }
+                try {
+                    const body = JSON.stringify({
+                        keyword: "",
+                        sort: "heat",
+                        filter: { type: [2], tag: tags }
+                    });
+                    const res = await fetchJson(
+                        "/v0/search/subjects?limit=" + searchPageSize + "&offset=" + offset,
+                        { method: "POST", body: body }
+                    );
+                    list = (res.data && res.data.data) || [];
+                    totalHint = (res.data && res.data.total) || list.length;
+                    usedApi = (res.via || "") + " tag/heat";
+                } catch (e1) {
+                    errors.push(String(e1 && e1.message ? e1.message : e1));
+                    console.warn("[search tag heat]", e1);
+                }
+                // 兜底：旧接口不支持 offset，仅第 1 页
+                if (!list.length && page === 1) {
+                    try {
+                        const path = "/search/subject/" + encodeURIComponent(tags.join(" ")) +
+                            "?type=2&responseGroup=small&max_results=" + searchPageSize;
+                        const res2 = await fetchJson(path);
+                        list = (res2.data && res2.data.list) || [];
+                        totalHint = (res2.data && res2.data.results) || list.length;
+                        usedApi = "search/subject fallback";
+                    } catch (e2) {
+                        errors.push(String(e2 && e2.message ? e2.message : e2));
+                    }
+                }
+            } else {
+                // —— 名称搜索：POST /v0/search/subjects sort=match ——
+                try {
+                    const body = JSON.stringify({
+                        keyword: q,
+                        sort: "match",
+                        filter: { type: [2] }
+                    });
+                    const res = await fetchJson(
+                        "/v0/search/subjects?limit=" + searchPageSize + "&offset=" + offset,
+                        { method: "POST", body: body }
+                    );
+                    list = (res.data && res.data.data) || [];
+                    totalHint = (res.data && res.data.total) || list.length;
+                    usedApi = (res.via || "") + " name/match";
+                } catch (e1) {
+                    errors.push(String(e1 && e1.message ? e1.message : e1));
+                    console.warn("[search name v0]", e1);
+                }
+                if (!list.length && page === 1) {
+                    try {
+                        const path = "/search/subject/" + encodeURIComponent(q) +
+                            "?type=2&responseGroup=small&max_results=" + searchPageSize;
+                        const res2 = await fetchJson(path);
+                        list = (res2.data && res2.data.list) || [];
+                        totalHint = (res2.data && res2.data.results) || list.length;
+                        usedApi = "search/subject";
+                    } catch (e3) {
+                        errors.push(String(e3 && e3.message ? e3.message : e3));
+                    }
+                }
+            }
+
+            if (!list.length && errors.length) {
+                console.warn("[search failed]", errors);
+            }
+
+            searchTotal = totalHint || list.length;
+            searchData = normalizeSubjectList(list);
+            if (mode === "name") {
+                searchData = rankByNameMatch(searchData, q);
+            }
+            // 若请求页超出范围且有总数，拉回末页
+            var maxPage = getSearchTotalPages();
+            if (page > maxPage && maxPage >= 1 && searchTotal > 0) {
+                return loadSearch(q, mode, maxPage);
+            }
+            var countText = searchData.length +
+                (searchTotal > searchData.length ? (" / 约 " + searchTotal) : "");
+            statusEl.textContent = modeLabel + "搜索「" + q + "」· 第 " + searchPage +
+                "/" + maxPage + " 页 · " + countText + " 条" +
+                (usedApi ? " · " + usedApi : "");
+            if (!searchData.length) {
+                mainEl.innerHTML = '<div class="empty-tip">没有找到「' + escapeHtml(q) +
+                    "」相关" + (mode === "tag" ? "标签" : "番名") +
+                    (page > 1 ? "（第 " + page + " 页）" : "") +
+                    "<br><small>可切换「名称搜索 / 标签搜索」再试" +
+                    (mode === "tag" ? " · 标签可空格分隔多个" : "") +
+                    "</small></div>" +
+                    (page > 1 ? buildPagerHtml() : "");
+                if (page > 1) bindPagerEvents();
+            } else {
+                var displayQ = mode === "tag"
+                    ? (parseTagList(q).join(" · ") + "（标签 · 热度）")
+                    : (q + "（名称）");
+                renderSearch(searchData, displayQ);
+                // 翻页后滚到结果区顶部
+                try {
+                    mainEl.scrollIntoView({ behavior: "smooth", block: "start" });
+                } catch (_) {}
+            }
+        } catch (e) {
+            statusEl.textContent = "搜索失败";
+            mainEl.innerHTML = '<div class="empty-tip">' + escapeHtml(e.message || e) +
+                "<br><small>建议用 server.js 启动站点（搜索需代理 UA）</small></div>";
+        }
+    }
+
+    /** 点击标签 / 年份：季度标签切季度，其它标签走「标签搜索」 */
+    function handleTagClick(tagName) {
+        if (!tagName) return;
+        closeModal();
+        // 2026年7月 / 2025年10月 等 → 切到对应季度
+        var m = String(tagName).match(/^(\d{4})年(1|4|7|10)月$/);
+        if (m) {
+            var labels = { 1: "冬季", 4: "春季", 7: "夏季", 10: "秋季" };
+            pickYear = Number(m[1]);
+            pickMonth = Number(m[2]);
+            syncPickerUI();
+            seasonInfo = { year: pickYear, month: pickMonth, label: labels[pickMonth], tag: tagName };
+            view = "season";
+            seasonData = null;
+            setActiveTab("season");
+            loadSeason();
+            return;
+        }
+        // 纯年份 / 其它标签 → 标签搜索（显示真正的番名列表）
+        if (/^\d{4}$/.test(tagName)) {
+            loadSearch(tagName + "年", "tag");
+            return;
+        }
+        loadSearch(tagName, "tag");
+    }
+
+    // —— 弹窗 ——
+    const mask = document.getElementById("animeModalMask");
+    function closeModal() {
+        mask.classList.remove("show");
+        document.body.style.overflow = "";
+        currentSubjectId = null;
+    }
+    document.getElementById("animeModalClose").addEventListener("click", closeModal);
+    mask.addEventListener("click", function (e) { if (e.target === mask) closeModal(); });
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && mask.classList.contains("show")) closeModal();
+    });
+
+    async function openModal(id) {
+        currentSubjectId = id;
+        currentSubjectCache = null;
+        mask.classList.add("show");
+        document.body.style.overflow = "hidden";
+        document.getElementById("modalTitle").textContent = "加载中…";
+        document.getElementById("modalJp").textContent = "";
+        document.getElementById("modalSummary").textContent = "加载中…";
+        document.getElementById("modalTags").innerHTML = "";
+        document.getElementById("modalInfo").innerHTML = "";
+        document.getElementById("modalScoreRow").innerHTML = "";
+        document.getElementById("modalCover").src = "";
+        document.getElementById("btnBgm").href = "https://bgm.tv/subject/" + id;
+        var shareBtn = document.getElementById("btnShareChat");
+        if (shareBtn) {
+            shareBtn.disabled = false;
+            shareBtn.textContent = "分享到聊天室";
+        }
+        updateMarkButtons(id);
+
+        try {
+            const res = await fetchJson("/v0/subjects/" + id);
+            const d = res.data;
+            currentSubjectCache = d;
+            document.getElementById("modalCover").src = coverOf(d);
+            document.getElementById("modalTitle").textContent = titleOf(d);
+            document.getElementById("modalJp").textContent = d.name || "";
+            document.getElementById("modalScoreRow").innerHTML =
+                '<span class="score-pill">★ ' + scoreOf(d) + "</span>" +
+                (d.rating && d.rating.total ? "<span> " + d.rating.total + " 人评</span>" : "") +
+                (d.date ? "<span> · " + escapeHtml(d.date) + "</span>" : "");
+            document.getElementById("modalSummary").textContent = (d.summary && String(d.summary).trim()) || "暂无简介";
+            const tags = (d.tags || []).slice(0, 14);
+            document.getElementById("modalTags").innerHTML = tags.map(function (t) {
+                var name = t.name || t;
+                var isYear = /^\d{4}/.test(String(name)) || /年/.test(String(name));
+                return '<button type="button" class="anime-tag' + (isYear ? " year-tag" : "") +
+                    '" data-tag="' + escapeHtml(name) + '" title="点击搜索此标签">' +
+                    escapeHtml(name) + "</button>";
+            }).join("");
+            document.getElementById("modalTags").querySelectorAll(".anime-tag").forEach(function (el) {
+                el.addEventListener("click", function (e) {
+                    e.stopPropagation();
+                    handleTagClick(el.getAttribute("data-tag"));
+                });
+            });
+            const infoKeys = ["中文名", "话数", "放送开始", "放送星期", "播放电视台", "其他电视台", "官方网站", "Copyright"];
+            const rows = [];
+            (d.infobox || []).forEach(function (row) {
+                if (infoKeys.indexOf(row.key) === -1 && rows.length >= 8) return;
+                var val = row.value;
+                if (Array.isArray(val)) val = val.map(function (x) { return x.v || x; }).join(" / ");
+                if (val != null && String(val).trim()) {
+                    rows.push('<div><span class="k">' + escapeHtml(row.key) + '</span><span>' + escapeHtml(String(val)) + "</span></div>");
+                }
+            });
+            if (d.platform) rows.unshift('<div><span class="k">平台</span><span>' + escapeHtml(d.platform) + "</span></div>");
+            document.getElementById("modalInfo").innerHTML = rows.join("") || "<div>暂无制作信息</div>";
+        } catch (e) {
+            document.getElementById("modalSummary").textContent = "详情加载失败：" + (e.message || e);
+        }
+    }
+
+    function updateMarkButtons(id) {
+        const m = getMark(id);
+        const bw = document.getElementById("btnWant");
+        const bw2 = document.getElementById("btnWatching");
+        const bf = document.getElementById("btnFav");
+        bw.className = "anime-btn " + (m === "want" ? "active-want" : "ghost");
+        bw2.className = "anime-btn " + (m === "watching" ? "active-watching" : "ghost");
+        bf.className = "anime-btn " + (m === "fav" ? "active-fav" : "ghost");
+        bw.textContent = m === "want" ? "✓ 想看" : "想看";
+        bw2.textContent = m === "watching" ? "✓ 在看" : "在看";
+        bf.textContent = m === "fav" ? "✓ 收藏" : "收藏";
+    }
+
+    function toggleMark(kind) {
+        if (!currentSubjectId) return;
+        const cur = getMark(currentSubjectId);
+        setMark(currentSubjectId, cur === kind ? null : kind);
+        updateMarkButtons(currentSubjectId);
+        refreshView();
+    }
+
+    document.getElementById("btnWant").addEventListener("click", function () { toggleMark("want"); });
+    document.getElementById("btnWatching").addEventListener("click", function () { toggleMark("watching"); });
+    document.getElementById("btnFav").addEventListener("click", function () { toggleMark("fav"); });
+
+    async function shareToChat() {
+        var btn = document.getElementById("btnShareChat");
+        var sb = window.supabaseClient;
+        if (!sb) {
+            alert("聊天服务未就绪");
+            return;
+        }
+        if (!currentSubjectId) return;
+
+        var session = null;
+        try {
+            if (window.QISH && typeof QISH.waitForAuthSession === "function") {
+                session = await QISH.waitForAuthSession(sb, 4000);
+            } else {
+                var r = await sb.auth.getSession();
+                session = r && r.data && r.data.session;
+            }
+        } catch (_) {}
+        var user = session && session.user;
+        if (!user) {
+            if (confirm("分享到聊天室需要登录，是否前往登录？")) {
+                location.href = "auth.html";
+            }
+            return;
+        }
+
+        var nickname = "用户";
+        var avatar_url = "";
+        try {
+            var pr = await sb.from("public_user_list").select("nickname, avatar_url").eq("user_id", user.id).maybeSingle();
+            if (pr.data) {
+                nickname = pr.data.nickname || nickname;
+                avatar_url = pr.data.avatar_url || "";
+            }
+        } catch (_) {}
+
+        var d = currentSubjectCache || { id: currentSubjectId };
+        var title = titleOf(d);
+        var score = scoreOf(d);
+        var cover = coverOf(d);
+        // 站点内可点详情 + Bangumi 外链
+        var siteLink = "anime.html?id=" + currentSubjectId;
+        var bgmLink = "https://bgm.tv/subject/" + currentSubjectId;
+        var content = "📺 安利新番【" + title + "】";
+        if (score && score !== "—") content += " 评分 " + score;
+        content += "\n" + siteLink + "\n" + bgmLink;
+        // 特殊标记便于聊天室识别
+        content += "\n#qish_anime:" + currentSubjectId;
+
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = "分享中…";
+        }
+        try {
+            var payload = {
+                user_id: user.id,
+                nickname: nickname,
+                content: content,
+                avatar_url: avatar_url,
+                msg_type: cover ? "image" : "text"
+            };
+            if (cover) {
+                payload.file_url = cover;
+                payload.file_name = "anime-" + currentSubjectId + ".jpg";
+            }
+            var ins = await sb.from("public_messages").insert(payload).select().single();
+            if (ins.error) throw ins.error;
+            if (btn) btn.textContent = "已分享 ✓";
+            setTimeout(function () {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.textContent = "分享到聊天室";
+                }
+            }, 2000);
+        } catch (e) {
+            alert("分享失败：" + (e.message || e));
+            if (btn) {
+                btn.disabled = false;
+                btn.textContent = "分享到聊天室";
+            }
+        }
+    }
+    document.getElementById("btnShareChat").addEventListener("click", shareToChat);
+
+    // tabs
+    document.getElementById("tabWeek").addEventListener("click", function () {
+        view = "week";
+        setActiveTab("week");
+        loadWeek();
+    });
+    document.getElementById("tabSeason").addEventListener("click", function () {
+        view = "season";
+        searchQuery = "";
+        searchData = null;
+        setActiveTab("season");
+        seasonData = null;
+        loadSeason();
+    });
+    document.getElementById("seasonPrev").addEventListener("click", function () {
+        seasonInfo = shiftSeason(seasonInfo, -1);
+        seasonData = null;
+        loadSeason();
+    });
+    document.getElementById("seasonNext").addEventListener("click", function () {
+        seasonInfo = shiftSeason(seasonInfo, 1);
+        seasonData = null;
+        loadSeason();
+    });
+
+    // 仅绑定「在看/想看/收藏」筛选，勿波及搜索模式 tabs
+    document.querySelectorAll(".anime-filter .filter-chip[data-filter]").forEach(function (chip) {
+        chip.addEventListener("click", function () {
+            document.querySelectorAll(".anime-filter .filter-chip[data-filter]").forEach(function (c) {
+                c.classList.remove("active");
+            });
+            chip.classList.add("active");
+            filter = chip.getAttribute("data-filter") || "all";
+            refreshView();
+        });
+    });
+
+    // 搜索 / 年月选择器
+    syncPickerUI();
+    buildYearDrop();
+    buildMonthDrop();
+
+    document.getElementById("pickYearBtn").addEventListener("click", function () {
+        var box = document.getElementById("yearDrop");
+        var open = box.classList.contains("show");
+        closeDrops();
+        if (!open) {
+            buildYearDrop();
+            box.classList.add("show");
+            document.getElementById("pickYearBtn").classList.add("active");
+        }
+    });
+    document.getElementById("pickMonthBtn").addEventListener("click", function () {
+        var box = document.getElementById("monthDrop");
+        var open = box.classList.contains("show");
+        closeDrops();
+        if (!open) {
+            buildMonthDrop();
+            box.classList.add("show");
+            document.getElementById("pickMonthBtn").classList.add("active");
+        }
+    });
+    document.getElementById("pickSeasonBtn").addEventListener("click", function () {
+        var box = document.getElementById("monthDrop");
+        var open = box.classList.contains("show");
+        closeDrops();
+        if (!open) {
+            buildMonthDrop();
+            box.classList.add("show");
+            document.getElementById("pickSeasonBtn").classList.add("active");
+        }
+    });
+    document.getElementById("applySeasonBtn").addEventListener("click", applyPickedSeason);
+
+    function doSearchFromInput() {
+        var q = (document.getElementById("animeSearchInput").value || "").trim();
+        if (!q) return;
+        // 若输入像 2026年7月，直接切季度
+        if (/^\d{4}年(1|4|7|10)月$/.test(q)) {
+            handleTagClick(q);
+            return;
+        }
+        loadSearch(q, searchMode);
+    }
+    document.getElementById("animeSearchBtn").addEventListener("click", doSearchFromInput);
+    document.getElementById("animeSearchInput").addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            doSearchFromInput();
+        }
+    });
+    document.querySelectorAll("#searchModeTabs .filter-chip").forEach(function (chip) {
+        chip.addEventListener("click", function () {
+            document.querySelectorAll("#searchModeTabs .filter-chip").forEach(function (c) {
+                c.classList.remove("active");
+            });
+            chip.classList.add("active");
+            searchMode = chip.getAttribute("data-smode") || "name";
+            var input = document.getElementById("animeSearchInput");
+            if (input) {
+                input.placeholder = searchMode === "tag"
+                    ? "输入标签，例如：恋爱、校园、原创…（可多个）"
+                    : "输入番名，例如：孤独摇滚…";
+            }
+            // 已有关键词时切换模式立即重搜
+            var q = (input && input.value || "").trim();
+            if (q) loadSearch(q, searchMode);
+        });
+    });
+
+    // URL ?id= 打开详情
+    try {
+        var params = new URLSearchParams(location.search);
+        var openId = params.get("id");
+        if (openId) {
+            setTimeout(function () { openModal(Number(openId)); }, 600);
+        }
+    } catch (_) {}
+
+    // boot
+    loadWeek();
+
+    document.addEventListener("DOMContentLoaded", async function () {
+        var client = window.supabaseClient;
+        var t0 = Date.now();
+        while (!window.QISH && Date.now() - t0 < 4000) {
+            await new Promise(function (r) { setTimeout(r, 30); });
+        }
+        if (window.QISH && client) {
+            await QISH.updateAuthNav({ supabase: client });
+            client.auth.onAuthStateChange(function (event) {
+                if (event === "INITIAL_SESSION") return;
+                QISH.updateAuthNav({ supabase: client });
+            });
+        }
+    });
+})();
+</script>
+</body>
+</html>

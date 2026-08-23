@@ -8,7 +8,7 @@
   // 尽早应用主题，减少闪烁
   try {
     var _t = localStorage.getItem("qish_theme");
-    if (_t === "light" || _t === "dark" || _t === "color") {
+    if (_t === "light" || _t === "dark" || _t === "color" || _t === "aqua" || _t === "custom") {
       document.documentElement.setAttribute("data-theme", _t);
     } else {
       document.documentElement.setAttribute("data-theme", "color");
@@ -100,44 +100,204 @@
   function initMouseGlow() {
     const glow = document.getElementById("glow");
     if (!glow) return;
+    if (glow.dataset.glowInited === "1") return;
     if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       glow.style.display = "none";
       return;
     }
+    // 触摸设备不启用自定义光标特效
+    if (window.matchMedia && window.matchMedia("(hover: none) and (pointer: coarse)").matches) {
+      glow.style.display = "none";
+      return;
+    }
+    glow.dataset.glowInited = "1";
+
+    glow.classList.add("mouse-glow-ui");
+
+    // —— 白色细线拖尾（SVG）——
+    let trailSvg = document.getElementById("mouseTrail");
+    if (!trailSvg) {
+      trailSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      trailSvg.id = "mouseTrail";
+      trailSvg.setAttribute("class", "mouse-trail-svg");
+      trailSvg.innerHTML =
+        '<path id="mouseTrailPath" fill="none" stroke="rgba(255,255,255,0.55)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path>' +
+        '<path id="mouseTrailPath2" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path>';
+      document.body.appendChild(trailSvg);
+    }
+    const trailPath = document.getElementById("mouseTrailPath");
+    const trailPath2 = document.getElementById("mouseTrailPath2");
+    const trailPts = [];
+    const TRAIL_MAX = 18;
+
     let mouseX = window.innerWidth / 2;
     let mouseY = window.innerHeight / 2;
     let currentX = mouseX;
     let currentY = mouseY;
-    let velX = 0;
-    let velY = 0;
+    let prevX = mouseX;
+    let prevY = mouseY;
+    let adsorb = 0; // 0~1 吸附强度
+    let lastMoveT = performance.now();
+
+    // 可吸附 UI（去掉整块 nav，避免大区域抖动）
+    const MAGNET_SEL =
+      ".container, .card, .userlist-card, .anime-search-panel, " +
+      ".home-time-card, .home-stats-card, .home-announce-card, " +
+      ".nav-links a, .nav-logout-btn, .panel-links a, " +
+      ".filter-chip, .season-card, .anime-card, .user-item, " +
+      ".theme-switcher-toggle, .anime-btn, .chat-enter-btn";
+
+    var _magCache = null;
+    var _magCacheT = 0;
+
+    function nearestMagnet(x, y) {
+      // 节流查询，减少 layout 抖动反馈
+      var now = performance.now();
+      if (!_magCache || now - _magCacheT > 48) {
+        _magCache = document.querySelectorAll(MAGNET_SEL);
+        _magCacheT = now;
+      }
+      var nodes = _magCache;
+      var best = null;
+      var bestD = 56;
+      for (var i = 0; i < nodes.length; i++) {
+        var el = nodes[i];
+        if (!el) continue;
+        var r = el.getBoundingClientRect();
+        if (r.width < 10 || r.height < 10) continue;
+        var cx = Math.max(r.left, Math.min(x, r.right));
+        var cy = Math.max(r.top, Math.min(y, r.bottom));
+        var dx = x - cx;
+        var dy = y - cy;
+        var d = Math.sqrt(dx * dx + dy * dy);
+        var inside = x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+        if (inside) d = 0;
+        if (d < bestD) {
+          bestD = d;
+          best = { d: d, cx: cx, cy: cy, inside: inside };
+        }
+      }
+      return best;
+    }
 
     document.addEventListener(
       "mousemove",
-      (e) => {
+      function (e) {
         mouseX = e.clientX;
         mouseY = e.clientY;
+        lastMoveT = performance.now();
       },
       { passive: true }
     );
 
+    document.addEventListener(
+      "mousedown",
+      function (e) {
+        if (e.button !== 0) return;
+        spawnClickFx(e.clientX, e.clientY);
+        glow.classList.add("mouse-glow-click");
+        setTimeout(function () {
+          glow.classList.remove("mouse-glow-click");
+        }, 280);
+      },
+      { passive: true }
+    );
+
+    function spawnClickFx(x, y) {
+      var ring = document.createElement("div");
+      ring.className = "mouse-click-ring";
+      ring.style.left = x + "px";
+      ring.style.top = y + "px";
+      document.body.appendChild(ring);
+      var splash = document.createElement("div");
+      splash.className = "mouse-click-splash";
+      splash.style.left = x + "px";
+      splash.style.top = y + "px";
+      document.body.appendChild(splash);
+      setTimeout(function () {
+        ring.remove();
+        splash.remove();
+      }, 700);
+    }
+
+    function updateTrail(x, y) {
+      // 位移太小不采样，避免静止时线段抖动
+      var last = trailPts[trailPts.length - 1];
+      if (last && Math.hypot(x - last.x, y - last.y) < 1.2) {
+        if (trailSvg) {
+          var idle = performance.now() - lastMoveT > 120;
+          trailSvg.style.opacity = idle ? "0.25" : "0.85";
+        }
+        return;
+      }
+      trailPts.push({ x: x, y: y });
+      if (trailPts.length > TRAIL_MAX) trailPts.shift();
+      if (trailPts.length < 2) return;
+      var d = "M " + trailPts[0].x.toFixed(1) + " " + trailPts[0].y.toFixed(1);
+      for (var i = 1; i < trailPts.length; i++) {
+        d += " L " + trailPts[i].x.toFixed(1) + " " + trailPts[i].y.toFixed(1);
+      }
+      if (trailPath) trailPath.setAttribute("d", d);
+      if (trailPath2) trailPath2.setAttribute("d", d);
+      if (trailSvg) trailSvg.style.opacity = "1";
+    }
+
     function animate() {
-      const dx = mouseX - currentX;
-      const dy = mouseY - currentY;
-      velX += dx * 0.12;
-      velY += dy * 0.12;
-      velX *= 0.78;
-      velY *= 0.78;
-      currentX += velX;
-      currentY += velY;
-      const speed = Math.sqrt(velX * velX + velY * velY);
-      const stretch = Math.min(speed * 0.08, 1.8);
-      const angle = (Math.atan2(velY, velX) * 180) / Math.PI;
+      var mag = nearestMagnet(mouseX, mouseY);
+      var targetX = mouseX;
+      var targetY = mouseY;
+      var wantAdsorb = 0;
+      if (mag) {
+        if (mag.inside) {
+          // 在 UI 内部：只跟随鼠标，不额外拉扯（避免弹抖）
+          wantAdsorb = 1;
+        } else {
+          var pull = Math.max(0, 1 - mag.d / 56);
+          // 轻度拉向边缘，最多 55%
+          targetX = mouseX + (mag.cx - mouseX) * pull * 0.55;
+          targetY = mouseY + (mag.cy - mouseY) * pull * 0.55;
+          wantAdsorb = pull;
+        }
+      }
+
+      // 临界阻尼插值，无弹簧速度 → 不会来回弹
+      adsorb += (wantAdsorb - adsorb) * 0.2;
+      var follow = 0.28 + adsorb * 0.12;
+      currentX += (targetX - currentX) * follow;
+      currentY += (targetY - currentY) * follow;
+      // 贴死微抖动
+      if (Math.abs(targetX - currentX) < 0.35) currentX = targetX;
+      if (Math.abs(targetY - currentY) < 0.35) currentY = targetY;
+
+      var vx = currentX - prevX;
+      var vy = currentY - prevY;
+      prevX = currentX;
+      prevY = currentY;
+      var speed = Math.sqrt(vx * vx + vy * vy);
+      // 轻微拉伸，上限压低
+      var stretch = Math.min(speed * 0.045, 0.55) * (1 - adsorb * 0.6);
+      var angle = speed > 0.15 ? (Math.atan2(vy, vx) * 180) / Math.PI : 0;
+
+      // 吸附：略放大变软，不再大幅 scale 弹跳
+      var sx = 1 + stretch + adsorb * 0.25;
+      var sy = 1 - stretch * 0.35 + adsorb * 0.2;
+      var br = 50 - adsorb * 8;
+
       glow.style.left = currentX + "px";
       glow.style.top = currentY + "px";
-      glow.style.transform = `translate(-50%, -50%) rotate(${angle}deg) scaleX(${
-        1 + stretch
-      }) scaleY(${1 - stretch * 0.3})`;
-      glow.style.borderRadius = stretch > 0.3 ? "40%" : "50%";
+      glow.style.transform =
+        "translate(-50%, -50%) rotate(" +
+        angle.toFixed(1) +
+        "deg) scale(" +
+        sx.toFixed(3) +
+        ", " +
+        sy.toFixed(3) +
+        ")";
+      glow.style.borderRadius = br + "%";
+      glow.style.opacity = String(0.55 + adsorb * 0.15);
+      glow.classList.toggle("mouse-glow-adsorb", adsorb > 0.55);
+
+      updateTrail(currentX, currentY);
       requestAnimationFrame(animate);
     }
     requestAnimationFrame(animate);
@@ -174,15 +334,146 @@
    * @param {function} [opts.onLogout] - 登出后回调
    * @returns {Promise<{user, profile, nickname, avatar}>}
    */
-  async function updateAuthNav(opts) {
-    opts = opts || {};
-    // 只用真正的 client，绝不用 SDK 命名空间 window.supabase
-    let sb = opts.supabase || window.supabaseClient || window.__qish_sb;
-    if (!sb || typeof sb.auth !== "object" || typeof sb.auth.getSession !== "function") {
-      console.warn("[QISH] Supabase client 无效", sb);
-      return { user: null };
+  /**
+   * 等待 Supabase 客户端完成从 localStorage 恢复会话。
+   * 原因：createClient 后 initialize 是异步的，立刻 getSession 可能仍为 null；
+   * 另外 SDK 在 refresh 失败时会静默清空 storage，需用备份恢复。
+   */
+  var AUTH_KEY = "qish-auth-v1";
+  var AUTH_BACKUP_KEY = "qish-auth-backup-v1";
+
+  function accessTokenStillValid(token) {
+    if (!token || typeof token !== "string") return false;
+    try {
+      var parts = token.split(".");
+      if (parts.length < 2) return false;
+      var b64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+      while (b64.length % 4) b64 += "=";
+      var payload = JSON.parse(atob(b64));
+      return payload && typeof payload.exp === "number" && payload.exp * 1000 > Date.now() + 30000;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function normalizeSession(parsed) {
+    if (!parsed || typeof parsed !== "object") return null;
+    var sess = parsed.access_token
+      ? parsed
+      : (parsed.currentSession || parsed.session || null);
+    if (sess && sess.access_token && (sess.user || sess.refresh_token)) return sess;
+    if (parsed.user && parsed.access_token) return parsed;
+    return null;
+  }
+
+  function readStoredAuth() {
+    try {
+      var raw = localStorage.getItem(AUTH_KEY);
+      if (raw) {
+        var sess = normalizeSession(JSON.parse(raw));
+        if (sess) return sess;
+      }
+    } catch (_) {}
+    try {
+      var bak = localStorage.getItem(AUTH_BACKUP_KEY);
+      if (bak) {
+        var sess2 = normalizeSession(JSON.parse(bak));
+        if (sess2 && sess2.access_token) {
+          try { localStorage.setItem(AUTH_KEY, JSON.stringify(sess2)); } catch (_) {}
+          return sess2;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  function saveAuthBackup(session) {
+    if (!session || !session.access_token) return;
+    try {
+      localStorage.setItem(AUTH_BACKUP_KEY, JSON.stringify({
+        access_token: session.access_token,
+        refresh_token: session.refresh_token || "",
+        expires_at: session.expires_at || null,
+        expires_in: session.expires_in || null,
+        token_type: session.token_type || "bearer",
+        user: session.user || null
+      }));
+      localStorage.setItem(AUTH_KEY, JSON.stringify(session));
+    } catch (_) {}
+  }
+
+  async function waitForAuthSession(sb, timeoutMs) {
+    timeoutMs = timeoutMs || 4000;
+    if (!sb || !sb.auth) return readStoredAuth();
+
+    try {
+      var res1 = await sb.auth.getSession();
+      if (res1 && res1.data && res1.data.session && res1.data.session.user) {
+        saveAuthBackup(res1.data.session);
+        return res1.data.session;
+      }
+    } catch (_) {}
+
+    var stored = readStoredAuth();
+    if (stored && stored.access_token && stored.refresh_token) {
+      try {
+        var setRes = await sb.auth.setSession({
+          access_token: stored.access_token,
+          refresh_token: stored.refresh_token
+        });
+        if (setRes && !setRes.error && setRes.data && setRes.data.session) {
+          saveAuthBackup(setRes.data.session);
+          return setRes.data.session;
+        }
+        if (stored.user && accessTokenStillValid(stored.access_token)) {
+          saveAuthBackup(stored);
+          return stored;
+        }
+        if (stored.user) return stored;
+      } catch (_) {
+        if (stored && stored.user) return stored;
+      }
+    } else if (stored && stored.user && accessTokenStillValid(stored.access_token)) {
+      return stored;
     }
 
+    var waitMs = Math.min(timeoutMs, 2500);
+    var fromEvent = await new Promise(function (resolve) {
+      var settled = false;
+      var timer = setTimeout(function () {
+        if (settled) return;
+        settled = true;
+        try { if (sub) sub.unsubscribe(); } catch (_) {}
+        resolve(null);
+      }, waitMs);
+      var sub = null;
+      try {
+        var ret = sb.auth.onAuthStateChange(function (event, session) {
+          if (settled) return;
+          if (session && session.user) {
+            settled = true;
+            clearTimeout(timer);
+            try { if (sub) sub.unsubscribe(); } catch (_) {}
+            resolve(session);
+          }
+        });
+        sub = ret && ret.data && ret.data.subscription;
+      } catch (e) {
+        clearTimeout(timer);
+        resolve(null);
+      }
+    });
+    if (fromEvent) {
+      saveAuthBackup(fromEvent);
+      return fromEvent;
+    }
+
+    return readStoredAuth();
+  }
+
+  async function updateAuthNav(opts) {
+    opts = opts || {};
+    let sb = opts.supabase || window.supabaseClient || window.__qish_sb;
     const navAvatar = document.getElementById("navAvatar");
     const navNickname = document.getElementById("navNickname");
     const panelAvatar = document.getElementById("panelAvatar");
@@ -191,21 +482,26 @@
     const panelLinksBox = document.getElementById("panelLinksBox");
 
     let session = null;
-    try {
-      const { data, error } = await sb.auth.getSession();
-      if (error) console.warn("[QISH] getSession error", error);
-      session = data && data.session;
-    } catch (e) {
-      console.warn("[QISH] getSession exception", e);
-    }
-    // 兜底：有时 getSession 为空但 token 仍在
-    if (!session) {
-      try {
-        const { data: udata } = await sb.auth.getUser();
-        if (udata && udata.user) {
-          session = { user: udata.user };
-        }
-      } catch (_) {}
+    if (sb && typeof sb.auth === "object" && typeof sb.auth.getSession === "function") {
+      session = await waitForAuthSession(sb, 4000);
+      if (!window.__qish_auth_listener) {
+        window.__qish_auth_listener = true;
+        try {
+          sb.auth.onAuthStateChange(function (event) {
+            if (event === "INITIAL_SESSION") return;
+            if (window.__qish_auth_nav_busy) return;
+            window.__qish_auth_nav_busy = true;
+            setTimeout(function () {
+              var p = updateAuthNav({ supabase: sb });
+              if (p && p.finally) p.finally(function () { window.__qish_auth_nav_busy = false; });
+              else window.__qish_auth_nav_busy = false;
+            }, 30);
+          });
+        } catch (_) {}
+      }
+    } else {
+      console.warn("[QISH] Supabase client 无效", sb);
+      session = readStoredAuth();
     }
 
     const linksLoggedIn = `
@@ -219,17 +515,19 @@
     `;
     const linksGuest = linksLoggedIn + `<a href="auth.html">登录/注册</a>`;
 
-    if (session) {
+    if (session && session.user) {
       const user = session.user;
       let profile = null;
-      try {
-        const res = await sb
-          .from("public_user_list")
-          .select("avatar_url, nickname")
-          .eq("user_id", user.id)
-          .single();
-        profile = res.data;
-      } catch (_) {}
+      if (sb && sb.from) {
+        try {
+          const res = await sb
+            .from("public_user_list")
+            .select("avatar_url, nickname")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          profile = res.data;
+        } catch (_) {}
+      }
 
       const avatarUrl = (profile && profile.avatar_url) || DEFAULT_AVATAR;
       const nickname = (profile && profile.nickname) || "匿名用户";
@@ -252,8 +550,9 @@
         if (btn) {
           btn.onclick = async () => {
             try {
-              await sb.auth.signOut({ scope: "local" });
+              if (sb && sb.auth) await sb.auth.signOut({ scope: "local" });
             } catch (_) {}
+            try { localStorage.removeItem("qish-auth-v1"); localStorage.removeItem("qish-auth-backup-v1"); } catch (_) {}
             window.location.replace("auth.html");
           };
         }
@@ -1122,8 +1421,8 @@ body.album-page .qm-empty{color:#64748b}
   const ANNOUNCE_KEY = "qish_announce_hide_date";
   // 可在此修改公告内容
   const ANNOUNCE_CONFIG = {
-    title: "网站公告",
-    body: "欢迎来到 QISH 小站～\n\n• 聊天室支持发图、文件与一起听歌\n• 右下角可使用音乐播放器\n• 有问题可以在聊天室留言\n\n• 项目里有4k音游可以玩哦\n\n祝你玩得开心！",
+    title: "网站公告 v1.0.0",
+    body: "欢迎来到 QISH 小站～\n\n• 支持新番查询功能啦\n• 聊天室支持发图、文件与一起听歌\n• 右下角可使用音乐播放器\n• 有问题可以在聊天室留言\n\n祝你玩得开心！",
     onlyHome: true, // 仅首页弹出
   };
 
@@ -1477,7 +1776,7 @@ body.album-page .qm-empty{color:#64748b}
   // ========== 主题 ==========
   const THEME_KEY = "qish_theme";
   const CUSTOM_BG_KEY = "qish_custom_bg";
-  const THEMES = ["color", "light", "dark", "custom"];
+  const THEMES = ["color", "light", "dark", "aqua", "custom"];
 
   function getSavedTheme() {
     try {
@@ -1509,6 +1808,46 @@ body.album-page .qm-empty{color:#64748b}
     }
   }
 
+  /** 水纹主题：注入多层 SVG 波浪，可见的横向流动 */
+  function syncAquaWaves(on) {
+    var el = document.getElementById("qishAquaWaves");
+    if (!on) {
+      if (el) el.remove();
+      if (document.body) document.body.classList.remove("theme-aqua-active");
+      return;
+    }
+    if (document.body) document.body.classList.add("theme-aqua-active");
+    if (el) return;
+    el = document.createElement("div");
+    el.id = "qishAquaWaves";
+    el.className = "qish-aqua-waves";
+    el.setAttribute("aria-hidden", "true");
+    el.innerHTML =
+      '<div class="qish-aqua-caustic"></div>' +
+      '<svg class="qish-wave-svg qish-wave-a" viewBox="0 0 1440 320" preserveAspectRatio="none">' +
+      '<path fill="rgba(255,255,255,0.18)" d="M0,192L48,176C96,160,192,128,288,133.3C384,139,480,181,576,186.7C672,192,768,160,864,144C960,128,1056,128,1152,149.3C1248,171,1344,213,1392,234.7L1440,256L1440,320L0,320Z"></path>' +
+      '<path fill="rgba(165,243,252,0.22)" d="M0,224L60,213.3C120,203,240,181,360,181.3C480,181,600,203,720,192C840,181,960,139,1080,133.3C1200,128,1320,160,1380,176L1440,192L1440,320L0,320Z"></path>' +
+      "</svg>" +
+      '<svg class="qish-wave-svg qish-wave-b" viewBox="0 0 1440 320" preserveAspectRatio="none">' +
+      '<path fill="rgba(255,255,255,0.12)" d="M0,160L80,170.7C160,181,320,203,480,197.3C640,192,800,160,960,154.7C1120,149,1280,171,1360,181.3L1440,192L1440,320L0,320Z"></path>' +
+      "</svg>" +
+      '<svg class="qish-wave-svg qish-wave-c" viewBox="0 0 1440 320" preserveAspectRatio="none">' +
+      '<path fill="rgba(14,165,233,0.25)" d="M0,256L48,240C96,224,192,192,288,181.3C384,171,480,181,576,197.3C672,213,768,235,864,229.3C960,224,1056,192,1152,170.7C1248,149,1344,139,1392,133.3L1440,128L1440,320L0,320Z"></path>' +
+      "</svg>" +
+      '<div class="qish-aqua-bubbles"></div>';
+    // 气泡粒子
+    var bubbles = el.querySelector(".qish-aqua-bubbles");
+    for (var i = 0; i < 12; i++) {
+      var b = document.createElement("span");
+      b.style.left = Math.random() * 100 + "%";
+      b.style.animationDelay = Math.random() * 8 + "s";
+      b.style.animationDuration = 6 + Math.random() * 8 + "s";
+      b.style.width = b.style.height = 6 + Math.random() * 14 + "px";
+      bubbles.appendChild(b);
+    }
+    document.body.appendChild(el);
+  }
+
   function applyTheme(name) {
     if (!THEMES.includes(name)) name = "color";
     document.documentElement.setAttribute("data-theme", name);
@@ -1531,8 +1870,15 @@ body.album-page .qm-empty{color:#64748b}
     });
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) {
-      meta.content = name === "dark" ? "#0b0f14" : name === "light" ? "#f5f6f8" : "#60a5fa";
+      meta.content =
+        name === "dark" ? "#0b0f14" :
+        name === "light" ? "#f5f6f8" :
+        name === "aqua" ? "#0ea5e9" : "#60a5fa";
     }
+    // 水纹主题：挂载可见波浪层
+    try {
+      syncAquaWaves(name === "aqua");
+    } catch (_) {}
     // 相册页使用独立 CSS 变量，需单独同步
     applyAlbumTheme(name);
   }
@@ -1580,6 +1926,18 @@ body.album-page .qm-empty{color:#64748b}
         "--shadow": "0 8px 32px rgba(0, 0, 0, 0.45)",
         "--album-bg": "#0b0f14",
       },
+      aqua: {
+        "--gradient-start": "#67e8f9",
+        "--gradient-mid": "#22d3ee",
+        "--gradient-end": "#0ea5e9",
+        "--glass-bg": "rgba(255, 255, 255, 0.22)",
+        "--glass-bg-strong": "rgba(255, 255, 255, 0.38)",
+        "--glass-border": "rgba(255, 255, 255, 0.5)",
+        "--text-main": "#0c4a6e",
+        "--text-sub": "rgba(12, 74, 110, 0.85)",
+        "--shadow": "0 12px 40px rgba(14, 165, 233, 0.25)",
+        "--album-bg": "linear-gradient(160deg, #0ea5e9 0%, #22d3ee 40%, #67e8f9 100%)",
+      },
     };
     const vars = map[name] || map.color;
     Object.keys(vars).forEach((k) => {
@@ -1613,12 +1971,12 @@ body.album-page .qm-empty{color:#64748b}
 .theme-opt .dot.color{background:linear-gradient(135deg,#e0f2fe,#bae6fd,#dbeafe)}
 .theme-opt .dot.light{background:#f8fafc}
 .theme-opt .dot.dark{background:#0f172a}
+.theme-opt .dot.aqua{background:linear-gradient(135deg,#0ea5e9,#22d3ee,#a5f3fc)}
 .theme-opt .dot.custom{background:repeating-linear-gradient(45deg,#60a5fa,#60a5fa 4px,#93c5fd 4px,#93c5fd 8px)}
 html[data-theme="dark"] body.album-page{filter:none}
 html[data-theme="dark"] .theme-switcher-panel{background:#1e2430;border-color:rgba(255,255,255,0.1)}
 html[data-theme="dark"] .theme-opt{color:#e2e8f0}
 html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
-.nav-logout-btn{background:linear-gradient(135deg,#60a5fa,#93c5fd);border:none;border-radius:999px;padding:7px 14px;cursor:pointer;font-size:14px;font-weight:600;color:#fff!important;white-space:nowrap;box-shadow:0 4px 12px rgba(96,165,250,.3)}
 .theme-opt.custom-opt{display:flex;align-items:center;justify-content:space-between;gap:6px}
 .theme-opt .custom-main{flex:1;min-width:0;text-align:left}
 .theme-opt .custom-actions{display:flex;gap:2px;align-items:center;flex-shrink:0}
@@ -1638,6 +1996,7 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
         '<button type="button" class="theme-opt" data-theme="color"><span class="dot color"></span>彩色</button>' +
         '<button type="button" class="theme-opt" data-theme="light"><span class="dot light"></span>白色</button>' +
         '<button type="button" class="theme-opt" data-theme="dark"><span class="dot dark"></span>黑色</button>' +
+        '<button type="button" class="theme-opt" data-theme="aqua"><span class="dot aqua"></span>水纹</button>' +
         '<button type="button" class="theme-opt custom-opt" data-theme="custom" id="themeCustomBtn">' +
           '<span class="custom-main"><span class="dot custom"></span>自定义背景</span>' +
           '<span class="custom-actions">' +
@@ -1813,13 +2172,13 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
       ],
     };
 
-    // 表情图映射
+    // 表情 GIF（千世系列）
     const EXPRESSIONS = {
-      normal: "chibi-normal.png",
-      shy: "chibi-shy.png",
-      happy: "chibi-happy.png",
-      sleepy: "chibi-sleepy.png",
-      surprised: "chibi-surprised.png",
+      normal: "qishi-expr-normal.gif",
+      shy: "qishi-expr-shy.gif",
+      happy: "qishi-expr-happy.gif",
+      sleepy: "qishi-expr-sleepy.gif",
+      surprised: "qishi-expr-surprised.gif",
     };
 
     // ===== 状态变量 =====
@@ -1853,7 +2212,12 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
     function setExpression(mood) {
       if (!isChibi) return;
       const src = EXPRESSIONS[mood] || EXPRESSIONS.normal;
-      if (!img.src.endsWith(src)) img.src = src;
+      // 用路径结尾判断，避免绝对 URL 导致重复赋值打断 GIF
+      try {
+        var cur = (img.getAttribute("src") || "").split("?")[0];
+        if (cur === src || cur.endsWith("/" + src) || cur.endsWith(src)) return;
+      } catch (_) {}
+      img.src = src;
     }
     function showBubble(text) {
       const textEl = bubble.querySelector(".char-bubble-text");
@@ -1869,11 +2233,14 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
     function jump() {
       if (jumping) return;
       jumping = true;
+      // 只切换 jump 类：动画全部在 .char-inner 上，不必拆掉 char-drifting（避免卡顿回弹）
+      wrap.classList.remove("char-sway", "jump");
+      void wrap.offsetWidth;
       wrap.classList.add("jump");
       setTimeout(function () {
         wrap.classList.remove("jump");
         jumping = false;
-      }, 420);
+      }, 460);
     }
     function restoreIdle() {
       if (shyActive) return;
@@ -1921,17 +2288,9 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
       showBubble(pick(pool));
     }
 
-    // ===== 空闲摇摆（每 6~12 秒触发一次） =====
+    // ===== 空闲摇摆（每 7~14 秒；与 jump 互斥，避免动画抢 transform） =====
     function scheduleSway() {
-      if (!isChibi) return;
-      const delay = 6000 + Math.random() * 6000;
-      swayTimer = setTimeout(function () {
-        if (!shyActive && !jumping && !wrap.classList.contains("char-sway")) {
-          wrap.classList.add("char-sway");
-          setTimeout(function () { wrap.classList.remove("char-sway"); }, 2400);
-        }
-        scheduleSway();
-      }, delay);
+      // 已取消左右摇晃
     }
 
     // ===== Q版小人：用 .char-inner 包裹 img 实现呼吸分层 =====
@@ -2112,6 +2471,8 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
           origTop = rect.top;
           posX = origLeft;
           posY = origTop;
+          // 置顶，避免被大立绘挡住无法继续拖动
+          wrap.classList.add("dragging");
           // 手机端：touchstart 不 preventDefault，否则会吞掉 click / 无法触发对话
           if (!isTouch) {
             applyPos(origLeft, origTop);
@@ -2131,6 +2492,7 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
             moved = true;
             applyPos(origLeft, origTop);
             wrap.classList.remove("char-drifting");
+            wrap.classList.add("dragging");
           }
           if (!moved) return;
 
@@ -2153,6 +2515,7 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
           if (!dragging) return;
           dragging = false;
           img.style.cursor = "";
+          wrap.classList.remove("dragging");
           if (moved) {
             wrap.dataset.wasDragged = "1";
             suppressNextClick = true;
@@ -2215,30 +2578,107 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
 
 
   // ========== 在线状态 Presence ==========
+  // 任意页面 boot 都会加入同一频道；登录用户用 user.id 作为 key，全站显示在线
   const PRESENCE_CHANNEL = "online_users";
   let presenceChannel = null;
   let presenceTracked = false;
   let presenceAuthListenerSet = false;
+  let presenceHeartbeatTimer = null;
+  let presenceInitSeq = 0;
+  let presenceMeta = { user_id: null, nickname: "匿名用户", avatar_url: "" };
 
-  // 加入在线频道并上报当前用户状态
+  function isUuidKey(k) {
+    return typeof k === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(k);
+  }
+
+  function emitPresenceSync() {
+    if (!presenceChannel) return;
+    try {
+      const state = presenceChannel.presenceState() || {};
+      const ids = Array.from(collectOnlineUserIds(state));
+      window.dispatchEvent(new CustomEvent("qish-presence-sync", {
+        detail: { ids: ids, state: state }
+      }));
+    } catch (_) {}
+  }
+
+  function collectOnlineUserIds(state) {
+    const ids = new Set();
+    if (!state || typeof state !== "object") return ids;
+    Object.keys(state).forEach(function (key) {
+      const metas = state[key] || [];
+      var hasUser = false;
+      for (var i = 0; i < metas.length; i++) {
+        var m = metas[i];
+        if (m && m.user_id) {
+          ids.add(m.user_id);
+          hasUser = true;
+        }
+      }
+      // 兼容：presence key 本身就是 user uuid
+      if (!hasUser && isUuidKey(key)) ids.add(key);
+    });
+    return ids;
+  }
+
+  async function trackPresenceNow() {
+    if (!presenceChannel || !presenceMeta.user_id) return;
+    try {
+      await presenceChannel.track({
+        user_id: presenceMeta.user_id,
+        nickname: presenceMeta.nickname || "匿名用户",
+        avatar_url: presenceMeta.avatar_url || "",
+        online_at: Date.now(),
+        page: (location.pathname.split("/").pop() || "index.html").toLowerCase()
+      });
+      presenceTracked = true;
+    } catch (e) {
+      console.warn("[QISH] presence track", e);
+    }
+  }
+
+  function startPresenceHeartbeat() {
+    if (presenceHeartbeatTimer) {
+      clearInterval(presenceHeartbeatTimer);
+      presenceHeartbeatTimer = null;
+    }
+    // 定期续命，避免长时间停留某页被判定离线
+    presenceHeartbeatTimer = setInterval(function () {
+      if (document.visibilityState === "hidden") return;
+      trackPresenceNow();
+    }, 25000);
+  }
+
+  // 加入在线频道并上报当前用户状态（全站任意页面）
   async function initPresence(supabase) {
     if (!supabase || typeof supabase.auth !== "object") return;
+    const seq = ++presenceInitSeq;
 
-    // 清理旧频道
+    // 清理旧频道 / 心跳
+    if (presenceHeartbeatTimer) {
+      clearInterval(presenceHeartbeatTimer);
+      presenceHeartbeatTimer = null;
+    }
     if (presenceChannel) {
       try { await supabase.removeChannel(presenceChannel); } catch (_) {}
       presenceChannel = null;
       presenceTracked = false;
     }
 
-    // 获取当前登录用户（会等待 session 恢复）
+    // 关键：先等会话从 localStorage 恢复，再决定是否 track
     let user = null;
     try {
-      const { data } = await supabase.auth.getUser();
-      user = data && data.user;
-    } catch (_) { user = null; }
+      const session = await waitForAuthSession(supabase, 5000);
+      if (session && session.user) user = session.user;
+    } catch (_) {}
+    if (!user) {
+      try {
+        const { data } = await supabase.auth.getUser();
+        user = data && data.user;
+      } catch (_) { user = null; }
+    }
+    if (seq !== presenceInitSeq) return; // 被更新的 init 取代
 
-    // 拉取用户资料（昵称、头像）——仅登录用户
     let nickname = "匿名用户";
     let avatar_url = "";
     if (user) {
@@ -2255,71 +2695,230 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
       } catch (_) {}
     }
 
-    // 创建频道（游客也可以订阅，接收在线状态同步）
-    presenceChannel = supabase.channel(PRESENCE_CHANNEL, {
-      config: { presence: { key: user ? user.id : "guest-" + Math.random().toString(36).slice(2, 10) } }
-    });
+    presenceMeta = {
+      user_id: user ? user.id : null,
+      nickname: nickname,
+      avatar_url: avatar_url
+    };
 
-    // 监听在线状态同步，派发自定义事件供各页面订阅
-    presenceChannel.on("presence", { event: "sync" }, () => {
+    // 登录用户用稳定 uuid 作 key；游客用本地固定 guest id（不计入在线人数）
+    var presenceKey;
+    if (user) {
+      presenceKey = user.id;
+    } else {
       try {
-        const state = presenceChannel.presenceState();
-        const ids = Object.keys(state);
-        window.dispatchEvent(new CustomEvent("qish-presence-sync", {
-          detail: { ids, state }
-        }));
-      } catch (_) {}
+        presenceKey = localStorage.getItem("qish_guest_presence");
+        if (!presenceKey) {
+          presenceKey = "guest-" + Math.random().toString(36).slice(2, 12);
+          localStorage.setItem("qish_guest_presence", presenceKey);
+        }
+      } catch (_) {
+        presenceKey = "guest-" + Math.random().toString(36).slice(2, 12);
+      }
+    }
+
+    presenceChannel = supabase.channel(PRESENCE_CHANNEL, {
+      config: { presence: { key: presenceKey } }
     });
 
-    await presenceChannel.subscribe(async (status) => {
-      if (status === "SUBSCRIBED" && !presenceTracked) {
-        // 仅登录用户上报自己的在线状态
+    presenceChannel.on("presence", { event: "sync" }, function () {
+      emitPresenceSync();
+    });
+    presenceChannel.on("presence", { event: "join" }, function () {
+      emitPresenceSync();
+    });
+    presenceChannel.on("presence", { event: "leave" }, function () {
+      emitPresenceSync();
+    });
+
+    await presenceChannel.subscribe(async function (status) {
+      if (seq !== presenceInitSeq) return;
+      if (status === "SUBSCRIBED") {
         if (user) {
-          try {
-            await presenceChannel.track({
-              user_id: user.id,
-              nickname,
-              avatar_url,
-              online_at: Date.now()
-            });
-            presenceTracked = true;
-          } catch (_) {}
+          await trackPresenceNow();
+          startPresenceHeartbeat();
         } else {
-          // 游客也标记为已订阅，避免重复
-          presenceTracked = true;
+          presenceTracked = true; // 游客只订阅，不上报为在线成员
         }
-        // 订阅成功后立即派发一次同步，让页面拿到初始在线列表
-        try {
-          const state = presenceChannel.presenceState();
-          const ids = Object.keys(state);
-          window.dispatchEvent(new CustomEvent("qish-presence-sync", {
-            detail: { ids, state }
-          }));
-        } catch (_) {}
+        emitPresenceSync();
       }
     });
 
-    // 只绑定一次 auth 监听
+    // 页签重新可见时立刻续命
+    if (!window.__qish_presence_vis) {
+      window.__qish_presence_vis = true;
+      document.addEventListener("visibilitychange", function () {
+        if (document.visibilityState === "visible") trackPresenceNow();
+      });
+    }
+
+    // auth 变化时重建（含 INITIAL_SESSION：解决「先 guest 后才恢复登录」）
     if (!presenceAuthListenerSet) {
       presenceAuthListenerSet = true;
       try {
-        supabase.auth.onAuthStateChange((event) => {
-          if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
-            initPresence(supabase);
+        supabase.auth.onAuthStateChange(function (event) {
+          if (
+            event === "SIGNED_IN" ||
+            event === "SIGNED_OUT" ||
+            event === "TOKEN_REFRESHED" ||
+            event === "USER_UPDATED" ||
+            event === "INITIAL_SESSION"
+          ) {
+            clearTimeout(window.__qish_presence_reinit_t);
+            window.__qish_presence_reinit_t = setTimeout(function () {
+              initPresence(supabase);
+            }, 120);
           }
         });
       } catch (_) {}
     }
   }
 
-  // 获取当前在线用户 ID 集合
+  // 获取当前在线用户 ID 集合（仅真实登录用户，不含 guest）
   function getOnlineUserIds() {
     if (!presenceChannel) return new Set();
     try {
-      const state = presenceChannel.presenceState();
-      return new Set(Object.keys(state));
+      return collectOnlineUserIds(presenceChannel.presenceState());
     } catch (_) {
       return new Set();
+    }
+  }
+
+  // ========== 访问统计（轻量，无第三方） ==========
+  const VISIT_TABLE = "public_site_visits";
+  const VISIT_DEDUP_MS = 30 * 60 * 1000; // 同页 30 分钟内不重复记
+
+  function getVisitorKey() {
+    try {
+      let k = localStorage.getItem("qish_vid");
+      if (!k) {
+        k = "v_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+        localStorage.setItem("qish_vid", k);
+      }
+      return k;
+    } catch (_) {
+      return "anon";
+    }
+  }
+
+  function detectDeviceType() {
+    const ua = navigator.userAgent || "";
+    if (/iPad|Tablet|PlayBook/i.test(ua)) return "tablet";
+    if (/Mobile|Android.*Mobile|iPhone|iPod|webOS|BlackBerry|IEMobile|Opera Mini/i.test(ua)) return "mobile";
+    return "desktop";
+  }
+
+  function detectBrowserName() {
+    const ua = navigator.userAgent || "";
+    if (/MicroMessenger/i.test(ua)) return "微信";
+    if (/Edg\//i.test(ua)) return "Edge";
+    if (/OPR\/|Opera/i.test(ua)) return "Opera";
+    if (/Chrome\//i.test(ua) && !/Edg\//i.test(ua)) return "Chrome";
+    if (/Firefox\//i.test(ua)) return "Firefox";
+    if (/Safari\//i.test(ua) && !/Chrome/i.test(ua)) return "Safari";
+    return "其他";
+  }
+
+  function parseReferrerHost(ref) {
+    if (!ref) return "直接访问";
+    try {
+      const u = new URL(ref);
+      if (u.hostname === location.hostname) return "站内跳转";
+      return (u.hostname || "").replace(/^www\./, "") || "其他";
+    } catch (_) {
+      return "其他";
+    }
+  }
+
+  async function recordPageVisit(supabase) {
+    if (!supabase || typeof supabase.from !== "function") return;
+    try {
+      const path = (location.pathname.split("/").pop() || "index.html").toLowerCase() || "index.html";
+      const dedupKey = "qish_visit_" + path;
+      try {
+        const last = parseInt(sessionStorage.getItem(dedupKey) || "0", 10);
+        if (last && Date.now() - last < VISIT_DEDUP_MS) return;
+        sessionStorage.setItem(dedupKey, String(Date.now()));
+      } catch (_) {}
+
+      const ref = document.referrer || "";
+      await supabase.from(VISIT_TABLE).insert({
+        path: path,
+        referrer: String(ref).slice(0, 500),
+        referrer_host: parseReferrerHost(ref),
+        device: detectDeviceType(),
+        browser: detectBrowserName(),
+        visitor_key: getVisitorKey(),
+        page_title: String(document.title || "").slice(0, 120)
+      });
+    } catch (e) {
+      console.warn("[QISH] visit record", e && e.message ? e.message : e);
+    }
+  }
+
+  /** 拉取访问统计：总量、今日、设备/来源/页面分布 */
+  async function fetchVisitStats(supabase) {
+    if (!supabase || typeof supabase.from !== "function") {
+      return { total: 0, today: 0, uniqueToday: 0, devices: {}, sources: {}, pages: {}, recent: [], error: "无客户端" };
+    }
+    try {
+      const start = new Date();
+      start.setHours(0, 0, 0, 0);
+      const todayIso = start.toISOString();
+
+      const totalRes = await supabase.from(VISIT_TABLE).select("*", { count: "exact", head: true });
+      const todayRes = await supabase
+        .from(VISIT_TABLE)
+        .select("*", { count: "exact", head: true })
+        .gte("created_at", todayIso);
+
+      const recentRes = await supabase
+        .from(VISIT_TABLE)
+        .select("path,referrer_host,device,browser,created_at,visitor_key")
+        .order("created_at", { ascending: false })
+        .limit(1000);
+
+      if (totalRes.error) {
+        return {
+          total: 0, today: 0, uniqueToday: 0, devices: {}, sources: {}, pages: {}, recent: [],
+          error: totalRes.error.message
+        };
+      }
+
+      const rows = recentRes.data || [];
+      const devices = {};
+      const sources = {};
+      const pages = {};
+      const uniqueSet = new Set();
+      const todayMs = start.getTime();
+
+      rows.forEach(function (r) {
+        const d = r.device || "desktop";
+        devices[d] = (devices[d] || 0) + 1;
+        const s = r.referrer_host || "直接访问";
+        sources[s] = (sources[s] || 0) + 1;
+        const p = r.path || "index.html";
+        pages[p] = (pages[p] || 0) + 1;
+        if (r.created_at && new Date(r.created_at).getTime() >= todayMs && r.visitor_key) {
+          uniqueSet.add(r.visitor_key);
+        }
+      });
+
+      return {
+        total: totalRes.count || 0,
+        today: todayRes.count || 0,
+        uniqueToday: uniqueSet.size,
+        devices: devices,
+        sources: sources,
+        pages: pages,
+        recent: rows.slice(0, 12),
+        error: null
+      };
+    } catch (e) {
+      return {
+        total: 0, today: 0, uniqueToday: 0, devices: {}, sources: {}, pages: {}, recent: [],
+        error: e && e.message ? e.message : String(e)
+      };
     }
   }
 
@@ -2329,6 +2928,7 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
     initMouseGlow,
     initSidePanel,
     updateAuthNav,
+    waitForAuthSession,
     highlightCurrentNav,
     initMusicPlayer,
     isAudioFile,
@@ -2343,6 +2943,8 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
     initCharDialogue,
     initPresence,
     getOnlineUserIds,
+    recordPageVisit,
+    fetchVisitStats,
   };
 
   // 自动初始化光效、侧栏、音乐播放器
@@ -2352,12 +2954,24 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
     const page = (location.pathname.split("/").pop() || "index.html").toLowerCase();
     const chat = page === "chat.html";
     if (page === "album.html") document.body.classList.add("album-page");
-    // supabase 可能尚未就绪，延迟一帧
-    setTimeout(() => {
+    if (page === "index.html" || page === "" || page === "/") document.body.classList.add("home-page");
+    // supabase 可能尚未就绪：轮询等待后初始化在线状态（全站任意页）
+    (function waitSbAndPresence(attempt) {
       const sb = window.supabaseClient || window.__qish_sb || null;
-      initMusicPlayer({ isChatPage: chat, supabase: sb });
-      if (sb) initPresence(sb);
-    }, 50);
+      if (sb) {
+        initMusicPlayer({ isChatPage: chat, supabase: sb });
+        try { initPresence(sb); } catch (e) { console.warn("[QISH] initPresence", e); }
+        setTimeout(function () {
+          try { recordPageVisit(sb); } catch (e) { console.warn(e); }
+        }, 400);
+        return;
+      }
+      if (attempt < 40) {
+        setTimeout(function () { waitSbAndPresence(attempt + 1); }, 150);
+      } else {
+        initMusicPlayer({ isChatPage: chat, supabase: null });
+      }
+    })(0);
     try { initAnnounce(); } catch (e) { console.warn(e); }
     try { initNewMsgNotifier(); } catch (e) { console.warn(e); }
     try { initPWA(); } catch (e) { console.warn(e); }
