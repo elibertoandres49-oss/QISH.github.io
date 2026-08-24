@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -309,20 +309,60 @@ function openTimeModal() {
     }, 1000);
 }
 
-// 访问统计详情
+// 访问统计详情（全局 Supabase 数据）
 function openVisitModal() {
-    const total = parseInt(localStorage.getItem('qish_visit_count') || '0', 10);
-    const todayKey = 'qish_visit_today_' + new Date().toISOString().slice(0,10);
-    const today = parseInt(localStorage.getItem(todayKey) || '0', 10);
     const onlineEl = document.getElementById('onlineCount');
     const online = onlineEl ? onlineEl.textContent : '--';
-    const firstVisit = localStorage.getItem('qish_first_visit') || new Date().toLocaleDateString('zh-CN');
-    if (!localStorage.getItem('qish_first_visit')) localStorage.setItem('qish_first_visit', firstVisit);
-    document.getElementById('vmTotal').textContent = total;
-    document.getElementById('vmToday').textContent = today || '1';
-    document.getElementById('vmOnline').textContent = online;
-    document.getElementById('vmFirst').textContent = firstVisit;
+    // 优先用已加载的全局数据
+    var stats = window.__qishVisitStats;
+    if (stats && !stats.error) {
+        document.getElementById('vmTotal').textContent = stats.total;
+        document.getElementById('vmToday').textContent = stats.today;
+        document.getElementById('vmOnline').textContent = online;
+        var fv = stats.firstVisit;
+        if (fv) {
+            try { fv = new Date(fv).toLocaleDateString('zh-CN'); } catch(e) {}
+        }
+        document.getElementById('vmFirst').textContent = fv || '记录中';
+    } else {
+        // 兜底：localStorage
+        const total = parseInt(localStorage.getItem('qish_visit_count') || '0', 10);
+        const todayKey = 'qish_visit_today_' + new Date().toISOString().slice(0,10);
+        const today = parseInt(localStorage.getItem(todayKey) || '0', 10);
+        const firstVisit = localStorage.getItem('qish_first_visit') || new Date().toLocaleDateString('zh-CN');
+        document.getElementById('vmTotal').textContent = total;
+        document.getElementById('vmToday').textContent = today || '1';
+        document.getElementById('vmOnline').textContent = online;
+        document.getElementById('vmFirst').textContent = firstVisit;
+    }
     openModal('visitModal');
+}
+
+// 从 Supabase 拉取全局访问统计
+async function loadGlobalVisitStats() {
+    var sb = window.supabaseClient || window.__qish_sb;
+    if (!sb || typeof sb.from !== 'function') return;
+    if (typeof fetchVisitStats !== 'function') return;
+    try {
+        var stats = await fetchVisitStats(sb);
+        window.__qishVisitStats = stats;
+        if (stats && !stats.error) {
+            // 更新气泡显示
+            var el = document.getElementById('visitCount');
+            if (el) {
+                var target = stats.total || 0;
+                var cur = 0;
+                var step = Math.max(1, Math.floor(target / 30));
+                var timer = setInterval(function() {
+                    cur += step;
+                    if (cur >= target) { cur = target; clearInterval(timer); }
+                    el.textContent = cur;
+                }, 30);
+            }
+        }
+    } catch (e) {
+        console.warn('[访问统计] Supabase 拉取失败，使用本地数据', e);
+    }
 }
 
 // 音乐详情
@@ -360,29 +400,42 @@ function musicModalNext() {
     setTimeout(updateMusicModal, 100);
 }
 
-// 今日访问计数
+// 今日访问计数（本地兜底）
 (function() {
     const todayKey = 'qish_visit_today_' + new Date().toISOString().slice(0,10);
     let t = parseInt(localStorage.getItem(todayKey) || '0', 10);
     t++;
     localStorage.setItem(todayKey, String(t));
+    if (!localStorage.getItem('qish_first_visit')) {
+        localStorage.setItem('qish_first_visit', new Date().toLocaleDateString('zh-CN'));
+    }
 })();
 
-// ========== 累计访问统计 ==========
+// 累计访问统计：优先 Supabase 全局，兜底 localStorage
 (function updateVisitCount() {
+    // 先显示本地计数（快速）
     const VISIT_KEY = 'qish_visit_count';
-    let count = parseInt(localStorage.getItem(VISIT_KEY) || '0', 10);
-    count++;
-    localStorage.setItem(VISIT_KEY, String(count));
-    // 数字滚动动画
+    let localCount = parseInt(localStorage.getItem(VISIT_KEY) || '0', 10);
+    localCount++;
+    localStorage.setItem(VISIT_KEY, String(localCount));
     const el = document.getElementById('visitCount');
-    let cur = 0;
-    const step = Math.max(1, Math.floor(count / 30));
-    const timer = setInterval(() => {
-        cur += step;
-        if (cur >= count) { cur = count; clearInterval(timer); }
-        el.textContent = cur;
-    }, 30);
+    if (el) el.textContent = localCount;
+    // 异步拉取全局数据并更新
+    if (window.supabaseClient || window.__qish_sb) {
+        loadGlobalVisitStats();
+    } else {
+        // 等待 Supabase 初始化
+        var attempts = 0;
+        var timer = setInterval(function() {
+            attempts++;
+            if (window.supabaseClient || window.__qish_sb) {
+                clearInterval(timer);
+                loadGlobalVisitStats();
+            } else if (attempts > 30) {
+                clearInterval(timer);
+            }
+        }, 150);
+    }
 })();
 
 // ========== 在线人数（Supabase Presence）==========

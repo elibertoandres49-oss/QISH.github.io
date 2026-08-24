@@ -2031,37 +2031,53 @@ body.album-page .qm-empty{color:#64748b}
 
   function applyTheme(name) {
     if (!THEMES.includes(name)) name = "aqua";
-    document.documentElement.setAttribute("data-theme", name);
-    try {
-      localStorage.setItem(THEME_KEY, name);
-    } catch (_) {}
-    // 自定义主题：应用用户背景图
-    if (name === "custom") {
-      const bg = getCustomBg();
-      if (bg) {
-        document.documentElement.style.setProperty("--custom-bg", `url("${bg}")`);
+    // 切换前：添加淡入遮罩防止闪屏
+    var flash = document.getElementById("qishThemeFlash");
+    if (!flash) {
+      flash = document.createElement("div");
+      flash.id = "qishThemeFlash";
+      flash.style.cssText = "position:fixed;inset:0;z-index:99999;background:var(--bg-gradient,#fff);opacity:0;pointer-events:none;transition:opacity 0.25s ease;";
+      document.body.appendChild(flash);
+    }
+    flash.style.opacity = "1";
+    // 等一帧让遮罩淡入，再切换主题
+    requestAnimationFrame(function () {
+      document.documentElement.setAttribute("data-theme", name);
+      try {
+        localStorage.setItem(THEME_KEY, name);
+      } catch (_) {}
+      // 自定义主题：应用用户背景图
+      if (name === "custom") {
+        const bg = getCustomBg();
+        if (bg) {
+          document.documentElement.style.setProperty("--custom-bg", `url("${bg}")`);
+        } else {
+          document.documentElement.style.removeProperty("--custom-bg");
+        }
       } else {
         document.documentElement.style.removeProperty("--custom-bg");
       }
-    } else {
-      document.documentElement.style.removeProperty("--custom-bg");
-    }
-    document.querySelectorAll(".theme-opt").forEach((btn) => {
-      btn.classList.toggle("active", btn.dataset.theme === name);
+      document.querySelectorAll(".theme-opt").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.theme === name);
+      });
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) {
+        meta.content =
+          name === "dark" ? "#0b0f14" :
+          name === "light" ? "#f5f6f8" :
+          name === "aqua" ? "#0ea5e9" : "#60a5fa";
+      }
+      // 水纹主题：挂载可见波浪层
+      try {
+        syncAquaWaves(name === "aqua");
+      } catch (_) {}
+      // 相册页使用独立 CSS 变量，需单独同步
+      applyAlbumTheme(name);
+      // 主题应用完成后，遮罩淡出
+      requestAnimationFrame(function () {
+        flash.style.opacity = "0";
+      });
     });
-    const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) {
-      meta.content =
-        name === "dark" ? "#0b0f14" :
-        name === "light" ? "#f5f6f8" :
-        name === "aqua" ? "#0ea5e9" : "#60a5fa";
-    }
-    // 水纹主题：挂载可见波浪层
-    try {
-      syncAquaWaves(name === "aqua");
-    } catch (_) {}
-    // 相册页使用独立 CSS 变量，需单独同步
-    applyAlbumTheme(name);
   }
 
   function applyAlbumTheme(name) {
@@ -3092,6 +3108,7 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
         sources: sources,
         pages: pages,
         recent: rows.slice(0, 12),
+        firstVisit: rows.length > 0 ? rows[rows.length - 1].created_at : null,
         error: null
       };
     } catch (e) {
