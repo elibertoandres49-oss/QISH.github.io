@@ -2349,24 +2349,17 @@ body.ui-edit-mode .bubble-circle:hover {
     .polaroid .polaroid-del {
         opacity: 1;
     }
-    /* 禁用文字选中（交互元素） */
+    /* 确保可点击元素正常响应触摸 */
     .bubble-circle,
     .nav-fab,
     .page-nav-arrow,
-    .polaroid {
-        -webkit-user-select: none;
-        user-select: none;
-        -webkit-tap-highlight-color: transparent;
-    }
-    /* 活跃态反馈替代悬停 */
-    .bubble-circle:active {
-        transform: scale(0.92) !important;
-    }
-    .nav-fab:active {
-        transform: scale(0.92) !important;
-    }
-    .page-nav-arrow:active {
-        transform: translateY(-50%) scale(0.92) !important;
+    .polaroid,
+    .sidebar-nav a,
+    .sidebar-nav button,
+    .anime-circle-item,
+    .anime-item {
+        -webkit-tap-highlight-color: rgba(91,168,160,0.15);
+        touch-action: manipulation;
     }
 }
 
