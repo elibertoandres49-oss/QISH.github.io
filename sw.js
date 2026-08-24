@@ -1,5 +1,5 @@
 /* QISH PWA Service Worker */
-const CACHE = "qish-static-v1";
+const CACHE = "qish-static-v15";
 const PRECACHE = [
   "./",
   "./index.html",
@@ -15,7 +15,11 @@ const PRECACHE = [
   "./auth.html",
   "./profile.html",
   "./projects.html",
-  "./userlist.html"
+  "./userlist.html",
+  "./anime.html",
+  "./rhythm4k.html",
+  "./announce.html",
+  "./timeline.html"
 ];
 
 self.addEventListener("install", (event) => {

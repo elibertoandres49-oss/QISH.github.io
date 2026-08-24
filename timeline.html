@@ -1,0 +1,177 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人历程 - QISH</title>
+    <link rel="icon" href="avatar.jpg">
+    <link rel="stylesheet" href="style.css">
+    <script>
+    (function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="aqua"||t==="custom")?t:"aqua");}catch(e){document.documentElement.setAttribute("data-theme","aqua");}})();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
+    <script>
+    (function initSupabase() {
+        window.SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
+        window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
+        function tryCreate() {
+            if (window.supabase && typeof window.supabase.createClient === "function") {
+                window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+                    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage, storageKey: "qish-auth-v1" }
+                });
+            } else { setTimeout(tryCreate, 80); }
+        }
+        tryCreate();
+    })();
+    </script>
+    <script src="common.js" defer></script>
+</head>
+<body>
+    <button class="nav-fab" id="navFab" aria-label="导航菜单"><img src="avatar.jpg" alt="菜单" id="navAvatar"></button>
+    <div class="nav-fab-ring" id="navFabRing"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="avatar.jpg" alt="头像" class="sidebar-avatar" id="sidebarAvatar">
+            <div class="sidebar-user-info">
+                <div class="sidebar-username" id="sidebarUsername">QISH</div>
+                <div class="sidebar-status" id="sidebarStatus">未登录</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="sidebar-nav-label">导航</div>
+            <a href="index.html">首页</a>
+            <a href="about.html">关于我</a>
+            <a href="timeline.html" class="nav-active">个人历程</a>
+            <a href="projects.html">我的项目</a>
+            <a href="announce.html">公告</a>
+            <a href="chat.html">聊天室</a>
+            <a href="album.html">成员相册</a>`n            <a href="userlist.html">用户列表</a>
+            <a href="profile.html">个人资料</a>
+            <div class="sidebar-nav-label">账号</div>
+            <a href="auth.html" id="sidebarAuthLink">登录/注册</a>
+            <button class="sidebar-logout-btn" id="sidebarLogoutBtn" style="display:none;">退出登录</button>
+        </nav>
+    </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <main class="main-content">
+        <div class="container">
+            <a href="index.html" class="back-btn" style="margin-bottom:16px;">← 返回首页</a>
+            <h1>📜 个人历程</h1>
+            <p style="color:var(--text-sub);margin-bottom:8px;">记录一路走来的脚印</p>
+
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-card">
+                        <div class="timeline-year">2026 · 08</div>
+                        <div class="timeline-title">QISH 小站 v1.0 正式上线</div>
+                        <div class="timeline-desc">个人网站全面重构，采用玻璃拟态设计，接入 Supabase 后端，支持实时聊天、追番表、相册、音乐播放器等功能。</div>
+                        <div class="timeline-tags">
+                            <span class="timeline-tag">网站上线</span>
+                            <span class="timeline-tag">Supabase</span>
+                            <span class="timeline-tag">PWA</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-card">
+                        <div class="timeline-year">2026 · 06</div>
+                        <div class="timeline-title">开始学习全栈开发</div>
+                        <div class="timeline-desc">系统学习 Node.js、数据库设计、用户认证与实时通信，为个人网站搭建做技术准备。</div>
+                        <div class="timeline-tags">
+                            <span class="timeline-tag">Node.js</span>
+                            <span class="timeline-tag">PostgreSQL</span>
+                            <span class="timeline-tag">Realtime</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-card">
+                        <div class="timeline-year">2026 · 03</div>
+                        <div class="timeline-title">4K 音游项目启动</div>
+                        <div class="timeline-desc">开发网页端 4K 下落式音游，支持自定义铺面编辑、上传与分享，累计制作 20+ 铺面。</div>
+                        <div class="timeline-tags">
+                            <span class="timeline-tag">音游</span>
+                            <span class="timeline-tag">Canvas</span>
+                            <span class="timeline-tag">Web Audio</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-card">
+                        <div class="timeline-year">2025 · 11</div>
+                        <div class="timeline-title">入坑 Bangumi 追番</div>
+                        <div class="timeline-desc">开始使用 Bangumi API 管理追番列表，累计标记 150+ 部动画，养成每日看番习惯。</div>
+                        <div class="timeline-tags">
+                            <span class="timeline-tag">动漫</span>
+                            <span class="timeline-tag">API</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-card">
+                        <div class="timeline-year">2025 · 07</div>
+                        <div class="timeline-title">第一个网页项目</div>
+                        <div class="timeline-desc">完成第一个静态个人主页，学习 HTML/CSS/JS 基础，尝试 CSS 动画与响应式布局。</div>
+                        <div class="timeline-tags">
+                            <span class="timeline-tag">HTML</span>
+                            <span class="timeline-tag">CSS</span>
+                            <span class="timeline-tag">入门</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-card">
+                        <div class="timeline-year">2025 · 01</div>
+                        <div class="timeline-title">开始编程之旅</div>
+                        <div class="timeline-desc">第一次接触编程，从 Python 入门，写了一些小工具和爬虫，从此一发不可收拾。</div>
+                        <div class="timeline-tags">
+                            <span class="timeline-tag">Python</span>
+                            <span class="timeline-tag">起点</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer><p>© 2026 QISH 小站 · Made with ❤️</p></footer>
+    </main>
+
+    <div class="right-image" id="rightImage">
+        <span class="char-inner"><img src="qishi-expr-normal.gif" alt="Q版小人" id="rightCharImg"></span>
+        <div class="char-bubble" id="charBubble" aria-hidden="true">
+            <span class="char-bubble-text">看看我的故事吧~</span>
+        </div>
+    </div>
+
+    <div class="side-panel" id="sidePanel">
+        <div class="side-panel-content">
+            <button class="close-btn" id="closePanel">×</button>
+            <img src="avatar.jpg" alt="头像" class="panel-avatar" id="panelAvatar">
+            <h2 id="panelUsername">QISH</h2>
+            <p class="panel-desc">ovo</p>
+            <p class="panel-email" id="panelEmail" style="display:none;"></p>
+            <div class="panel-links" id="panelLinksBox">
+                <a href="index.html">首页</a><a href="about.html">关于我</a><a href="timeline.html">个人历程</a><a href="projects.html">我的项目</a>
+                <a href="announce.html">公告</a>`n            <a href="userlist.html">用户列表</a><a href="profile.html">个人资料</a><a href="./album.html">相册</a>
+                <a href="chat.html">聊天室</a><a href="auth.html">登录/注册</a>
+            </div>
+        </div>
+    </div>
+    <div class="overlay" id="overlay"></div>
+    <div class="mouse-glow" id="glow"></div>
+
+<script>
+</script>
+</body>
+</html>

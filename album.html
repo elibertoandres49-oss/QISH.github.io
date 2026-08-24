@@ -1,862 +1,646 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>成员相册</title>
+    <title>成员相册 - QISH</title>
+    <link rel="icon" href="avatar.jpg">
     <script>
-    (function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="color"||t==="aqua"||t==="custom")?t:"color");}catch(e){document.documentElement.setAttribute("data-theme","color");}})();
+    (function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="aqua"||t==="custom")?t:"aqua");}catch(e){document.documentElement.setAttribute("data-theme","aqua");}})();
     </script>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
+    <script src="common.js" defer></script>
     <style>
-:root {
-    --gradient-start: #acbafc;
-    --gradient-mid: #b58cde;
-    --gradient-end: #f0aef7;
-    --glass-bg: rgba(255, 255, 255, 0.18);
-    --glass-bg-strong: rgba(255, 255, 255, 0.28);
-    --glass-border: rgba(255, 255, 255, 0.35);
-    --text-main: #ffffff;
-    --text-sub: rgba(255, 255, 255, 0.85);
-    --shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-}
-
-* {
-    box-sizing: border-box;
-}
-
-body {
-    margin: 0;
-    min-height: 100vh;
-    color: var(--text-main);
-    font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
-    background: var(--album-bg,
-        radial-gradient(circle at 10% 20%, rgba(96, 165, 250, 0.85), transparent 50%),
-        radial-gradient(circle at 90% 10%, rgba(59, 130, 246, 0.7), transparent 50%),
-        radial-gradient(circle at 50% 90%, rgba(147, 197, 253, 0.8), transparent 50%),
-        linear-gradient(135deg, #60a5fa 0%, #3b82f6 50%, #93c5fd 100%));
-    background-attachment: fixed;
-    transition: background 0.35s ease, color 0.25s ease;
-}
-
-/* 主题：白 */
-html[data-theme="light"] body.album-page {
-    --text-main: #0f172a;
-    --text-sub: #64748b;
-    --glass-bg: rgba(255, 255, 255, 0.88);
-    --glass-bg-strong: rgba(255, 255, 255, 0.96);
-    --glass-border: rgba(15, 23, 42, 0.1);
-    --shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
-    --album-bg: #f5f6f8;
-    background: #f5f6f8;
-    color: #0f172a;
-}
-html[data-theme="light"] body.album-page .trail-light {
-    background: radial-gradient(circle, rgba(124, 58, 237, 0.12), transparent 70%);
-}
-html[data-theme="light"] body.album-page .photo-card {
-    color: #0f172a;
-}
-
-/* 主题：黑 */
-html[data-theme="dark"] body.album-page {
-    --text-main: #e2e8f0;
-    --text-sub: #94a3b8;
-    --glass-bg: rgba(30, 41, 59, 0.75);
-    --glass-bg-strong: rgba(30, 41, 59, 0.92);
-    --glass-border: rgba(255, 255, 255, 0.12);
-    --shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
-    --album-bg: #0b0f14;
-    background: #0b0f14;
-    color: #e2e8f0;
-}
-html[data-theme="dark"] body.album-page .trail-light {
-    background: radial-gradient(circle, rgba(167, 139, 250, 0.15), transparent 70%);
-}
-
-
-body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    background:
-        radial-gradient(circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.08), transparent 35%);
-    transition: background 0.12s ease-out;
-    z-index: 0;
-}
-
-.trail-light {
-    position: fixed;
-    width: 180px;
-    height: 180px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255,255,255,0.14), transparent 70%);
-    pointer-events: none;
-    transform: translate(-50%, -50%);
-    transition: opacity 0.6s ease, transform 0.08s ease;
-    opacity: 0;
-    z-index: 1;
-}
-
-/* 相册内嵌鼠标光球样式（本页未引入 style.css） */
-.mouse-glow {
-    position: fixed;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background:
-        radial-gradient(circle at 32% 28%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.35) 28%, transparent 55%),
-        rgba(255, 255, 255, 0.22);
-    backdrop-filter: blur(14px) saturate(1.4);
-    -webkit-backdrop-filter: blur(14px) saturate(1.4);
-    border: 1.5px solid rgba(255, 255, 255, 0.65);
-    box-shadow:
-        0 4px 16px rgba(15, 23, 42, 0.12),
-        inset 0 1px 2px rgba(255, 255, 255, 0.7);
-    pointer-events: none;
-    transform: translate(-50%, -50%);
-    z-index: 9990;
-    will-change: transform, left, top;
-}
-.mouse-glow.mouse-glow-adsorb {
-    border-color: rgba(255, 255, 255, 0.85);
-    background:
-        radial-gradient(circle at 30% 25%, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.5) 30%, transparent 60%),
-        rgba(255, 255, 255, 0.4);
-    mix-blend-mode: soft-light;
-}
-.mouse-trail-svg {
-    position: fixed;
-    left: 0; top: 0;
-    width: 100%; height: 100%;
-    pointer-events: none;
-    z-index: 9988;
-}
-.mouse-click-ring {
-    position: fixed;
-    width: 12px; height: 12px;
-    margin-left: -6px; margin-top: -6px;
-    border-radius: 50%;
-    border: 1.5px solid rgba(255, 255, 255, 0.75);
-    pointer-events: none;
-    z-index: 9991;
-    animation: mouseRingOut 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-.mouse-click-splash {
-    position: fixed;
-    width: 8px; height: 8px;
-    margin-left: -4px; margin-top: -4px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(255,255,255,0.9) 0%, transparent 70%);
-    pointer-events: none;
-    z-index: 9991;
-    animation: mouseSplashOut 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-@keyframes mouseRingOut {
-    0% { transform: scale(0.4); opacity: 0.9; }
-    100% { transform: scale(4.5); opacity: 0; }
-}
-@keyframes mouseSplashOut {
-    0% { transform: scale(0.5); opacity: 1; }
-    100% { transform: scale(3.2); opacity: 0; }
-}
-
-/* 大边框：橡皮绳 + 鼠标内凹 */
-.elastic-frame {
-    position: relative;
-    --dent-x: 50%;
-    --dent-y: 50%;
-    --dent-s: 0;
-    --pull-x: 0px;
-    --pull-y: 0px;
-    transition:
-        transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
-        box-shadow 0.35s ease,
-        border-color 0.3s ease;
-    /* no rubber transform */
-}
-.elastic-frame::before {
-    content: "";
-    position: absolute;
-    inset: -1px;
-    border-radius: inherit;
-    pointer-events: none;
-    z-index: 3;
-    /* 边框高光，在鼠标处被“咬”出内凹 */
-    background:
-        radial-gradient(
-            circle 56px at var(--dent-x) var(--dent-y),
-            transparent 0%,
-            transparent calc(22px + var(--dent-s) * 18px),
-            rgba(255, 255, 255, 0.28) calc(28px + var(--dent-s) * 10px),
-            transparent calc(42px + var(--dent-s) * 20px)
-        );
-    opacity: calc(0.08 + var(--dent-s) * 0.28);
-    mix-blend-mode: soft-light;
-    transition: opacity 0.2s ease;
-}
-.elastic-frame::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    pointer-events: none;
-    z-index: 2;
-    /* 内侧阴影随鼠标凹陷 */
-    box-shadow:
-        inset
-            calc((var(--dent-x) - 50%) * 0.18)
-            calc((var(--dent-y) - 50%) * 0.18)
-            calc(12px + var(--dent-s) * 28px)
-            rgba(0, 0, 0, calc(0.03 + var(--dent-s) * 0.06));
-    transition: box-shadow 0.15s ease;
-}
-.elastic-frame.is-near {
-    border-color: rgba(255, 255, 255, 0.65);
-}
-35%  { transform: translate(calc(var(--pull-x) * -0.35), calc(var(--pull-y) * -0.35)) scale(0.97); }
-    65%  { transform: translate(calc(var(--pull-x) * 0.12), calc(var(--pull-y) * 0.12)) scale(1.02); }
-    100% { transform: translate(0, 0) scale(1); }
-}
-html[data-theme="dark"] body.album-page .elastic-frame::before {
-    background:
-        radial-gradient(
-            circle 56px at var(--dent-x) var(--dent-y),
-            transparent 0%,
-            transparent calc(22px + var(--dent-s) * 18px),
-            rgba(148, 163, 184, 0.45) calc(28px + var(--dent-s) * 14px),
-            transparent calc(42px + var(--dent-s) * 20px)
-        );
-}
-html[data-theme="light"] body.album-page .elastic-frame::before {
-    background:
-        radial-gradient(
-            circle 56px at var(--dent-x) var(--dent-y),
-            transparent 0%,
-            transparent calc(22px + var(--dent-s) * 18px),
-            rgba(59, 130, 246, 0.35) calc(28px + var(--dent-s) * 14px),
-            transparent calc(42px + var(--dent-s) * 20px)
-        );
-}
-
-.page-wrapper {
-    position: relative;
-    z-index: 2;
-    max-width: 1600px;
-    margin: 0 auto;
-    padding: 24px 20px 48px;
-}
-
-.back-wrap {
-    margin-bottom: 24px;
-}
-
-.btn-back {
-    padding: 10px 18px;
-    border-radius: 999px;
-    border: 1px solid var(--glass-border);
-    background: var(--glass-bg);
-    color: var(--text-main);
-    cursor: pointer;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    box-shadow: var(--shadow);
-    transition: 0.3s ease;
-    font-size: 15px;
-}
-
-.btn-back:hover {
-    transform: translateY(-2px);
-    background: var(--glass-bg-strong);
-    box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2);
-}
-
-.page-title {
-    text-align: center;
-    font-size: 34px;
-    font-weight: 800;
-    padding-bottom: 16px;
-    border-bottom: 1px solid var(--glass-border);
-    margin-bottom: 28px;
-    letter-spacing: 1px;
-    text-shadow: 0 2px 8px rgba(0,0,0,0.35);
-}
-
-.upload-box {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 24px;
-    padding: 28px;
-    margin-bottom: 36px;
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    box-shadow: var(--shadow);
-}
-
-.upload-box h3 {
-    margin-top: 0;
-    margin-bottom: 18px;
-    font-size: 20px;
-    color: var(--text-main);
-}
-
-#photoInput {
-    display: none;
-}
-
-.file-btn,
-.up-btn {
-    padding: 12px 26px;
-    border: none;
-    border-radius: 999px;
-    color: white;
-    cursor: pointer;
-    font-size: 15px;
-    font-weight: 600;
-    transition: 0.3s ease;
-    box-shadow: 0 4px 18px rgba(0,0,0,0.15);
-}
-
-.file-btn {
-    background: linear-gradient(135deg, #5b7cd8, #6a85d8);
-    margin-right: 12px;
-}
-
-.file-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(91, 124, 216, 0.45);
-}
-
-.up-btn {
-    background: linear-gradient(135deg, #36b37e, #42c9a3);
-}
-
-.up-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(54, 179, 126, 0.45);
-}
-
-.tip-file {
-    margin-top: 14px;
-    font-size: 14px;
-    color: var(--text-sub);
-}
-
-.msg-tip {
-    margin-top: 10px;
-    font-size: 14px;
-    color: #ffd6d6;
-}
-
-.album-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 24px;
-}
-
-.photo-card {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
-    border-radius: 24px;
-    overflow: hidden;
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    box-shadow: var(--shadow);
-    transition: 0.4s ease;
-}
-
-.photo-card:hover {
-    transform: translateY(-6px) scale(1.02);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.25);
-}
-
-.img-wrap {
-    width: 100%;
-    aspect-ratio: 1/1;
-    overflow: hidden;
-    cursor: pointer;
-}
-
-.img-wrap img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.4s ease;
-}
-
-.photo-card:hover .img-wrap img {
-    transform: scale(1.08);
-}
-
-.card-info {
-    padding: 12px 14px;
-    font-size: 13px;
-    color: var(--text-sub);
-}
-
-.card-name {
-    font-weight: bold;
-    color: var(--text-main);
-    margin-bottom: 4px;
-    font-size: 14px;
-}
-
-.del-btn {
-    margin-top: 10px;
-    background: linear-gradient(135deg, #e53e3e, #ff6b6b);
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 999px;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 600;
-    transition: 0.3s ease;
-}
-
-.del-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(229, 62, 62, 0.45);
-}
-
-.modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.55);
-    display: none;
-    align-items: center;
-    justify-content: center;
-    z-index: 999;
-    padding: 24px;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-}
-
-.modal-overlay.active {
-    display: flex;
-}
-
-.modal-img {
-    max-width: 92vw;
-    max-height: 88vh;
-    border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
-}
-
-.close-modal {
-    position: absolute;
-    top: 20px;
-    right: 24px;
-    color: #fff;
-    font-size: 36px;
-    cursor: pointer;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.4);
-    transition: 0.3s ease;
-}
-
-.close-modal:hover {
-    transform: scale(1.15);
-}
-
-.empty-tip {
-    padding: 48px;
-    text-align: center;
-    color: var(--text-sub);
-    font-size: 15px;
-}
-
-@media (max-width: 640px) {
-    .page-title {
-        font-size: 24px;
+    body.album-page { overflow-x: hidden; }
+    .album-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 24px 0;
+        max-width: 1400px;
+        margin: 0 auto;
     }
-
-    .album-grid {
-        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-        gap: 16px;
+    .album-title {
+        font-size: 22px;
+        font-weight: 800;
+        color: var(--text-main);
     }
-
-    .file-btn,
-    .up-btn {
+    .album-actions { display: flex; gap: 10px; align-items: center; }
+    .album-tip {
+        text-align: center;
+        color: var(--text-sub);
+        font-size: 13px;
+        padding: 8px;
+    }
+    .scatter-wall {
+        position: relative;
+        max-width: 1400px;
+        margin: 0 auto;
+        min-height: 75vh;
+    }
+    .polaroid {
+        position: absolute;
+        width: 170px;
+        background: #fff;
+        padding: 8px 8px 32px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        cursor: pointer;
+        transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+        z-index: 1;
+        border-radius: 2px;
+    }
+    .polaroid:hover {
+        transform: scale(1.18) rotate(0deg) !important;
+        z-index: 100 !important;
+        box-shadow: 0 16px 48px rgba(0,0,0,0.25);
+    }
+    .polaroid img {
         width: 100%;
-        margin-right: 0;
-        margin-bottom: 12px;
+        height: 150px;
+        object-fit: cover;
+        display: block;
+        border-radius: 1px;
     }
-}
-</style>
+    .polaroid-caption {
+        position: absolute;
+        bottom: 6px;
+        left: 0; right: 0;
+        text-align: center;
+        font-size: 11px;
+        color: #666;
+        font-family: "Comic Sans MS", "Caveat", cursive;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding: 0 6px;
+    }
+    .polaroid-del {
+        position: absolute;
+        top: -8px; right: -8px;
+        width: 22px; height: 22px;
+        border-radius: 50%;
+        background: #ef4444;
+        color: #fff;
+        border: none;
+        font-size: 11px;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.2s;
+        display: flex; align-items: center; justify-content: center;
+        z-index: 2;
+    }
+    .polaroid:hover .polaroid-del { opacity: 1; }
+    .scatter-upload {
+        position: fixed;
+        bottom: 28px;
+        right: 28px;
+        z-index: 60;
+    }
+    .scatter-upload-btn {
+        width: 58px; height: 58px;
+        border-radius: 50%;
+        border: none;
+        background: var(--accent-grad);
+        color: #fff;
+        font-size: 26px;
+        cursor: pointer;
+        box-shadow: 0 6px 24px rgba(91,168,160,0.45);
+        transition: transform 0.3s ease;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .scatter-upload-btn:hover { transform: scale(1.1) rotate(90deg); }
+    .upload-panel {
+        position: fixed;
+        bottom: 100px;
+        right: 28px;
+        z-index: 61;
+        background: var(--card-bg-strong);
+        backdrop-filter: blur(20px);
+        border: 1px solid var(--card-border);
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: var(--card-shadow-hover);
+        display: none;
+        width: 280px;
+    }
+    .upload-panel.show { display: block; }
+    .upload-panel h4 { margin: 0 0 10px; font-size: 14px; }
+    .upload-panel .file-btn {
+        display: block; width: 100%;
+        padding: 10px; border-radius: 12px;
+        border: 1px dashed var(--accent);
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 13px; font-weight: 600;
+        cursor: pointer; text-align: center;
+        margin-bottom: 8px;
+    }
+    .upload-panel .up-btn {
+        display: block; width: 100%;
+        padding: 10px; border-radius: 12px;
+        border: none;
+        background: var(--accent-grad);
+        color: #fff;
+        font-size: 13px; font-weight: 600;
+        cursor: pointer;
+    }
+    .upload-panel .up-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .upload-panel .file-name {
+        font-size: 12px; color: var(--text-sub);
+        margin-bottom: 8px; word-break: break-all;
+    }
+    .upload-panel .msg { font-size: 12px; margin-top: 8px; }
+    .modal-overlay {
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,0.7);
+        backdrop-filter: blur(8px);
+        display: none;
+        align-items: center; justify-content: center;
+        z-index: 999; padding: 24px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-img-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        max-width: 90vw;
+        max-height: 80vh;
+    }
+    .modal-img {
+        max-width: 90vw;
+        max-height: 78vh;
+        border-radius: 16px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        transition: opacity 0.25s ease, transform 0.3s ease;
+        user-select: none;
+        -webkit-user-drag: none;
+    }
+    .modal-img.switching { opacity: 0; transform: scale(0.96); }
+    .modal-img.switch-left { transform: translateX(-30px); opacity: 0; }
+    .modal-img.switch-right { transform: translateX(30px); opacity: 0; }
+    .modal-nav {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(10px);
+        color: #fff;
+        font-size: 28px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        z-index: 10;
+        line-height: 1;
+    }
+    .modal-nav:hover { background: rgba(255,255,255,0.3); transform: translateY(-50%) scale(1.1); }
+    .modal-prev { left: 24px; }
+    .modal-next { right: 24px; }
+    .modal-counter {
+        position: absolute;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #fff;
+        font-size: 14px;
+        font-weight: 600;
+        background: rgba(0,0,0,0.4);
+        padding: 6px 16px;
+        border-radius: 20px;
+        backdrop-filter: blur(8px);
+    }
+    .modal-caption {
+        position: absolute;
+        bottom: 60px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: #fff;
+        font-size: 13px;
+        background: rgba(0,0,0,0.4);
+        padding: 4px 14px;
+        border-radius: 12px;
+        backdrop-filter: blur(8px);
+        white-space: nowrap;
+        max-width: 80vw;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .close-modal {
+        position: absolute; top: 20px; right: 24px;
+        color: #fff; font-size: 36px; cursor: pointer;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+    .empty-album {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        color: var(--text-sub);
+        font-size: 16px;
+    }
+    </style>
 </head>
 <body class="album-page">
-    <!-- 与全站一致的鼠标光球（common.js initMouseGlow） -->
-    <div class="mouse-glow" id="glow"></div>
-    <div class="trail-light" id="trailLight"></div>
+    <!-- 左上角圆形导航按钮 -->
+    <button class="nav-fab" id="navFab" aria-label="导航菜单"><img src="avatar.jpg" alt="菜单" id="navAvatar"></button>
+    <div class="nav-fab-ring" id="navFabRing"></div>
 
-    <div class="page-wrapper">
-        <div class="back-wrap" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;">
-            <button class="btn-back" onclick="location.href='./index.html'">← 返回主页</button>
-            <button class="btn-back" onclick="location.href='./chat.html'">💬 聊天室</button>
-            <button class="btn-back" onclick="location.href='./profile.html'">个人资料</button>
+    <!-- 侧边栏 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="avatar.jpg" alt="头像" class="sidebar-avatar" id="sidebarAvatar">
+            <div class="sidebar-user-info">
+                <div class="sidebar-username" id="sidebarUsername">QISH</div>
+                <div class="sidebar-status" id="sidebarStatus">未登录</div>
+            </div>
         </div>
+        <nav class="sidebar-nav">
+            <div class="sidebar-nav-label">导航</div>
+            <a href="index.html">首页</a>
+            <a href="about.html">关于我</a>
+            <a href="timeline.html">个人历程</a>
+            <a href="projects.html">我的项目</a>
+            <a href="announce.html">公告</a>
+            <a href="chat.html">聊天室</a>
+            <a href="album.html" class="nav-active">成员相册</a>`n            <a href="userlist.html">用户列表</a>
+            <a href="profile.html">个人资料</a>
+            <div class="sidebar-nav-label">账号</div>
+            <a href="auth.html" id="sidebarAuthLink">登录/注册</a>
+            <button class="sidebar-logout-btn" id="sidebarLogoutBtn" style="display:none;">退出登录</button>
+        </nav>
+    </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-        <div class="page-title">成员相册</div>
-
-        <div class="upload-box elastic-frame" id="uploadBox">
-            <h3>上传照片（登录成员可用）</h3>
-            <input type="file" id="photoInput" accept="image/*">
-            <button class="file-btn" id="selectBtn">选择图片文件</button>
-            <button class="up-btn" id="uploadBtn">上传图片</button>
-            <div class="tip-file" id="fileNameTip"></div>
-            <div class="msg-tip" id="msgBox"></div>
-        </div>
-
-        <div class="album-grid" id="albumContainer"></div>
+    <!-- 页面间箭头：相册 → 聊天室 -->
+    <div class="page-nav-arrow left" onclick="navigateWithSlide('chat.html','right')" title="返回聊天室" style="cursor:pointer;">
+        <span class="arrow-label">聊天室</span>
+        ←
     </div>
 
+    <div class="mouse-glow" id="glow"></div>
+
+    <main class="main-content">
+        <div class="container" style="background:transparent;border:none;box-shadow:none;backdrop-filter:none;padding:0;">
+        <!-- 顶部栏 -->
+        <div class="album-topbar">
+            <div style="width:80px;"></div>
+            <div class="album-title">成员相册</div>
+            <div style="width:80px;"></div>
+        </div>
+        <div class="album-tip">点击照片查看大图 · 悬停显示删除按钮 · 左右滑动切换</div>
+
+        <!-- 散落照片墙 -->
+        <div class="scatter-wall" id="scatterWall">
+            <div class="empty-album" id="emptyTip">加载中...</div>
+        </div>
+        </div>
+    </main>
+
+    <!-- 上传浮动按钮 -->
+    <div class="scatter-upload">
+        <button class="scatter-upload-btn" id="uploadFab" title="上传照片">+</button>
+    </div>
+
+    <!-- 上传面板 -->
+    <div class="upload-panel" id="uploadPanel">
+        <h4>上传照片</h4>
+        <input type="file" id="photoInput" accept="image/*" style="display:none;">
+        <label class="file-btn" for="photoInput">选择图片</label>
+        <div class="file-name" id="fileNameTip"></div>
+        <button class="up-btn" id="uploadBtn" disabled>上传</button>
+        <div class="msg" id="msgBox"></div>
+    </div>
+
+    <!-- 大图预览 -->
     <div class="modal-overlay" id="photoModal">
         <span class="close-modal" id="closeModal">×</span>
-        <img class="modal-img" id="modalImage" src="">
+        <button class="modal-nav modal-prev" id="modalPrev">‹</button>
+        <button class="modal-nav modal-next" id="modalNext">›</button>
+        <div class="modal-img-wrap" id="modalImgWrap">
+            <img class="modal-img" id="modalImage" src="">
+        </div>
+        <div class="modal-counter" id="modalCounter">1 / 1</div>
+        <div class="modal-caption" id="modalCaption"></div>
     </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
-<script src="common.js" defer></script>
 <script>
-// ===================== 【务必修改这里】 =====================
 const SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
 const ADMIN_UIDS = ["8dbea2a6-e81e-4958-8c7a-3cbb47b2eb7d"];
 const BUCKET_NAME = "album_bucket";
-// ==========================================================
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-        storage: window.localStorage,
-        storageKey: "qish-auth-v1"
-    }
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage, storageKey: "qish-auth-v1" }
 });
 window.supabaseClient = sb;
 
-const albumContainer = document.getElementById("albumContainer");
+const scatterWall = document.getElementById("scatterWall");
 const photoInput = document.getElementById("photoInput");
-const selectBtn = document.getElementById("selectBtn");
 const uploadBtn = document.getElementById("uploadBtn");
 const fileNameTip = document.getElementById("fileNameTip");
 const msgBox = document.getElementById("msgBox");
 const photoModal = document.getElementById("photoModal");
 const modalImage = document.getElementById("modalImage");
 const closeModal = document.getElementById("closeModal");
+const modalPrev = document.getElementById("modalPrev");
+const modalNext = document.getElementById("modalNext");
+const modalCounter = document.getElementById("modalCounter");
+const modalCaption = document.getElementById("modalCaption");
+const uploadFab = document.getElementById("uploadFab");
+const uploadPanel = document.getElementById("uploadPanel");
 
-selectBtn.onclick = ()=> photoInput.click();
+// 缓存相册数据，resize 时不重新拉取
+let cachedAlbumData = null;
+let currentPhotoIndex = 0;
+let isSwitching = false;
 
-photoInput.onchange = ()=>{
-    if(photoInput.files[0]){
-        fileNameTip.innerText = "已选文件："+photoInput.files[0].name;
-    }else{
-        fileNameTip.innerText = "";
-    }
-};
-
-closeModal.onclick = ()=> photoModal.classList.remove("active");
-photoModal.onclick = (e)=>{
-    if(e.target === photoModal) photoModal.classList.remove("active");
-};
-
-function formatDate(str){
-    const d = new Date(str);
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+// 打开大图预览
+function openPhotoModal(index) {
+    if (!cachedAlbumData || cachedAlbumData.length === 0) return;
+    currentPhotoIndex = index;
+    showPhoto(index, null);
+    photoModal.classList.add("active");
 }
 
-async function deletePhoto(recordId, photoUrl, ownerUserId){
-    const {data:{user}} = await sb.auth.getUser();
-    if(!user){
-        alert("请登录");
-        return;
-    }
-    const isAdmin = ADMIN_UIDS.includes(user.id);
-    if(!isAdmin && user.id !== ownerUserId){
-        alert("没有权限删除");
-        return;
-    }
+// 显示指定索引的照片（带滑动动画）
+function showPhoto(index, direction) {
+    if (!cachedAlbumData || cachedAlbumData.length === 0) return;
+    if (index < 0) index = cachedAlbumData.length - 1;
+    if (index >= cachedAlbumData.length) index = 0;
+    currentPhotoIndex = index;
 
-    if(!confirm("确定删除这张照片？删除后无法恢复！")) return;
+    const item = cachedAlbumData[index];
+    const safeUrl = item.photo_url || "";
+    const safeNick = escapeHtml(item.nickname || "匿名");
+    const dateStr = formatDate(item.upload_at);
 
-    let filePath = null;
-    console.log("===删除调试===");
-    console.log("photoUrl:", photoUrl);
-    console.log("当前登录user.id:", user.id);
-    console.log("图片ownerUserId:", ownerUserId);
-    console.log("isAdmin:",isAdmin);
-
-    if(photoUrl){
-        const reg = /\/storage\/v1\/object\/public\/album_bucket\/(.*)$/;
-        const match = photoUrl.match(reg);
-        if(match && match[1]){
-            filePath = decodeURIComponent(match[1]);
-        }
-    }
-
-    if(!filePath){
-        alert("无法解析图片路径，终止删除");
-        console.error("filePath解析失败！photoUrl=",photoUrl);
-        return;
-    }
-    console.log("解析得到filePath:", filePath);
-
-    try{
-        const {error:storageErr} = await sb.storage.from(BUCKET_NAME).remove([filePath]);
-        console.log("storage删除 error:", storageErr);
-
-        const {error:dbErr} = await sb.from("public_album").delete().eq("id", recordId);
-        console.log("数据库删除 error:", dbErr);
-
-        if(dbErr){
-            alert("删除数据库记录失败："+dbErr.message);
-            return;
-        }
-        msgBox.innerText="✅照片已删除";
-        loadAlbum();
-    }catch(e){
-        console.error("删除捕获异常",e);
-        msgBox.innerText="删除异常";
-    }
-}
-
-async function loadAlbum(){
-    msgBox.innerText="";
-    const {data:{user}} = await sb.auth.getUser();
-    const isAdmin = user ? ADMIN_UIDS.includes(user.id) : false;
-
-    const {data,error}=await sb
-        .from("public_album")
-        .select("*")
-        .order("upload_at",{ascending:false});
-
-    if(error){
-        msgBox.innerText="读取相册失败："+error.message;
-        return;
-    }
-    albumContainer.innerHTML="";
-    if(!data || data.length===0){
-        albumContainer.innerHTML = `<div style="padding:40px;text-align:center;color:#666;">相册暂无图片，登录后可以上传照片</div>`;
-        return;
-    }
-
-    function escapeHtml(s) {
-        return String(s == null ? "" : s)
-            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;");
-    }
-
-    data.forEach(item=>{
-        const div = document.createElement("div");
-        div.className="photo-card elastic-frame";
-        const safeUrl = item.photo_url || "";
-        const safeNick = escapeHtml(item.nickname || "匿名用户");
-        const safeId = escapeHtml(item.id);
-        const safeOwner = escapeHtml(item.user_id);
-        let delHtml = "";
-        if(user && (user.id === item.user_id || isAdmin)){
-            delHtml = `<button type="button" class="del-btn" data-rid="${safeId}" data-owner="${safeOwner}">删除照片</button>`;
-        }
-        div.innerHTML=`
-            <div class="img-wrap">
-                <img src="${escapeHtml(safeUrl)}" alt="" loading="lazy">
-            </div>
-            <div class="card-info">
-                <div class="card-name">${safeNick}</div>
-                <div>${formatDate(item.upload_at)}</div>
-                ${delHtml}
-            </div>
-        `;
-        div.querySelector(".img-wrap").onclick = ()=>{
+    if (direction) {
+        isSwitching = true;
+        modalImage.classList.add(direction === "next" ? "switch-right" : "switch-left");
+        setTimeout(() => {
             modalImage.src = safeUrl;
-            photoModal.classList.add("active");
-        };
-        const delBtn = div.querySelector(".del-btn");
-        if(delBtn){
-            delBtn.onclick = async (ev)=>{
-                ev.stopPropagation();
-                const rid = delBtn.dataset.rid;
-                const oid = delBtn.dataset.owner;
-                await deletePhoto(rid, safeUrl, oid);
-            };
-        }
-        albumContainer.appendChild(div);
-    });
-    if (window.__albumBindElastic) window.__albumBindElastic();
+            modalCaption.textContent = safeNick + " · " + dateStr;
+            modalCounter.textContent = (index + 1) + " / " + cachedAlbumData.length;
+            modalImage.classList.remove("switch-right", "switch-left");
+            isSwitching = false;
+        }, 200);
+    } else {
+        modalImage.src = safeUrl;
+        modalCaption.textContent = safeNick + " · " + dateStr;
+        modalCounter.textContent = (index + 1) + " / " + cachedAlbumData.length;
+    }
 }
 
-uploadBtn.onclick = async ()=>{
-    msgBox.innerText="";
-    const {data:{user}} = await sb.auth.getUser();
-    if(!user){
-        msgBox.innerText="请先登录账号";
-        return;
-    }
-    const file = photoInput.files[0];
-    if(!file){
-        msgBox.innerText="请选择一张图片";
-        return;
-    }
+function prevPhoto() {
+    if (isSwitching) return;
+    showPhoto(currentPhotoIndex - 1, "prev");
+}
+function nextPhoto() {
+    if (isSwitching) return;
+    showPhoto(currentPhotoIndex + 1, "next");
+}
 
-    let nickName = "匿名用户";
-    const {data:userInfo} = await sb.from("public_user_list").select("nickname").eq("user_id",user.id).single();
-    if(userInfo?.nickname) nickName = userInfo.nickname;
+// 关闭
+closeModal.onclick = () => photoModal.classList.remove("active");
+photoModal.onclick = (e) => { if (e.target === photoModal) photoModal.classList.remove("active"); };
 
-    const filePath = `${user.id}/${Date.now()}.${file.name.split(".").pop()}`;
-    const {error:upErr} = await sb.storage.from(BUCKET_NAME).upload(filePath, file, {cacheControl:"3600",upsert:false});
-    if(upErr){
-        msgBox.innerText="上传失败："+upErr.message;
-        return;
-    }
-    const {data:urlObj} = sb.storage.from(BUCKET_NAME).getPublicUrl(filePath);
-    const photoUrl = urlObj.publicUrl;
+// 左右箭头
+modalPrev.onclick = (e) => { e.stopPropagation(); prevPhoto(); };
+modalNext.onclick = (e) => { e.stopPropagation(); nextPhoto(); };
 
-    const {error:insertErr} = await sb.from("public_album").insert({
-        user_id:user.id,
-        photo_url:photoUrl,
-        nickname:nickName,
-        upload_at:new Date().toISOString()
-    });
-    if(insertErr){
-        msgBox.innerText="保存相册记录失败："+insertErr.message;
-        return;
+// 键盘控制
+document.addEventListener("keydown", (e) => {
+    if (!photoModal.classList.contains("active")) return;
+    if (e.key === "ArrowLeft") prevPhoto();
+    else if (e.key === "ArrowRight") nextPhoto();
+    else if (e.key === "Escape") photoModal.classList.remove("active");
+});
+
+// 触摸滑动
+let touchStartX = 0;
+let touchStartY = 0;
+photoModal.addEventListener("touchstart", (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+}, { passive: true });
+photoModal.addEventListener("touchend", (e) => {
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    const dy = e.changedTouches[0].clientY - touchStartY;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+        if (dx > 0) prevPhoto();
+        else nextPhoto();
     }
-    msgBox.innerText="✅上传成功";
-    photoInput.value = "";
-    fileNameTip.innerText = "";
-    loadAlbum();
+}, { passive: true });
+
+// 上传面板切换
+uploadFab.addEventListener('click', () => uploadPanel.classList.toggle('show'));
+document.addEventListener('click', (e) => {
+    if (!uploadPanel.contains(e.target) && e.target !== uploadFab && !uploadFab.contains(e.target)) {
+        uploadPanel.classList.remove('show');
+    }
+});
+
+photoInput.onchange = () => {
+    if (photoInput.files[0]) {
+        fileNameTip.textContent = photoInput.files[0].name;
+        uploadBtn.disabled = false;
+    } else {
+        fileNameTip.textContent = "";
+        uploadBtn.disabled = true;
+    }
 };
-// —— 相册页鼠标光晕 + 大边框内凹 / 橡皮绳 ——
-(function albumMouseFX() {
-    const trailLight = document.getElementById("trailLight");
-    let mouseX = window.innerWidth / 2;
-    let mouseY = window.innerHeight / 2;
-    let trailX = mouseX;
-    let trailY = mouseY;
-    let prevX = mouseX;
-    let prevY = mouseY;
-    let vx = 0;
-    let vy = 0;
 
-    window.addEventListener("mousemove", (e) => {
-        vx = e.clientX - prevX;
-        vy = e.clientY - prevY;
-        prevX = e.clientX;
-        prevY = e.clientY;
-        mouseX = e.clientX;
-        mouseY = e.clientY;
-        document.body.style.setProperty("--mouse-x", mouseX + "px");
-        document.body.style.setProperty("--mouse-y", mouseY + "px");
-        if (trailLight) {
-            trailLight.style.left = mouseX + "px";
-            trailLight.style.top = mouseY + "px";
-            trailLight.style.opacity = "1";
-        }
-    }, { passive: true });
+function escapeHtml(s) {
+    return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
 
-    window.addEventListener("mouseout", () => {
-        if (trailLight) trailLight.style.opacity = "0";
-    });
+function formatDate(str) {
+    const d = new Date(str);
+    return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')}`;
+}
 
-    function animateTrail() {
-        trailX += (mouseX - trailX) * 0.1;
-        trailY += (mouseY - trailY) * 0.1;
-        if (trailLight) {
-            trailLight.style.transform =
-                "translate(-50%, -50%) translate(" +
-                ((trailX - mouseX) * 0.04).toFixed(2) + "px, " +
-                ((trailY - mouseY) * 0.04).toFixed(2) + "px)";
-        }
-        requestAnimationFrame(animateTrail);
-    }
-    animateTrail();
-
-    const EDGE = 48;
-    let frames = [];
-
-    function refreshFrames() {
-        frames = Array.prototype.slice.call(document.querySelectorAll(".elastic-frame"));
-    }
-
-    function bindElastic() {
-        refreshFrames();
-        frames.forEach(function (el) {
-            if (el.__elasticBound) return;
-            el.__elasticBound = true;
-            // 已取消橡皮绳弹簧；仅保留轻微边框内凹
-            el.addEventListener("mouseleave", function () {
-                el.style.setProperty("--dent-s", "0");
-                el.classList.remove("is-near");
-            });
+// 生成随机散落位置
+function scatterPositions(count) {
+    const positions = [];
+    const wallWidth = scatterWall.offsetWidth || 1200;
+    const wallHeight = Math.max(600, count * 80);
+    const itemW = 170, itemH = 200;
+    const cols = Math.max(3, Math.floor(wallWidth / (itemW + 30)));
+    const rows = Math.ceil(count / cols);
+    for (let i = 0; i < count; i++) {
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const baseX = col * (wallWidth / cols) + (wallWidth / cols - itemW) / 2;
+        const baseY = row * (itemH + 40) + 20;
+        const jitterX = (Math.random() - 0.5) * 60;
+        const jitterY = (Math.random() - 0.5) * 30;
+        const rotate = (Math.random() - 0.5) * 20;
+        positions.push({
+            left: baseX + jitterX,
+            top: baseY + jitterY,
+            rotate: rotate,
+            z: Math.floor(Math.random() * 10) + 1
         });
     }
+    return { positions, height: rows * (itemH + 40) + 60 };
+}
 
-    function updateDents() {
-        if (!frames.length) refreshFrames();
-        for (var i = 0; i < frames.length; i++) {
-            var el = frames[i];
-            var r = el.getBoundingClientRect();
-            if (r.width < 8) continue;
-            var inside =
-                mouseX >= r.left && mouseX <= r.right &&
-                mouseY >= r.top && mouseY <= r.bottom;
-            var lx = mouseX - r.left;
-            var ly = mouseY - r.top;
-
-            if (inside) {
-                var minEdge = Math.min(lx, r.width - lx, ly, r.height - ly);
-                var near = minEdge < EDGE;
-                var strength = near ? (1 - minEdge / EDGE) : 0.18;
-                el.style.setProperty("--dent-x", ((lx / r.width) * 100).toFixed(2) + "%");
-                el.style.setProperty("--dent-y", ((ly / r.height) * 100).toFixed(2) + "%");
-                el.style.setProperty("--dent-s", strength.toFixed(3));
-                el.classList.toggle("is-near", near);
-            } else {
-                var cx = Math.max(r.left, Math.min(mouseX, r.right));
-                var cy = Math.max(r.top, Math.min(mouseY, r.bottom));
-                var d = Math.hypot(mouseX - cx, mouseY - cy);
-                if (d < EDGE * 1.2) {
-                    var s = 1 - d / (EDGE * 1.2);
-                    el.style.setProperty("--dent-x", (((cx - r.left) / r.width) * 100).toFixed(2) + "%");
-                    el.style.setProperty("--dent-y", (((cy - r.top) / r.height) * 100).toFixed(2) + "%");
-                    el.style.setProperty("--dent-s", (s * 0.9).toFixed(3));
-                    el.classList.add("is-near");
-                } else {
-                    el.style.setProperty("--dent-s", "0");
-                    el.classList.remove("is-near");
-                }
-            }
-        }
-        requestAnimationFrame(updateDents);
+// 渲染照片（使用缓存数据或新数据）
+function renderAlbum(data) {
+    if (!data || data.length === 0) {
+        scatterWall.innerHTML = '<div class="empty-album">相册暂无图片<br><small>登录后点击右下角 + 上传</small></div>';
+        return;
     }
+    const { positions, height } = scatterPositions(data.length);
+    scatterWall.style.height = height + "px";
+    scatterWall.innerHTML = "";
 
-    window.__albumBindElastic = bindElastic;
-    bindElastic();
-    requestAnimationFrame(updateDents);
-
-    function ensureGlow() {
-        if (window.QISH && typeof window.QISH.initMouseGlow === "function") {
-            try { window.QISH.initMouseGlow(); } catch (_) {}
+    data.forEach((item, idx) => {
+        const pos = positions[idx];
+        const div = document.createElement("div");
+        div.className = "polaroid";
+        div.style.left = pos.left + "px";
+        div.style.top = pos.top + "px";
+        div.style.transform = `rotate(${pos.rotate}deg)`;
+        div.style.zIndex = pos.z;
+        const safeUrl = item.photo_url || "";
+        const safeNick = escapeHtml(item.nickname || "匿名");
+        const dateStr = formatDate(item.upload_at);
+        let delHtml = "";
+        const user = window.__qishCurrentUser;
+        const isAdmin = user ? ADMIN_UIDS.includes(user.id) : false;
+        if (user && (user.id === item.user_id || isAdmin)) {
+            delHtml = `<button class="polaroid-del" data-rid="${escapeHtml(item.id)}" data-owner="${escapeHtml(item.user_id)}" data-url="${escapeHtml(safeUrl)}">×</button>`;
         }
-    }
-    setTimeout(ensureGlow, 80);
-})();
-window.onload = loadAlbum;
-</script>
-<script>
-(function albumAuthInit() {
-  function run() {
-    const client = window.supabaseClient || (typeof sb !== "undefined" ? sb : null);
-    if (!window.QISH || !client) return;
-    QISH.updateAuthNav({ supabase: client });
-    client.auth.onAuthStateChange(() => {
-      QISH.updateAuthNav({ supabase: client });
+        div.innerHTML = `
+            ${delHtml}
+            <img src="${escapeHtml(safeUrl)}" alt="" loading="lazy">
+            <div class="polaroid-caption">${safeNick} · ${dateStr}</div>
+        `;
+        div.querySelector("img").onclick = () => {
+            openPhotoModal(idx);
+        };
+        const delBtn = div.querySelector(".polaroid-del");
+        if (delBtn) {
+            delBtn.onclick = (ev) => {
+                ev.stopPropagation();
+                deletePhoto(delBtn.dataset.rid, delBtn.dataset.url, delBtn.dataset.owner);
+            };
+        }
+        scatterWall.appendChild(div);
     });
-  }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", run);
-  else setTimeout(run, 0);
-})();
+}
+
+async function deletePhoto(recordId, photoUrl, ownerUserId) {
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { alert("请登录"); return; }
+    const isAdmin = ADMIN_UIDS.includes(user.id);
+    if (!isAdmin && user.id !== ownerUserId) { alert("没有权限删除"); return; }
+    if (!confirm("确定删除这张照片？")) return;
+
+    let filePath = null;
+    if (photoUrl) {
+        const match = photoUrl.match(/\/storage\/v1\/object\/public\/album_bucket\/(.*)$/);
+        if (match && match[1]) filePath = decodeURIComponent(match[1]);
+    }
+    if (!filePath) { alert("无法解析图片路径"); return; }
+
+    try {
+        await sb.storage.from(BUCKET_NAME).remove([filePath]);
+        const { error } = await sb.from("public_album").delete().eq("id", recordId);
+        if (error) { alert("删除失败：" + error.message); return; }
+        msgBox.textContent = "已删除";
+        loadAlbum(true);
+    } catch (e) {
+        alert("删除异常：" + e.message);
+    }
+}
+
+async function loadAlbum(forceRefresh) {
+    msgBox.textContent = "";
+    const { data: { user } } = await sb.auth.getUser();
+    window.__qishCurrentUser = user || null;
+
+    // 使用缓存（除非强制刷新）
+    if (cachedAlbumData && !forceRefresh) {
+        renderAlbum(cachedAlbumData);
+        return;
+    }
+
+    const { data, error } = await sb.from("public_album").select("*").order("upload_at", { ascending: false });
+    if (error) {
+        scatterWall.innerHTML = '<div class="empty-album">读取相册失败</div>';
+        return;
+    }
+    cachedAlbumData = data || [];
+    renderAlbum(cachedAlbumData);
+}
+
+uploadBtn.onclick = async () => {
+    msgBox.textContent = "";
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) { msgBox.textContent = "请先登录"; return; }
+    const file = photoInput.files[0];
+    if (!file) { msgBox.textContent = "请选择图片"; return; }
+
+    uploadBtn.disabled = true;
+    uploadBtn.textContent = "上传中...";
+    msgBox.textContent = "上传中...";
+
+    let nickName = "匿名用户";
+    try {
+        const { data: userInfo } = await sb.from("public_user_list").select("nickname").eq("user_id", user.id).single();
+        if (userInfo?.nickname) nickName = userInfo.nickname;
+    } catch (_) {}
+
+    const filePath = `${user.id}/${Date.now()}.${file.name.split(".").pop()}`;
+    try {
+        const { error: upErr } = await sb.storage.from(BUCKET_NAME).upload(filePath, file, { cacheControl: "3600", upsert: false });
+        if (upErr) throw upErr;
+        const { data: urlData } = sb.storage.from(BUCKET_NAME).getPublicUrl(filePath);
+        const { error: insErr } = await sb.from("public_album").insert({
+            user_id: user.id,
+            nickname: nickName,
+            photo_url: urlData.publicUrl,
+            upload_at: new Date().toISOString()
+        });
+        if (insErr) throw insErr;
+        msgBox.textContent = "上传成功";
+        photoInput.value = "";
+        fileNameTip.textContent = "";
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = "上传";
+        uploadPanel.classList.remove("show");
+        loadAlbum(true);
+    } catch (e) {
+        msgBox.textContent = "上传失败：" + e.message;
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = "上传";
+    }
+};
+
+// DOM 就绪即加载，不等所有图片
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => loadAlbum());
+} else {
+    loadAlbum();
+}
+
+// resize 防抖：只重新计算位置，不重新拉取数据
+let resizeTimer = null;
+window.addEventListener('resize', () => {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+        if (cachedAlbumData) renderAlbum(cachedAlbumData);
+    }, 250);
+});
 </script>
 </body>
 </html>

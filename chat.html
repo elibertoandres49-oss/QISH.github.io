@@ -1,807 +1,400 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>聊天室 - QISH</title>
+    <link rel="icon" href="avatar.jpg">
     <script>
-(function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="color"||t==="custom")?t:"color");}catch(e){document.documentElement.setAttribute("data-theme","color");}})();
-</script>
+    (function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="aqua"||t==="custom")?t:"aqua");}catch(e){document.documentElement.setAttribute("data-theme","aqua");}})();
+    </script>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
     <script>
+    (function initSupabase() {
         window.SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
         window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
-        let supabase = null;
-        if (window.supabase && window.supabase.createClient) {
-            window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
-                auth: {
-                    persistSession: true,
-                    autoRefreshToken: true,
-                    detectSessionInUrl: true,
-                    storage: window.localStorage,
-                    storageKey: "qish-auth-v1"
-                }
-            });
-            supabase = window.supabaseClient;
+        function tryCreate() {
+            if (window.supabase && typeof window.supabase.createClient === "function") {
+                window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+                    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage, storageKey: "qish-auth-v1" }
+                });
+            } else { setTimeout(tryCreate, 80); }
         }
+        tryCreate();
+    })();
     </script>
     <script src="common.js" defer></script>
     <style>
-        .chat-page {
-            max-width: 720px;
-            margin: 30px auto 40px;
-            display: flex;
-            flex-direction: column;
-            height: calc(100vh - 180px);
-            min-height: 420px;
-        }
-        .chat-header {
-            text-align: center;
-            margin-bottom: 16px;
-        }
-        .chat-header h1 {
-            border-bottom: none;
-            margin-bottom: 6px;
-            font-size: 1.7em;
-        }
-        .chat-sub {
-            color: #555;
-            font-size: 14px;
-        }
-        .chat-box {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            background: rgba(255, 255, 255, 0.22);
-            backdrop-filter: blur(22px);
-            -webkit-backdrop-filter: blur(22px);
-            border: 1px solid rgba(255, 255, 255, 0.35);
-            border-radius: 24px;
-            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
-            overflow: hidden;
-        }
-        .messages-area {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px 18px;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-        .msg-item {
-            display: flex;
-            gap: 10px;
-            align-items: flex-start;
-            max-width: 88%;
-            animation: msgIn 0.25s ease;
-        }
-        @keyframes msgIn {
-            from { opacity: 0; transform: translateY(8px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .msg-item.mine {
-            align-self: flex-end;
-            flex-direction: row-reverse;
-        }
-        .msg-avatar {
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid rgba(255,255,255,0.5);
-            flex-shrink: 0;
-        }
-        .msg-bubble {
-            background: rgba(255, 255, 255, 0.45);
-            border-radius: 16px;
-            padding: 10px 14px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
-            max-width: 100%;
-        }
-        .msg-item.mine .msg-bubble {
-            background: linear-gradient(135deg, rgba(96,165,250,0.35), rgba(147,197,253,0.35));
-        }
-        .msg-meta {
-            font-size: 12px;
-            color: #64748b;
-            margin-bottom: 4px;
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-        .msg-item.mine .msg-meta {
-            justify-content: flex-end;
-        }
-        .msg-nick {
-            font-weight: 600;
-            color: #2c3e50;
-        }
-        .msg-content {
-            font-size: 15px;
-            color: #1e293b;
-            word-break: break-word;
-            line-height: 1.5;
-        }
-        /* 图片消息 */
-        .msg-img {
-            max-width: 260px;
-            max-height: 320px;
-            width: auto;
-            height: auto;
-            border-radius: 12px;
-            display: block;
-            cursor: pointer;
-            margin-top: 4px;
-            transition: transform 0.2s;
-        }
-        .msg-img:hover {
-            transform: scale(1.02);
-        }
-        /* 新番分享卡片 */
-        .msg-anime-card {
-            display: flex;
-            gap: 12px;
-            align-items: stretch;
-            margin-top: 6px;
-            padding: 10px;
-            border-radius: 14px;
-            background: rgba(255,255,255,0.55);
-            border: 1px solid rgba(255,255,255,0.5);
-            cursor: pointer;
-            text-decoration: none;
-            color: inherit;
-            max-width: 320px;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .msg-anime-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(59,130,246,0.2);
-        }
-        .msg-anime-card img {
-            width: 72px;
-            height: 96px;
-            object-fit: cover;
-            border-radius: 10px;
-            flex-shrink: 0;
-            background: #e2e8f0;
-        }
-        .msg-anime-meta {
-            flex: 1;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            justify-content: center;
-        }
-        .msg-anime-title {
-            font-size: 14px;
-            font-weight: 800;
-            color: #0f172a;
-            line-height: 1.35;
-        }
-        .msg-anime-sub {
-            font-size: 12px;
-            color: #64748b;
-        }
-        .msg-anime-go {
-            font-size: 12px;
-            font-weight: 700;
-            color: #2563eb;
-        }
-        /* 文件消息卡片 */
-        .msg-file-card {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: rgba(255,255,255,0.5);
-            border-radius: 12px;
-            padding: 10px 14px;
-            margin-top: 4px;
-            min-width: 180px;
-            max-width: 280px;
-        }
-        .msg-file-icon {
-            font-size: 28px;
-            flex-shrink: 0;
-        }
-        .msg-file-info {
-            flex: 1;
-            min-width: 0;
-        }
-        .msg-file-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: #1e293b;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .msg-file-size {
-            font-size: 12px;
-            color: #64748b;
-            margin-top: 2px;
-        }
-        .msg-file-dl {
-            flex-shrink: 0;
-            padding: 6px 12px;
-            border-radius: 999px;
-            background: linear-gradient(135deg, #60a5fa, #93c5fd);
-            color: #fff;
-            font-size: 12px;
-            font-weight: 600;
-            text-decoration: none;
-            white-space: nowrap;
-            transition: 0.2s;
-        }
-        .msg-file-dl:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
-
-        .msg-actions {
-            display: flex;
-            gap: 6px;
-            margin-top: 8px;
-            flex-wrap: wrap;
-        }
-        .msg-act-btn {
-            padding: 3px 10px;
-            border: none;
-            border-radius: 999px;
-            font-size: 11px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            background: rgba(255,255,255,0.5);
-            color: #475569;
-        }
-        .msg-act-btn:hover {
-            transform: translateY(-1px);
-        }
-        .msg-act-btn.recall {
-            color: #3b82f6;
-            background: rgba(96,165,250,0.15);
-        }
-        .msg-act-btn.recall:hover {
-            background: rgba(96,165,250,0.28);
-        }
-        .msg-act-btn.del {
-            color: #dc2626;
-            background: rgba(220,38,38,0.12);
-        }
-        .msg-act-btn.del:hover {
-            background: rgba(220,38,38,0.22);
-        }
-        .msg-item.removing {
-            opacity: 0;
-            transform: scale(0.92);
-            transition: opacity 0.25s ease, transform 0.25s ease;
-            max-height: 0;
-            overflow: hidden;
-            margin: 0;
-            padding: 0;
-        }
-        .msg-recalled-tip {
-            text-align: center;
-            font-size: 12px;
-            color: #94a3b8;
-            padding: 6px 0;
-        }
-
-        /* 输入区 */
-        .chat-input-area {
-            display: flex;
-            gap: 8px;
-            padding: 14px 16px;
-            border-top: 1px solid rgba(255,255,255,0.3);
-            background: rgba(255,255,255,0.15);
-            align-items: center;
-        }
-        .chat-input {
-            flex: 1;
-            padding: 12px 16px;
-            border-radius: 999px;
-            border: 1px solid rgba(255,255,255,0.4);
-            background: rgba(255,255,255,0.35);
-            font-size: 15px;
-            color: #222;
-            outline: none;
-        }
-        .chat-input:focus {
-            border-color: #60a5fa;
-            box-shadow: 0 0 0 3px rgba(96,165,250,0.15);
-        }
-        .chat-attach-btn {
-            width: 44px;
-            height: 44px;
-            border: none;
-            border-radius: 50%;
-            background: rgba(255,255,255,0.4);
-            color: #2c3e50;
-            font-size: 20px;
-            cursor: pointer;
-            transition: 0.25s;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .chat-attach-btn:hover {
-            background: rgba(255,255,255,0.6);
-            transform: scale(1.05);
-        }
-        .chat-attach-btn:disabled {
-            opacity: 0.45;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .chat-send-btn {
-            padding: 12px 22px;
-            border: none;
-            border-radius: 999px;
-            background: linear-gradient(135deg, #60a5fa, #93c5fd);
-            color: #fff;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.25s ease;
-            white-space: nowrap;
-        }
-        .chat-send-btn:hover {
-            opacity: 0.92;
-            transform: translateY(-1px);
-        }
-        .chat-send-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-        .chat-tip {
-            text-align: center;
-            padding: 12px;
-            font-size: 14px;
-            color: #64748b;
-        }
-        .empty-chat {
-            text-align: center;
-            color: #64748b;
-            padding: 40px 20px;
-            font-size: 15px;
-        }
-        /* 图片预览大图 */
-        .img-modal {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.7);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-            padding: 20px;
-            backdrop-filter: blur(8px);
-        }
-        .img-modal.active {
-            display: flex;
-        }
-        .img-modal img {
-            max-width: 92vw;
-            max-height: 88vh;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-        }
-        .img-modal-close {
-            position: absolute;
-            top: 18px;
-            right: 24px;
-            color: #fff;
-            font-size: 36px;
-            cursor: pointer;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.5);
-        }
-        /* 上传中提示 */
-        .upload-progress {
-            font-size: 13px;
-            color: #64748b;
-            padding: 4px 0;
-            text-align: center;
-        }
-        @media (max-width: 640px) {
-            .chat-page {
-                margin: 16px 12px 30px;
-                height: calc(100vh - 160px);
-            }
-            .msg-item {
-                max-width: 92%;
-            }
-            .msg-img {
-                max-width: 200px;
-            }
-            .chat-send-btn {
-                padding: 12px 16px;
-            }
-        }
-
-        /* 聊天头部布局调整 */
-        .chat-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            text-align: left;
-        }
-        .chat-header-left {
-            flex: 1;
-            min-width: 0;
-        }
-        .chat-search-toggle {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            background: rgba(255, 255, 255, 0.35);
-            backdrop-filter: blur(12px);
-            font-size: 20px;
-            cursor: pointer;
-            transition: all 0.25s ease;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .chat-search-toggle:hover {
-            background: rgba(255, 255, 255, 0.55);
-            transform: scale(1.08);
-            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
-        }
-
-        /* 搜索抽屉面板 */
-        .search-drawer-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.3);
-            backdrop-filter: blur(4px);
-            z-index: 9998;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease, visibility 0.3s ease;
-        }
-        .search-drawer-overlay.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        .search-drawer {
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: min(380px, 88vw);
-            height: 100vh;
-            background: rgba(255, 255, 255, 0.35);
-            backdrop-filter: blur(28px);
-            -webkit-backdrop-filter: blur(28px);
-            border-left: 1px solid rgba(255, 255, 255, 0.45);
-            box-shadow: -8px 0 40px rgba(0, 0, 0, 0.15);
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            transform: translateX(100%);
-            transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-        .search-drawer.show {
-            transform: translateX(0);
-        }
-        .search-drawer-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 20px 20px 14px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-        }
-        .search-drawer-header h3 {
-            margin: 0;
-            font-size: 1.2em;
-            font-weight: 800;
-            color: #0f172a;
-        }
-        .search-drawer-close {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            border: none;
-            background: rgba(255, 255, 255, 0.5);
-            color: #475569;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.25s ease;
-        }
-        .search-drawer-close:hover {
-            background: rgba(255, 255, 255, 0.8);
-            transform: rotate(90deg);
-        }
-        .search-tabs {
-            display: flex;
-            gap: 6px;
-            padding: 12px 20px;
-        }
-        .search-tab {
-            flex: 1;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.35);
-            color: #475569;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .search-tab.active {
-            background: linear-gradient(135deg, #3b82f6, #60a5fa);
-            color: #fff;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
-        }
-        .search-input-wrap {
-            padding: 0 20px 12px;
-        }
-        .search-input {
-            width: 100%;
-            padding: 11px 16px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.45);
-            background: rgba(255, 255, 255, 0.45);
-            font-size: 14px;
-            color: #0f172a;
-            outline: none;
-            transition: all 0.2s ease;
-        }
-        .search-input:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
-            background: rgba(255, 255, 255, 0.6);
-        }
-        .search-input::placeholder {
-            color: #94a3b8;
-        }
-        .search-results {
-            flex: 1;
-            overflow-y: auto;
-            padding: 0 20px 20px;
-        }
-        .search-empty {
-            text-align: center;
-            color: #64748b;
-            padding: 40px 20px;
-            font-size: 14px;
-        }
-        .search-result-item {
-            background: rgba(255, 255, 255, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            border-radius: 12px;
-            padding: 10px 14px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .search-result-item:hover {
-            background: rgba(255, 255, 255, 0.6);
-            transform: translateX(-3px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-        }
-        .search-result-meta {
-            font-size: 11px;
-            color: #64748b;
-            margin-bottom: 3px;
-            display: flex;
-            gap: 8px;
-        }
-        .search-result-nick {
-            font-weight: 700;
-            color: #1e293b;
-        }
-        .search-result-content {
-            font-size: 13px;
-            color: #334155;
-            line-height: 1.4;
-            word-break: break-word;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        .search-result-content mark {
-            background: rgba(59, 130, 246, 0.3);
-            color: #1e40af;
-            padding: 0 2px;
-            border-radius: 3px;
-        }
-        .file-result-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: rgba(255, 255, 255, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            border-radius: 12px;
-            padding: 10px 14px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .file-result-item:hover {
-            background: rgba(255, 255, 255, 0.6);
-            transform: translateX(-3px);
-        }
-        .file-result-icon {
-            font-size: 24px;
-            flex-shrink: 0;
-        }
-        .file-result-info {
-            flex: 1;
-            min-width: 0;
-        }
-        .file-result-name {
-            font-size: 13px;
-            font-weight: 600;
-            color: #1e293b;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .file-result-meta {
-            font-size: 11px;
-            color: #64748b;
-            margin-top: 2px;
-        }
-        .file-result-thumb {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            object-fit: cover;
-            flex-shrink: 0;
-        }
-        @media (max-width: 640px) {
-            .chat-header {
-                gap: 8px;
-            }
-            .chat-search-toggle {
-                width: 40px;
-                height: 40px;
-                font-size: 18px;
-            }
-        }
+    .chat-page {
+        max-width: 720px;
+        margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 80px);
+        min-height: 420px;
+    }
+    .chat-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+    .chat-header h1 {
+        border-bottom: none;
+        margin: 0 0 4px;
+        font-size: 1.5em;
+        font-weight: 800;
+    }
+    .chat-sub { color: var(--text-sub); font-size: 13px; }
+    .chat-search-toggle {
+        width: 44px; height: 44px;
+        border-radius: 14px;
+        border: 1px solid var(--card-border);
+        background: var(--card-bg);
+        backdrop-filter: blur(12px);
+        font-size: 18px;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .chat-search-toggle:hover { background: var(--card-bg-strong); transform: scale(1.08); }
+    .chat-box {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: var(--card-bg);
+        backdrop-filter: blur(22px);
+        -webkit-backdrop-filter: blur(22px);
+        border: 1px solid var(--card-border);
+        border-radius: 24px;
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+    }
+    .messages-area {
+        flex: 1; overflow-y: auto;
+        padding: 20px 18px;
+        display: flex; flex-direction: column; gap: 14px;
+    }
+    .msg-item {
+        display: flex; gap: 10px; align-items: flex-start;
+        max-width: 88%; animation: msgIn 0.25s ease;
+    }
+    @keyframes msgIn { from { opacity:0; transform:translateY(8px);} to {opacity:1; transform:translateY(0);} }
+    .msg-item.mine { align-self: flex-end; flex-direction: row-reverse; }
+    .msg-avatar {
+        width: 38px; height: 38px; border-radius: 50%;
+        object-fit: cover; border: 2px solid var(--card-border); flex-shrink: 0;
+    }
+    .msg-bubble {
+        background: var(--card-bg-strong);
+        border-radius: 16px; padding: 10px 14px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05); max-width: 100%;
+    }
+    .msg-item.mine .msg-bubble { background: var(--accent-soft); }
+    .msg-meta { font-size: 12px; color: var(--text-sub); margin-bottom: 4px; display: flex; gap: 8px; align-items: center; }
+    .msg-item.mine .msg-meta { justify-content: flex-end; }
+    .msg-nick { font-weight: 600; color: var(--text-main); }
+    .msg-content { font-size: 15px; color: var(--text-body); word-break: break-word; line-height: 1.5; }
+    .msg-img { max-width: 260px; max-height: 320px; border-radius: 12px; display: block; cursor: pointer; margin-top: 4px; transition: transform 0.2s; }
+    .msg-img:hover { transform: scale(1.02); }
+    .msg-anime-card {
+        display: flex; gap: 12px; align-items: stretch; margin-top: 6px; padding: 10px;
+        border-radius: 14px; background: var(--card-bg); border: 1px solid var(--card-border);
+        cursor: pointer; text-decoration: none; color: inherit; max-width: 320px; transition: all 0.2s;
+    }
+    .msg-anime-card:hover { transform: translateY(-2px); box-shadow: var(--card-shadow-hover); }
+    .msg-anime-card img { width: 72px; height: 96px; object-fit: cover; border-radius: 10px; flex-shrink: 0; }
+    .msg-anime-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; justify-content: center; }
+    .msg-anime-title { font-size: 14px; font-weight: 800; color: var(--text-main); line-height: 1.35; }
+    .msg-anime-sub { font-size: 12px; color: var(--text-sub); }
+    .msg-anime-go { font-size: 12px; font-weight: 700; color: var(--accent); }
+    .msg-file-card {
+        display: flex; align-items: center; gap: 12px;
+        background: var(--card-bg); border-radius: 12px; padding: 10px 14px;
+        margin-top: 4px; min-width: 180px; max-width: 280px;
+    }
+    .msg-file-icon { font-size: 28px; flex-shrink: 0; }
+    .msg-file-info { flex: 1; min-width: 0; }
+    .msg-file-name { font-size: 14px; font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .msg-file-size { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+    .msg-file-dl {
+        flex-shrink: 0; padding: 6px 12px; border-radius: 999px;
+        background: var(--accent-grad); color: #fff; font-size: 12px; font-weight: 600;
+        text-decoration: none; white-space: nowrap; transition: 0.2s;
+    }
+    .msg-file-dl:hover { opacity: 0.9; transform: translateY(-1px); }
+    .msg-audio-actions { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+    .msg-audio-btn {
+        padding: 5px 10px; border: none; border-radius: 999px; font-size: 11px; font-weight: 600;
+        cursor: pointer; background: var(--accent-soft); color: var(--accent); transition: 0.2s;
+    }
+    .msg-audio-btn:hover { background: var(--accent); color: #fff; }
+    .msg-actions { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+    .msg-act-btn {
+        padding: 3px 10px; border: none; border-radius: 999px; font-size: 11px; font-weight: 600;
+        cursor: pointer; transition: 0.2s; background: var(--card-bg); color: var(--text-sub);
+    }
+    .msg-act-btn:hover { transform: translateY(-1px); }
+    .msg-act-btn.recall { color: var(--accent); background: var(--accent-soft); }
+    .msg-act-btn.del { color: #dc2626; background: rgba(220,38,38,0.1); }
+    .msg-item.removing { opacity: 0; transform: scale(0.92); transition: all 0.25s ease; max-height: 0; overflow: hidden; margin: 0; padding: 0; }
+    .msg-recalled-tip { text-align: center; font-size: 12px; color: var(--text-sub); padding: 6px 0; }
+    .chat-input-area {
+        display: flex; gap: 8px; padding: 14px 16px;
+        border-top: 1px solid var(--card-border); background: var(--card-bg); align-items: center;
+    }
+    .chat-input {
+        flex: 1; padding: 12px 16px; border-radius: 999px;
+        border: 1px solid var(--card-border); background: var(--card-bg-strong);
+        font-size: 15px; color: var(--text-main); outline: none; transition: all 0.2s;
+    }
+    .chat-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .chat-input::placeholder { color: var(--text-sub); }
+    .chat-attach-btn {
+        width: 44px; height: 44px; border: none; border-radius: 50%;
+        background: var(--card-bg-strong); color: var(--text-main); font-size: 20px;
+        cursor: pointer; transition: 0.25s; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .chat-attach-btn:hover { background: var(--accent-soft); transform: scale(1.05); }
+    .chat-attach-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+    .chat-send-btn {
+        padding: 12px 22px; border: none; border-radius: 999px;
+        background: var(--accent-grad); color: #fff; font-size: 15px; font-weight: 600;
+        cursor: pointer; transition: 0.25s ease; white-space: nowrap;
+        box-shadow: 0 4px 14px rgba(91,168,160,0.3);
+    }
+    .chat-send-btn:hover { opacity: 0.92; transform: translateY(-1px); }
+    .chat-send-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .chat-tip { text-align: center; padding: 10px; font-size: 13px; color: var(--text-sub); }
+    .empty-chat { text-align: center; color: var(--text-sub); padding: 40px 20px; font-size: 15px; }
+    .img-modal {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+        display: none; align-items: center; justify-content: center;
+        z-index: 9999; padding: 20px; backdrop-filter: blur(8px);
+    }
+    .img-modal.active { display: flex; }
+    .img-modal img { max-width: 92vw; max-height: 88vh; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+    .img-modal-close { position: absolute; top: 18px; right: 24px; color: #fff; font-size: 36px; cursor: pointer; }
+    .search-drawer-overlay {
+        position: fixed; inset: 0; background: rgba(0,0,0,0.3); backdrop-filter: blur(4px);
+        z-index: 9998; opacity: 0; visibility: hidden; transition: all 0.3s ease;
+    }
+    .search-drawer-overlay.show { opacity: 1; visibility: visible; }
+    .search-drawer {
+        position: fixed; top: 0; right: 0; width: min(380px, 88vw); height: 100vh;
+        background: var(--card-bg-strong); backdrop-filter: blur(28px);
+        border-left: 1px solid var(--card-border); box-shadow: -8px 0 40px rgba(0,0,0,0.15);
+        z-index: 9999; display: flex; flex-direction: column;
+        transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.22,1,0.36,1);
+    }
+    .search-drawer.show { transform: translateX(0); }
+    .search-drawer-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 20px 14px; border-bottom: 1px solid var(--card-border); }
+    .search-drawer-header h3 { margin: 0; font-size: 1.2em; font-weight: 800; color: var(--text-main); }
+    .search-drawer-close {
+        width: 32px; height: 32px; border-radius: 50%; border: none;
+        background: var(--card-bg); color: var(--text-sub); font-size: 18px; font-weight: 700;
+        cursor: pointer; transition: all 0.25s ease;
+    }
+    .search-drawer-close:hover { background: var(--card-bg-strong); transform: rotate(90deg); }
+    .search-tabs { display: flex; gap: 6px; padding: 12px 20px; }
+    .search-tab {
+        flex: 1; padding: 8px 12px; border: none; border-radius: 10px;
+        background: var(--card-bg); color: var(--text-sub); font-size: 13px; font-weight: 600;
+        cursor: pointer; transition: all 0.2s ease;
+    }
+    .search-tab.active { background: var(--accent-grad); color: #fff; box-shadow: 0 4px 12px rgba(91,168,160,0.3); }
+    .search-input-wrap { padding: 0 20px 12px; }
+    .search-input {
+        width: 100%; padding: 11px 16px; border-radius: 12px;
+        border: 1px solid var(--card-border); background: var(--card-bg);
+        font-size: 14px; color: var(--text-main); outline: none; transition: all 0.2s ease;
+    }
+    .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+    .search-input::placeholder { color: var(--text-sub); }
+    .search-results { flex: 1; overflow-y: auto; padding: 0 20px 20px; }
+    .search-empty { text-align: center; color: var(--text-sub); padding: 40px 20px; font-size: 14px; }
+    .search-result-item {
+        background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px;
+        padding: 10px 14px; margin-bottom: 8px; cursor: pointer; transition: all 0.2s ease;
+    }
+    .search-result-item:hover { background: var(--card-bg-strong); transform: translateX(-3px); }
+    .search-result-meta { font-size: 11px; color: var(--text-sub); margin-bottom: 3px; display: flex; gap: 8px; }
+    .search-result-nick { font-weight: 700; color: var(--text-main); }
+    .search-result-content { font-size: 13px; color: var(--text-body); line-height: 1.4; word-break: break-word; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .search-result-content mark { background: var(--accent-soft); color: var(--accent); padding: 0 2px; border-radius: 3px; }
+    .file-result-item {
+        display: flex; align-items: center; gap: 10px; background: var(--card-bg);
+        border: 1px solid var(--card-border); border-radius: 12px; padding: 10px 14px;
+        margin-bottom: 8px; cursor: pointer; transition: all 0.2s ease;
+    }
+    .file-result-item:hover { background: var(--card-bg-strong); transform: translateX(-3px); }
+    .file-result-icon { font-size: 24px; flex-shrink: 0; }
+    .file-result-info { flex: 1; min-width: 0; }
+    .file-result-name { font-size: 13px; font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-result-meta { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+    .file-result-thumb { width: 40px; height: 40px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+    @media (max-width: 768px) {
+        .chat-page { height: calc(100vh - 100px); }
+        .msg-item { max-width: 92%; }
+        .msg-img { max-width: 200px; }
+    }
     </style>
 </head>
-
-<div class="side-panel" id="sidePanel">
-    <div class="side-panel-content">
-        <button class="close-btn" id="closePanel">×</button>
-        <img src="avatar.jpg" alt="头像" class="panel-avatar" id="panelAvatar">
-        <h2 id="panelUsername">QISH</h2>
-        <p class="panel-desc">ovo</p>
-        <div class="panel-links" id="panelLinksBox">
+<body>
+    <button class="nav-fab" id="navFab" aria-label="导航菜单"><img src="avatar.jpg" alt="菜单" id="navAvatar"></button>
+    <div class="nav-fab-ring" id="navFabRing"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="avatar.jpg" alt="头像" class="sidebar-avatar" id="sidebarAvatar">
+            <div class="sidebar-user-info">
+                <div class="sidebar-username" id="sidebarUsername">QISH</div>
+                <div class="sidebar-status" id="sidebarStatus">未登录</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="sidebar-nav-label">导航</div>
             <a href="index.html">首页</a>
             <a href="about.html">关于我</a>
+            <a href="timeline.html">个人历程</a>
             <a href="projects.html">我的项目</a>
-            <a href="userlist.html">用户列表</a>
+            <a href="announce.html">公告</a>
+            <a href="chat.html" class="nav-active">聊天室</a>
+            <a href="album.html">成员相册</a>`n            <a href="userlist.html">用户列表</a>
             <a href="profile.html">个人资料</a>
-            <a href="./album.html">相册</a>
-            <a href="chat.html">聊天室</a>
-            <a href="auth.html">登录/注册</a>
+            <div class="sidebar-nav-label">账号</div>
+            <a href="auth.html" id="sidebarAuthLink">登录/注册</a>
+            <button class="sidebar-logout-btn" id="sidebarLogoutBtn" style="display:none;">退出登录</button>
+        </nav>
+    </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <main class="main-content">
+        <div class="chat-page">
+            <div class="chat-header">
+                <div class="chat-header-left">
+                    <a href="index.html" class="back-btn" style="margin-bottom:8px;">← 返回</a>
+                    <h1>💬 成员聊天室</h1>
+                    <p class="chat-sub">登录后可发送文字、图片和文件 · 支持实时同步</p>
+                </div>
+                <button class="chat-search-toggle" id="chatSearchToggle" title="搜索聊天记录">🔍</button>
+            </div>
+            <div class="chat-box">
+                <div class="messages-area" id="messagesArea">
+                    <div class="empty-chat" id="emptyTip">加载中...</div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="file" id="fileInput" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.txt,.mp3,.mp4,.mov" style="display:none;">
+                    <button class="chat-attach-btn" id="attachBtn" title="发送图片或文件" disabled>📎</button>
+                    <input type="text" class="chat-input" id="msgInput" placeholder="输入消息，按 Enter 发送..." maxlength="500" disabled>
+                    <button class="chat-send-btn" id="sendBtn" disabled>发送</button>
+                </div>
+            </div>
+            <div class="chat-tip" id="statusTip">请先登录后再发言</div>
+        </div>
+        <footer>© 2026 QISH · Made with ❤️</footer>
+    </main>
+
+    <div class="search-drawer" id="searchDrawer">
+        <div class="search-drawer-header">
+            <h3>🔍 搜索与文件</h3>
+            <button class="search-drawer-close" id="searchDrawerClose" aria-label="关闭">×</button>
+        </div>
+        <div class="search-tabs">
+            <button class="search-tab active" data-tab="search">聊天记录</button>
+            <button class="search-tab" data-tab="files">历史文件</button>
+        </div>
+        <div class="search-input-wrap">
+            <input type="text" class="search-input" id="searchInput" placeholder="输入关键词搜索聊天记录..." />
+        </div>
+        <div class="search-results" id="searchResults">
+            <div class="search-empty">输入关键词开始搜索</div>
+        </div>
+        <div class="search-results" id="filesResults" style="display:none;">
+            <div class="search-empty">暂无文件记录</div>
         </div>
     </div>
-</div>
+    <div class="search-drawer-overlay" id="searchDrawerOverlay"></div>
 
-<div class="right-image" id="rightImage">
-    <img src="qishi-expr-normal.gif" alt="Q版小人" id="rightCharImg">
-    <div class="char-bubble" id="charBubble" aria-hidden="true">
-        <span class="char-bubble-text">欢迎来到QISH小站~</span>
-    </div>
-</div>
-
-<div class="left-image" id="leftImage">
-    <img src="left-char.png" alt="左侧角色" id="leftCharImg">
-    <div class="char-bubble" id="leftCharBubble" aria-hidden="true">
-        <span class="char-bubble-text">去聊聊天吧~</span>
-    </div>
-</div>
-
-<div class="overlay" id="overlay"></div>
-
-<body>
-<div class="mouse-glow" id="glow"></div>
-
-<nav>
-    <div class="nav-avatar-area">
-        <img src="avatar.jpg" alt="头像" class="nav-avatar" id="navAvatar">
-        <span class="nav-nickname" id="navNickname" style="display: none;"></span>
-    </div>
-    <div class="nav-links">
-        <a href="index.html">首页</a>
-        <a href="about.html">关于我</a>
-        <a href="projects.html">项目</a>
-        <a href="userlist.html">用户列表</a>
-        <a href="profile.html">个人资料</a>
-        <a href="./album.html">相册</a>
-        <a href="chat.html">聊天室</a>
-        <span id="auth-nav">
-            <a href="auth.html">登录/注册</a>
-        </span>
-    </div>
-</nav>
-
-<div class="chat-page">
-    <div class="chat-header">
-        <div class="chat-header-left">
-            <h1>💬 成员聊天室</h1>
-            <p class="chat-sub">登录后可发送文字、图片和文件 · 支持实时同步</p>
-        </div>
-        <button class="chat-search-toggle" id="chatSearchToggle" title="搜索聊天记录">🔍</button>
+    <div class="img-modal" id="imgModal">
+        <span class="img-modal-close" id="imgModalClose">×</span>
+        <img id="imgModalImg" src="" alt="预览">
     </div>
 
-    <div class="chat-box">
-        <div class="messages-area" id="messagesArea">
-            <div class="empty-chat" id="emptyTip">加载中...</div>
-        </div>
-        <div class="chat-input-area">
-            <input type="file" id="fileInput" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.txt,.mp3,.mp4,.mov" style="display:none;">
-            <button class="chat-attach-btn" id="attachBtn" title="发送图片或文件" disabled>📎</button>
-            <input type="text" class="chat-input" id="msgInput" placeholder="输入消息，按 Enter 发送..." maxlength="500" disabled>
-            <button class="chat-send-btn" id="sendBtn" disabled>发送</button>
+    <div class="right-image" id="rightImage">
+        <span class="char-inner"><img src="qishi-expr-normal.gif" alt="Q版小人" id="rightCharImg"></span>
+        <div class="char-bubble" id="charBubble" aria-hidden="true">
+            <span class="char-bubble-text">来聊聊天吧~</span>
         </div>
     </div>
-    <div class="chat-tip" id="statusTip">请先登录后再发言</div>
-</div>
+    <div class="left-image" id="leftImage">
+        <span class="char-inner"><img src="left-char.png" alt="左侧角色" id="leftCharImg"></span>
+        <div class="char-bubble" id="leftCharBubble" aria-hidden="true">
+            <span class="char-bubble-text">去聊聊天吧~</span>
+        </div>
+    </div>
 
-<!-- 搜索抽屉面板 -->
-<div class="search-drawer" id="searchDrawer">
-    <div class="search-drawer-header">
-        <h3>🔍 搜索与文件</h3>
-        <button class="search-drawer-close" id="searchDrawerClose" aria-label="关闭">×</button>
+    <!-- 页面间箭头：聊天室 → 主页（左）、聊天室 → 相册（右） -->
+    <div class="page-nav-arrow left" onclick="navigateWithSlide('index.html','right')" title="返回主页" style="cursor:pointer;">
+        <span class="arrow-label">主页</span>
+        ←
     </div>
-    <div class="search-tabs">
-        <button class="search-tab active" data-tab="search">聊天记录</button>
-        <button class="search-tab" data-tab="files">历史文件</button>
+    <div class="page-nav-arrow" onclick="navigateWithSlide('album.html','left')" title="前往相册" style="cursor:pointer;">
+        <span class="arrow-label">相册</span>
+        →
     </div>
-    <div class="search-input-wrap">
-        <input type="text" class="search-input" id="searchInput" placeholder="输入关键词搜索聊天记录..." />
-    </div>
-    <div class="search-results" id="searchResults">
-        <div class="search-empty">输入关键词开始搜索</div>
-    </div>
-    <div class="search-results" id="filesResults" style="display:none;">
-        <div class="search-empty">暂无文件记录</div>
-    </div>
-</div>
-<div class="search-drawer-overlay" id="searchDrawerOverlay"></div>
 
-<!-- 图片大图预览 -->
-<div class="img-modal" id="imgModal">
-    <span class="img-modal-close" id="imgModalClose">×</span>
-    <img id="imgModalImg" src="" alt="预览">
-</div>
-
-<footer>© 2026 QISH · </footer>
+    <div class="side-panel" id="sidePanel">
+        <div class="side-panel-content">
+            <button class="close-btn" id="closePanel">×</button>
+            <img src="avatar.jpg" alt="头像" class="panel-avatar" id="panelAvatar">
+            <h2 id="panelUsername">QISH</h2>
+            <p class="panel-desc">ovo</p>
+            <p class="panel-email" id="panelEmail" style="display:none;"></p>
+            <div class="panel-links" id="panelLinksBox">
+                <a href="index.html">首页</a><a href="about.html">关于我</a><a href="projects.html">我的项目</a>`n            <a href="userlist.html">用户列表</a><a href="profile.html">个人资料</a><a href="./album.html">相册</a>
+                <a href="chat.html">聊天室</a><a href="auth.html">登录/注册</a>
+            </div>
+        </div>
+    </div>
+    <div class="overlay" id="overlay"></div>
+    <div class="mouse-glow" id="glow"></div>
 
 <script>
 const defaultAvatar = "avatar.jpg";
 const CHAT_BUCKET = "chat_bucket";
 const ADMIN_UIDS = ["8dbea2a6-e81e-4958-8c7a-3cbb47b2eb7d"];
-const RECALL_LIMIT_MS = 2 * 60 * 1000; // 撤回时限 2 分钟
-const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15MB
+const RECALL_LIMIT_MS = 2 * 60 * 1000;
+const MAX_FILE_SIZE = 15 * 1024 * 1024;
 
 let currentUser = null;
 let myNickname = "匿名用户";
 let myAvatar = defaultAvatar;
 let channel = null;
-let allMessages = []; // 存储所有已加载消息，用于搜索和文件列表
+let allMessages = [];
+let supabase = null;
 
+function waitForSb(ms) {
+    ms = ms || 6000;
+    const t0 = Date.now();
+    return new Promise(resolve => {
+        (function check() {
+            if (window.supabaseClient) { supabase = window.supabaseClient; resolve(); }
+            else if (Date.now() - t0 > ms) resolve();
+            else setTimeout(check, 80);
+        })();
+    });
+}
 
 async function waitForQISH(ms) {
     ms = ms || 4000;
     const t0 = Date.now();
     while (!window.QISH || !QISH.updateAuthNav) {
         if (Date.now() - t0 > ms) break;
-        await new Promise(function (r) { setTimeout(r, 30); });
+        await new Promise(r => setTimeout(r, 30));
     }
     return window.QISH;
 }
@@ -811,13 +404,8 @@ async function updateAuthNav() {
     const sendBtn = document.getElementById('sendBtn');
     const attachBtn = document.getElementById('attachBtn');
     const statusTip = document.getElementById('statusTip');
-
     await waitForQISH();
-    if (!window.QISH || !QISH.updateAuthNav) {
-        console.warn("QISH 未加载");
-        return;
-    }
-    if (!supabase) return;
+    if (!window.QISH || !QISH.updateAuthNav || !supabase) return;
     const r = await QISH.updateAuthNav({ supabase });
     if (r && r.user) {
         currentUser = r.user;
@@ -828,9 +416,7 @@ async function updateAuthNav() {
         if (attachBtn) attachBtn.disabled = false;
         if (statusTip) statusTip.innerText = `已登录为 ${myNickname}，可发送文字 / 图片 / 文件`;
     } else {
-        currentUser = null;
-        myAvatar = defaultAvatar;
-        myNickname = "匿名用户";
+        currentUser = null; myAvatar = defaultAvatar; myNickname = "匿名用户";
         if (msgInput) msgInput.disabled = true;
         if (sendBtn) sendBtn.disabled = true;
         if (attachBtn) attachBtn.disabled = true;
@@ -838,186 +424,72 @@ async function updateAuthNav() {
     }
 }
 
-function formatTime(str) {
-    const d = new Date(str);
-    const h = String(d.getHours()).padStart(2, '0');
-    const m = String(d.getMinutes()).padStart(2, '0');
-    return `${h}:${m}`;
-}
-
-function formatSize(bytes) {
-    if (!bytes || bytes <= 0) return "";
-    if (bytes < 1024) return bytes + " B";
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
-    return (bytes / (1024 * 1024)).toFixed(1) + " MB";
-}
-
-function escapeHtml(text) {
-    if (!text) return "";
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-function getFileIcon(name) {
-    const ext = (name || "").split(".").pop().toLowerCase();
-    const map = {
-        pdf: "📄", doc: "📝", docx: "📝",
-        xls: "📊", xlsx: "📊", ppt: "📑", pptx: "📑",
-        zip: "🗜️", rar: "🗜️", "7z": "🗜️",
-        mp3: "🎵", wav: "🎵", mp4: "🎬", mov: "🎬",
-        txt: "📃", md: "📃"
-    };
-    return map[ext] || "📎";
-}
-
-function isImageType(name, mime) {
-    if (mime && mime.startsWith("image/")) return true;
-    const ext = (name || "").split(".").pop().toLowerCase();
-    return ["jpg","jpeg","png","gif","webp","bmp","svg"].includes(ext);
-}
+function formatTime(str) { const d=new Date(str); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
+function formatSize(bytes) { if(!bytes||bytes<=0)return""; if(bytes<1024)return bytes+" B"; if(bytes<1048576)return (bytes/1024).toFixed(1)+" KB"; return (bytes/1048576).toFixed(1)+" MB"; }
+function escapeHtml(text) { if(!text)return""; const d=document.createElement('div'); d.textContent=text; return d.innerHTML; }
+function getFileIcon(name) { const e=(name||"").split(".").pop().toLowerCase(); const m={pdf:"📄",doc:"📝",docx:"📝",xls:"📊",xlsx:"📊",ppt:"📑",pptx:"📑",zip:"🗜️",rar:"🗜️","7z":"🗜️",mp3:"🎵",wav:"🎵",mp4:"🎬",mov:"🎬",txt:"📃",md:"📃"}; return m[e]||"📎"; }
+function isImageType(name,mime) { if(mime&&mime.startsWith("image/"))return true; return ["jpg","jpeg","png","gif","webp","bmp","svg"].includes((name||"").split(".").pop().toLowerCase()); }
 
 function appendMessage(item, isMine) {
-    // 存储消息数据用于搜索
-    if (item && item.id && !allMessages.find(m => m.id === item.id)) {
-        allMessages.push(item);
-    }
+    if (item && item.id && !allMessages.find(m => m.id === item.id)) allMessages.push(item);
     const area = document.getElementById('messagesArea');
     const empty = document.getElementById('emptyTip');
     if (empty) empty.remove();
-
     const div = document.createElement('div');
     div.className = 'msg-item' + (isMine ? ' mine' : '');
     div.dataset.id = item.id;
-
     const avatarSrc = item.avatar_url || defaultAvatar;
-    const msgType = item.msg_type || (item.file_url ? (isImageType(item.file_name, null) ? "image" : "file") : "text");
-
+    const msgType = item.msg_type || (item.file_url ? (isImageType(item.file_name,null)?"image":"file") : "text");
     let bodyHtml = "";
-
-    // 识别新番分享：#qish_anime:ID 或 anime.html?id=
-    const animeMatch = (item.content || "").match(/#qish_anime:(\d+)/) ||
-        (item.content || "").match(/anime\.html\?id=(\d+)/) ||
-        (item.content || "").match(/bgm\.tv\/subject\/(\d+)/);
+    const animeMatch = (item.content||"").match(/#qish_anime:(\d+)/) || (item.content||"").match(/anime\.html\?id=(\d+)/) || (item.content||"").match(/bgm\.tv\/subject\/(\d+)/);
     const animeId = animeMatch ? animeMatch[1] : null;
-    const animeTitleMatch = (item.content || "").match(/【([^】]+)】/);
+    const animeTitleMatch = (item.content||"").match(/【([^】]+)】/);
     const animeTitle = animeTitleMatch ? animeTitleMatch[1] : "新番推荐";
-    const animeScoreMatch = (item.content || "").match(/评分\s*([\d.]+)/);
+    const animeScoreMatch = (item.content||"").match(/评分\s*([\d.]+)/);
     const animeScore = animeScoreMatch ? animeScoreMatch[1] : "";
-
     if (animeId) {
         const cover = item.file_url || "";
-        bodyHtml = `
-            <div class="msg-content">📺 安利新番</div>
+        bodyHtml = `<div class="msg-content">📺 安利新番</div>
             <a class="msg-anime-card" href="anime.html?id=${animeId}" title="点击查看详情">
-                ${cover ? `<img src="${cover}" alt="" loading="lazy">` : ""}
-                <div class="msg-anime-meta">
-                    <div class="msg-anime-title">${escapeHtml(animeTitle)}</div>
-                    <div class="msg-anime-sub">${animeScore ? "★ " + escapeHtml(animeScore) + " · " : ""}Bangumi</div>
-                    <div class="msg-anime-go">查看详情 ›</div>
-                </div>
-            </a>
-        `;
+                ${cover?`<img src="${cover}" alt="" loading="lazy">`:""}
+                <div class="msg-anime-meta"><div class="msg-anime-title">${escapeHtml(animeTitle)}</div>
+                <div class="msg-anime-sub">${animeScore?"★ "+escapeHtml(animeScore)+" · ":""}Bangumi</div>
+                <div class="msg-anime-go">查看详情 ›</div></div></a>`;
     } else if (msgType === "image" && item.file_url) {
-        bodyHtml = `
-            ${item.content ? `<div class="msg-content">${escapeHtml(item.content)}</div>` : ""}
-            <img class="msg-img" src="${escapeHtml(item.file_url)}" alt="图片" loading="lazy" data-preview-url="${escapeHtml(item.file_url)}">
-        `;
+        bodyHtml = `${item.content?`<div class="msg-content">${escapeHtml(item.content)}</div>`:""}
+            <img class="msg-img" src="${escapeHtml(item.file_url)}" alt="图片" loading="lazy" data-preview-url="${escapeHtml(item.file_url)}">`;
     } else if (msgType === "file" && item.file_url) {
         const icon = getFileIcon(item.file_name);
         const sizeStr = formatSize(item.file_size);
-        const isAudio = /\.(mp3|wav|ogg|m4a|flac|aac|webm)$/i.test(item.file_name || "") ||
-            (item.file_url && /\.(mp3|wav|ogg|m4a|flac|aac)(\?|$)/i.test(item.file_url));
-        const audioBtns = isAudio ? `
-            <div class="msg-audio-actions">
-                <button type="button" class="msg-audio-btn add" data-url="${escapeHtml(item.file_url)}" data-name="${escapeHtml(item.file_name || '音频')}">🎵 加入播放</button>
-                <button type="button" class="msg-audio-btn together" data-url="${escapeHtml(item.file_url)}" data-name="${escapeHtml(item.file_name || '音频')}">🔊 一起听</button>
-            </div>
-        ` : "";
-        bodyHtml = `
-            ${item.content ? `<div class="msg-content">${escapeHtml(item.content)}</div>` : ""}
-            <div class="msg-file-card">
-                <div class="msg-file-icon">${icon}</div>
-                <div class="msg-file-info">
-                    <div class="msg-file-name" title="${escapeHtml(item.file_name || '文件')}">${escapeHtml(item.file_name || '文件')}</div>
-                    ${sizeStr ? `<div class="msg-file-size">${sizeStr}</div>` : ""}
-                </div>
-                <a class="msg-file-dl" href="${escapeHtml(item.file_url)}" download="${escapeHtml(item.file_name || 'download')}" target="_blank" rel="noopener">下载</a>
-            </div>
-            ${audioBtns}
-        `;
+        const isAudio = /\.(mp3|wav|ogg|m4a|flac|aac|webm)$/i.test(item.file_name||"") || (item.file_url&&/\.(mp3|wav|ogg|m4a|flac|aac)(\?|$)/i.test(item.file_url));
+        const audioBtns = isAudio ? `<div class="msg-audio-actions">
+            <button type="button" class="msg-audio-btn add" data-url="${escapeHtml(item.file_url)}" data-name="${escapeHtml(item.file_name||'音频')}">🎵 加入播放</button>
+            <button type="button" class="msg-audio-btn together" data-url="${escapeHtml(item.file_url)}" data-name="${escapeHtml(item.file_name||'音频')}">🔊 一起听</button></div>` : "";
+        bodyHtml = `${item.content?`<div class="msg-content">${escapeHtml(item.content)}</div>`:""}
+            <div class="msg-file-card"><div class="msg-file-icon">${icon}</div>
+            <div class="msg-file-info"><div class="msg-file-name" title="${escapeHtml(item.file_name||'文件')}">${escapeHtml(item.file_name||'文件')}</div>
+            ${sizeStr?`<div class="msg-file-size">${sizeStr}</div>`:""}</div>
+            <a class="msg-file-dl" href="${escapeHtml(item.file_url)}" download="${escapeHtml(item.file_name||'download')}" target="_blank" rel="noopener">下载</a></div>${audioBtns}`;
     } else {
         bodyHtml = `<div class="msg-content">${escapeHtml(item.content)}</div>`;
     }
-
     const canManage = currentUser && (isMine || ADMIN_UIDS.includes(currentUser.id));
     const createdAt = item.created_at ? new Date(item.created_at).getTime() : 0;
-    const canRecall = isMine && createdAt && (Date.now() - createdAt <= RECALL_LIMIT_MS);
+    const canRecall = isMine && createdAt && (Date.now()-createdAt <= RECALL_LIMIT_MS);
     let actionsHtml = "";
     if (canManage) {
         actionsHtml = `<div class="msg-actions">`;
-        if (canRecall) {
-            actionsHtml += `<button type="button" class="msg-act-btn recall" data-action="recall" data-id="${item.id}">撤回</button>`;
-        }
+        if (canRecall) actionsHtml += `<button type="button" class="msg-act-btn recall" data-action="recall" data-id="${item.id}">撤回</button>`;
         actionsHtml += `<button type="button" class="msg-act-btn del" data-action="delete" data-id="${item.id}">删除</button></div>`;
     }
-
     div.dataset.userId = item.user_id || "";
     div.dataset.createdAt = item.created_at || "";
-
-    div.innerHTML = `
-        <img class="msg-avatar" src="${escapeHtml(avatarSrc)}" alt="头像" onerror="this.src='${defaultAvatar}'">
-        <div class="msg-bubble">
-            <div class="msg-meta">
-                <span class="msg-nick">${escapeHtml(item.nickname || '匿名用户')}</span>
-                <span>${formatTime(item.created_at)}</span>
-            </div>
-            ${bodyHtml}
-            ${actionsHtml}
-        </div>
-    `;
-    div.querySelectorAll(".msg-img[data-preview-url]").forEach((img) => {
-        img.onclick = (ev) => {
-            ev.stopPropagation();
-            openImgModal(img.getAttribute("data-preview-url") || img.src);
-        };
-    });
-    div.querySelectorAll(".msg-audio-btn.add").forEach((btn) => {
-        btn.onclick = (ev) => {
-            ev.stopPropagation();
-            if (window.QISHMusic) {
-                QISHMusic.addToPlaylist(btn.dataset.url, btn.dataset.name, false);
-                btn.textContent = "✅ 已加入";
-                setTimeout(() => { btn.textContent = "🎵 加入播放"; }, 1500);
-            } else {
-                alert("播放器未就绪，请刷新页面");
-            }
-        };
-    });
-    div.querySelectorAll(".msg-audio-btn.together").forEach((btn) => {
-        btn.onclick = (ev) => {
-            ev.stopPropagation();
-            if (window.QISHMusic) {
-                QISHMusic.playTogether(btn.dataset.url, btn.dataset.name);
-                btn.textContent = "🔊 播放中";
-                setTimeout(() => { btn.textContent = "🔊 一起听"; }, 1500);
-            } else {
-                alert("播放器未就绪，请刷新页面");
-            }
-        };
-    });
-    div.querySelectorAll(".msg-act-btn").forEach((btn) => {
-        btn.onclick = async (ev) => {
-            ev.stopPropagation();
-            const id = btn.dataset.id;
-            const action = btn.dataset.action;
-            if (action === "recall") {
-                await recallMessage(id);
-            } else if (action === "delete") {
-                await deleteMessage(id);
-            }
-        };
-    });
+    div.innerHTML = `<img class="msg-avatar" src="${escapeHtml(avatarSrc)}" alt="头像" onerror="this.src='${defaultAvatar}'">
+        <div class="msg-bubble"><div class="msg-meta"><span class="msg-nick">${escapeHtml(item.nickname||'匿名用户')}</span><span>${formatTime(item.created_at)}</span></div>${bodyHtml}${actionsHtml}</div>`;
+    div.querySelectorAll(".msg-img[data-preview-url]").forEach(img => { img.onclick = ev => { ev.stopPropagation(); openImgModal(img.getAttribute("data-preview-url")||img.src); }; });
+    div.querySelectorAll(".msg-audio-btn.add").forEach(btn => { btn.onclick = ev => { ev.stopPropagation(); if(window.QISHMusic){QISHMusic.addToPlaylist(btn.dataset.url,btn.dataset.name,false);btn.textContent="✅ 已加入";setTimeout(()=>btn.textContent="🎵 加入播放",1500);}else alert("播放器未就绪，请刷新页面"); }; });
+    div.querySelectorAll(".msg-audio-btn.together").forEach(btn => { btn.onclick = ev => { ev.stopPropagation(); if(window.QISHMusic){QISHMusic.playTogether(btn.dataset.url,btn.dataset.name);btn.textContent="🔊 播放中";setTimeout(()=>btn.textContent="🔊 一起听",1500);}else alert("播放器未就绪，请刷新页面"); }; });
+    div.querySelectorAll(".msg-act-btn").forEach(btn => { btn.onclick = async ev => { ev.stopPropagation(); if(btn.dataset.action==="recall") await recallMessage(btn.dataset.id); else if(btn.dataset.action==="delete") await deleteMessage(btn.dataset.id); }; });
     area.appendChild(div);
     area.scrollTop = area.scrollHeight;
 }
@@ -1028,299 +500,124 @@ function removeMessageFromDOM(id, tipText) {
     el.classList.add("removing");
     setTimeout(() => {
         el.remove();
-        if (tipText) {
-            const area = document.getElementById("messagesArea");
-            const tip = document.createElement("div");
-            tip.className = "msg-recalled-tip";
-            tip.textContent = tipText;
-            area.appendChild(tip);
-            setTimeout(() => tip.remove(), 4000);
-        }
-        if (!areaHasMessages()) {
-            const area = document.getElementById("messagesArea");
-            if (area && !area.querySelector(".msg-item")) {
-                area.innerHTML = `<div class="empty-chat" id="emptyTip">还没有消息，来发第一条吧～</div>`;
-            }
-        }
+        if (tipText) { const area=document.getElementById("messagesArea"); const tip=document.createElement("div"); tip.className="msg-recalled-tip"; tip.textContent=tipText; area.appendChild(tip); setTimeout(()=>tip.remove(),4000); }
+        if (!areaHasMessages()) { const area=document.getElementById("messagesArea"); if(area&&!area.querySelector(".msg-item")) area.innerHTML=`<div class="empty-chat" id="emptyTip">还没有消息，来发第一条吧～</div>`; }
     }, 250);
 }
-
-function areaHasMessages() {
-    return !!document.querySelector("#messagesArea .msg-item");
-}
+function areaHasMessages() { return !!document.querySelector("#messagesArea .msg-item"); }
 
 async function recallMessage(id) {
-    if (!currentUser) {
-        alert("请先登录");
-        return;
-    }
+    if (!currentUser) { alert("请先登录"); return; }
     const el = document.querySelector(`.msg-item[data-id="${id}"]`);
     if (!el) return;
     const created = el.dataset.createdAt ? new Date(el.dataset.createdAt).getTime() : 0;
-    if (created && Date.now() - created > RECALL_LIMIT_MS) {
-        alert("已超过 2 分钟，无法撤回，请使用删除");
-        return;
-    }
-    if (el.dataset.userId && el.dataset.userId !== currentUser.id) {
-        alert("只能撤回自己的消息");
-        return;
-    }
+    if (created && Date.now()-created > RECALL_LIMIT_MS) { alert("已超过 2 分钟，无法撤回，请使用删除"); return; }
+    if (el.dataset.userId && el.dataset.userId !== currentUser.id) { alert("只能撤回自己的消息"); return; }
     if (!confirm("确定撤回这条消息？")) return;
-
     const { error } = await supabase.from("public_messages").delete().eq("id", id);
-    if (error) {
-        alert("撤回失败：" + error.message + "\n请确认已在 Supabase 为 public_messages 配置 DELETE 策略");
-        return;
-    }
+    if (error) { alert("撤回失败："+error.message); return; }
     removeMessageFromDOM(id, "你撤回了一条消息");
 }
 
 async function deleteMessage(id) {
-    if (!currentUser) {
-        alert("请先登录");
-        return;
-    }
+    if (!currentUser) { alert("请先登录"); return; }
     const el = document.querySelector(`.msg-item[data-id="${id}"]`);
     if (!el) return;
     const ownerId = el.dataset.userId;
     const isAdmin = ADMIN_UIDS.includes(currentUser.id);
-    if (ownerId !== currentUser.id && !isAdmin) {
-        alert("没有权限删除");
-        return;
-    }
+    if (ownerId !== currentUser.id && !isAdmin) { alert("没有权限删除"); return; }
     if (!confirm("确定删除这条消息？删除后无法恢复")) return;
-
     const { error } = await supabase.from("public_messages").delete().eq("id", id);
-    if (error) {
-        alert("删除失败：" + error.message + "\n请确认已在 Supabase 为 public_messages 配置 DELETE 策略");
-        return;
-    }
-    removeMessageFromDOM(id, isAdmin && ownerId !== currentUser.id ? "已删除一条消息" : null);
+    if (error) { alert("删除失败："+error.message); return; }
+    removeMessageFromDOM(id, isAdmin&&ownerId!==currentUser.id?"已删除一条消息":null);
 }
 
-function openImgModal(url) {
-    document.getElementById('imgModalImg').src = url;
-    document.getElementById('imgModal').classList.add('active');
-}
-document.getElementById('imgModalClose').onclick = () => {
-    document.getElementById('imgModal').classList.remove('active');
-};
-document.getElementById('imgModal').onclick = (e) => {
-    if (e.target.id === 'imgModal') {
-        document.getElementById('imgModal').classList.remove('active');
-    }
-};
+function openImgModal(url) { document.getElementById('imgModalImg').src=url; document.getElementById('imgModal').classList.add('active'); }
+document.getElementById('imgModalClose').onclick = () => document.getElementById('imgModal').classList.remove('active');
+document.getElementById('imgModal').onclick = e => { if(e.target.id==='imgModal') document.getElementById('imgModal').classList.remove('active'); };
 
 async function loadMessages() {
     const area = document.getElementById('messagesArea');
     allMessages = [];
-    const { data, error } = await supabase
-        .from("public_messages")
-        .select("*")
-        .order("created_at", { ascending: true })
-        .limit(150);
-
+    const { data, error } = await supabase.from("public_messages").select("*").order("created_at",{ascending:true}).limit(150);
     area.innerHTML = "";
-    if (error) {
-        area.innerHTML = `<div class="empty-chat">加载消息失败：${error.message}<br><br>
-        <small>请确认已在 Supabase 创建 public_messages 表并开启 Realtime</small></div>`;
-        return;
-    }
-    if (!data || data.length === 0) {
-        area.innerHTML = `<div class="empty-chat" id="emptyTip">还没有消息，来发第一条吧～</div>`;
-        return;
-    }
-    data.forEach(item => {
-        const isMine = currentUser && item.user_id === currentUser.id;
-        appendMessage(item, isMine);
-    });
+    if (error) { area.innerHTML=`<div class="empty-chat">加载消息失败：${error.message}</div>`; return; }
+    if (!data||data.length===0) { area.innerHTML=`<div class="empty-chat" id="emptyTip">还没有消息，来发第一条吧～</div>`; return; }
+    data.forEach(item => { const isMine=currentUser&&item.user_id===currentUser.id; appendMessage(item,isMine); });
 }
 
 function subscribeRealtime() {
-    if (channel) {
-        supabase.removeChannel(channel);
-    }
-    channel = supabase
-        .channel('public_messages_channel')
-        .on('postgres_changes', {
-            event: 'INSERT',
-            schema: 'public',
-            table: 'public_messages'
-        }, (payload) => {
-            const item = payload.new;
-            if (document.querySelector(`[data-id="${item.id}"]`)) return;
-            const isMine = currentUser && item.user_id === currentUser.id;
-            appendMessage(item, isMine);
+    if (channel) supabase.removeChannel(channel);
+    channel = supabase.channel('public_messages_channel')
+        .on('postgres_changes',{event:'INSERT',schema:'public',table:'public_messages'},payload => {
+            const item=payload.new; if(document.querySelector(`[data-id="${item.id}"]`))return;
+            appendMessage(item,currentUser&&item.user_id===currentUser.id);
         })
-        .on('postgres_changes', {
-            event: 'DELETE',
-            schema: 'public',
-            table: 'public_messages'
-        }, (payload) => {
-            const old = payload.old;
-            if (!old || !old.id) return;
-            // 别人撤回/删除时同步移除
-            if (document.querySelector(`.msg-item[data-id="${old.id}"]`)) {
-                removeMessageFromDOM(old.id, null);
-            }
-        })
-        .subscribe();
+        .on('postgres_changes',{event:'DELETE',schema:'public',table:'public_messages'},payload => {
+            const old=payload.old; if(!old||!old.id)return;
+            if(document.querySelector(`.msg-item[data-id="${old.id}"]`)) removeMessageFromDOM(old.id,null);
+        }).subscribe();
 }
 
 async function sendMessage() {
-    if (!currentUser) {
-        alert("请先登录");
-        return;
-    }
+    if (!currentUser) { alert("请先登录"); return; }
     const input = document.getElementById('msgInput');
     const content = input.value.trim();
     if (!content) return;
-
     const sendBtn = document.getElementById('sendBtn');
     sendBtn.disabled = true;
-
-    const { data, error } = await supabase
-        .from("public_messages")
-        .insert({
-            user_id: currentUser.id,
-            nickname: myNickname,
-            content: content,
-            avatar_url: myAvatar,
-            msg_type: "text"
-        })
-        .select()
-        .single();
-
+    const { data, error } = await supabase.from("public_messages").insert({user_id:currentUser.id,nickname:myNickname,content,avatar_url:myAvatar,msg_type:"text"}).select().single();
     sendBtn.disabled = false;
-
-    if (error) {
-        alert("发送失败：" + error.message);
-        return;
-    }
+    if (error) { alert("发送失败："+error.message); return; }
     input.value = "";
-    if (data) {
-        appendMessage(data, true);
-    }
+    if (data) appendMessage(data, true);
 }
 
 async function sendFile(file) {
-    if (!currentUser) {
-        alert("请先登录");
-        return;
-    }
+    if (!currentUser) { alert("请先登录"); return; }
     if (!file) return;
-
-    if (file.size > MAX_FILE_SIZE) {
-        alert("文件不能超过 15MB");
-        return;
-    }
-
+    if (file.size > MAX_FILE_SIZE) { alert("文件不能超过 15MB"); return; }
     const statusTip = document.getElementById('statusTip');
     const attachBtn = document.getElementById('attachBtn');
     const sendBtn = document.getElementById('sendBtn');
-    attachBtn.disabled = true;
-    sendBtn.disabled = true;
+    attachBtn.disabled = true; sendBtn.disabled = true;
     statusTip.innerText = "正在上传文件，请稍候…";
-
     try {
-        // 存储路径只用英文数字，避免中文/特殊符号触发 Invalid key
-        const rawExt = (file.name.split(".").pop() || "bin").toLowerCase();
-        const ext = rawExt.replace(/[^a-z0-9]/g, "") || "bin";
-        const filePath = `${currentUser.id}/${Date.now()}_${Math.random().toString(36).slice(2, 9)}.${ext}`;
-
-        const { error: upErr } = await supabase.storage
-            .from(CHAT_BUCKET)
-            .upload(filePath, file, {
-                cacheControl: "3600",
-                upsert: false,
-                contentType: file.type || undefined
-            });
-
-        if (upErr) {
-            throw new Error("上传失败：" + upErr.message + "\n请确认已创建 Storage 桶 chat_bucket 并设置公开读取策略");
-        }
-
+        const rawExt = (file.name.split(".").pop()||"bin").toLowerCase();
+        const ext = rawExt.replace(/[^a-z0-9]/g,"")||"bin";
+        const filePath = `${currentUser.id}/${Date.now()}_${Math.random().toString(36).slice(2,9)}.${ext}`;
+        const { error: upErr } = await supabase.storage.from(CHAT_BUCKET).upload(filePath, file, {cacheControl:"3600",upsert:false,contentType:file.type||undefined});
+        if (upErr) throw new Error("上传失败："+upErr.message);
         const { data: urlObj } = supabase.storage.from(CHAT_BUCKET).getPublicUrl(filePath);
         const fileUrl = urlObj.publicUrl;
         const isImg = isImageType(file.name, file.type);
         const msgType = isImg ? "image" : "file";
-
-        // 可选：文字输入框里的内容当作图片/文件的说明
         const caption = document.getElementById('msgInput').value.trim();
-
-        const { data, error } = await supabase
-            .from("public_messages")
-            .insert({
-                user_id: currentUser.id,
-                nickname: myNickname,
-                content: caption || "",
-                avatar_url: myAvatar,
-                msg_type: msgType,
-                file_url: fileUrl,
-                file_name: file.name,
-                file_size: file.size
-            })
-            .select()
-            .single();
-
-        if (error) {
-            throw new Error("保存消息失败：" + error.message + "\n请确认 public_messages 表已添加 msg_type / file_url / file_name / file_size 字段");
-        }
-
+        const { data, error } = await supabase.from("public_messages").insert({user_id:currentUser.id,nickname:myNickname,content:caption||"",avatar_url:myAvatar,msg_type:msgType,file_url:fileUrl,file_name:file.name,file_size:file.size}).select().single();
+        if (error) throw new Error("保存消息失败："+error.message);
         document.getElementById('msgInput').value = "";
-        if (data) {
-            appendMessage(data, true);
-        }
+        if (data) appendMessage(data, true);
         statusTip.innerText = `已登录为 ${myNickname}，可发送文字 / 图片 / 文件`;
-    } catch (e) {
-        console.error(e);
-        alert(e.message || "发送失败");
-        statusTip.innerText = `已登录为 ${myNickname}，可发送文字 / 图片 / 文件`;
-    } finally {
-        attachBtn.disabled = false;
-        sendBtn.disabled = false;
-        document.getElementById('fileInput').value = "";
-    }
+    } catch (e) { console.error(e); alert(e.message||"发送失败"); statusTip.innerText=`已登录为 ${myNickname}，可发送文字 / 图片 / 文件`; }
+    finally { attachBtn.disabled=false; sendBtn.disabled=false; document.getElementById('fileInput').value=""; }
 }
 
 document.getElementById('sendBtn').onclick = sendMessage;
-document.getElementById('msgInput').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-    }
-});
-
-document.getElementById('attachBtn').onclick = () => {
-    if (!currentUser) {
-        alert("请先登录");
-        return;
-    }
-    document.getElementById('fileInput').click();
-};
-
-document.getElementById('fileInput').onchange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-        sendFile(file);
-    }
-};
+document.getElementById('msgInput').addEventListener('keydown', e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();} });
+document.getElementById('attachBtn').onclick = () => { if(!currentUser){alert("请先登录");return;} document.getElementById('fileInput').click(); };
+document.getElementById('fileInput').onchange = e => { const f=e.target.files[0]; if(f) sendFile(f); };
 
 (async function init(){
+    await waitForSb();
     if (typeof waitForQISH === "function") await waitForQISH();
     await updateAuthNav();
     await loadMessages();
     subscribeRealtime();
 })();
 
-if (supabase) {
-    supabase.auth.onAuthStateChange((event) => {
-        if (event === "INITIAL_SESSION") return;
-        updateAuthNav();
-    });
-}
+if (supabase) supabase.auth.onAuthStateChange(event => { if(event!=="INITIAL_SESSION") updateAuthNav(); });
 
-// ========== 搜索抽屉面板 ==========
+// 搜索抽屉
 (function initSearchDrawer() {
     const toggleBtn = document.getElementById("chatSearchToggle");
     const drawer = document.getElementById("searchDrawer");
@@ -1330,162 +627,33 @@ if (supabase) {
     const searchResults = document.getElementById("searchResults");
     const filesResults = document.getElementById("filesResults");
     const tabs = document.querySelectorAll(".search-tab");
-    if (!toggleBtn || !drawer || !overlay) return;
-
-    function openDrawer() {
-        drawer.classList.add("show");
-        overlay.classList.add("show");
-        document.body.style.overflow = "hidden";
-        setTimeout(() => { if (searchInput) searchInput.focus(); }, 350);
-        // 如果当前在文件标签，刷新文件列表
-        const activeTab = document.querySelector(".search-tab.active");
-        if (activeTab && activeTab.dataset.tab === "files") renderFiles();
-    }
-    function closeDrawer() {
-        drawer.classList.remove("show");
-        overlay.classList.remove("show");
-        document.body.style.overflow = "";
-    }
+    if (!toggleBtn||!drawer||!overlay) return;
+    function openDrawer() { drawer.classList.add("show"); overlay.classList.add("show"); document.body.style.overflow="hidden"; setTimeout(()=>{if(searchInput)searchInput.focus();},350); const at=document.querySelector(".search-tab.active"); if(at&&at.dataset.tab==="files") renderFiles(); }
+    function closeDrawer() { drawer.classList.remove("show"); overlay.classList.remove("show"); document.body.style.overflow=""; }
     toggleBtn.addEventListener("click", openDrawer);
     closeBtn.addEventListener("click", closeDrawer);
     overlay.addEventListener("click", closeDrawer);
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && drawer.classList.contains("show")) closeDrawer();
-    });
-
-    // 标签页切换
-    tabs.forEach(tab => {
-        tab.addEventListener("click", () => {
-            tabs.forEach(t => t.classList.remove("active"));
-            tab.classList.add("active");
-            const target = tab.dataset.tab;
-            if (target === "search") {
-                searchResults.style.display = "";
-                filesResults.style.display = "none";
-                if (searchInput && searchInput.value) doSearch(searchInput.value);
-            } else {
-                searchResults.style.display = "none";
-                filesResults.style.display = "";
-                renderFiles();
-            }
-        });
-    });
-
-    // 搜索功能
+    document.addEventListener("keydown", e => { if(e.key==="Escape"&&drawer.classList.contains("show")) closeDrawer(); });
+    tabs.forEach(tab => { tab.addEventListener("click", () => { tabs.forEach(t=>t.classList.remove("active")); tab.classList.add("active"); const target=tab.dataset.tab; if(target==="search"){searchResults.style.display="";filesResults.style.display="none";if(searchInput&&searchInput.value)doSearch(searchInput.value);}else{searchResults.style.display="none";filesResults.style.display="";renderFiles();} }); });
     let searchTimer = null;
-    if (searchInput) {
-        searchInput.addEventListener("input", () => {
-            clearTimeout(searchTimer);
-            searchTimer = setTimeout(() => doSearch(searchInput.value.trim()), 250);
-        });
-    }
-
-    function escapeHtml(text) {
-        if (!text) return "";
-        const div = document.createElement("div");
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    function highlight(text, keyword) {
-        if (!keyword) return escapeHtml(text);
-        const escaped = escapeHtml(text);
-        const kw = escapeHtml(keyword).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        return escaped.replace(new RegExp(kw, "gi"), m => `<mark>${m}</mark>`);
-    }
-
+    if (searchInput) searchInput.addEventListener("input", () => { clearTimeout(searchTimer); searchTimer=setTimeout(()=>doSearch(searchInput.value.trim()),250); });
+    function escapeHtml2(text) { if(!text)return""; const d=document.createElement("div"); d.textContent=text; return d.innerHTML; }
+    function highlight(text,keyword) { if(!keyword)return escapeHtml2(text); const escaped=escapeHtml2(text); const kw=escapeHtml2(keyword).replace(/[.*+?^${}()|[\]\\]/g,"\\$&"); return escaped.replace(new RegExp(kw,"gi"),m=>`<mark>${m}</mark>`); }
     function doSearch(keyword) {
-        if (!searchResults) return;
-        if (!keyword) {
-            searchResults.innerHTML = '<div class="search-empty">输入关键词开始搜索</div>';
-            return;
-        }
-        const kw = keyword.toLowerCase();
-        const results = allMessages.filter(m => {
-            const content = (m.content || "").toLowerCase();
-            const nickname = (m.nickname || "").toLowerCase();
-            const fileName = (m.file_name || "").toLowerCase();
-            return content.includes(kw) || nickname.includes(kw) || fileName.includes(kw);
-        });
-        if (results.length === 0) {
-            searchResults.innerHTML = '<div class="search-empty">没有找到相关消息</div>';
-            return;
-        }
-        searchResults.innerHTML = results.map(item => {
-            const isImg = item.msg_type === "image" || (item.file_url && /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(item.file_name || ""));
-            const preview = item.content || (isImg ? "[图片]" : item.file_name ? `[文件] ${item.file_name}` : "");
-            return `
-                <div class="search-result-item" data-id="${item.id}">
-                    <div class="search-result-meta">
-                        <span class="search-result-nick">${escapeHtml(item.nickname || "匿名用户")}</span>
-                        <span>${formatTime(item.created_at)}</span>
-                    </div>
-                    <div class="search-result-content">${highlight(preview, keyword)}</div>
-                </div>
-            `;
-        }).join("");
-        // 点击搜索结果跳转到消息
-        searchResults.querySelectorAll(".search-result-item").forEach(el => {
-            el.addEventListener("click", () => {
-                const id = el.dataset.id;
-                const target = document.querySelector(`.msg-item[data-id="${id}"]`);
-                if (target) {
-                    closeDrawer();
-                    setTimeout(() => {
-                        target.scrollIntoView({ behavior: "smooth", block: "center" });
-                        target.style.transition = "background 0.3s ease";
-                        target.style.background = "rgba(59, 130, 246, 0.25)";
-                        setTimeout(() => { target.style.background = ""; }, 1500);
-                    }, 350);
-                }
-            });
-        });
+        if(!searchResults)return;
+        if(!keyword){searchResults.innerHTML='<div class="search-empty">输入关键词开始搜索</div>';return;}
+        const kw=keyword.toLowerCase();
+        const results=allMessages.filter(m=>(m.content||"").toLowerCase().includes(kw)||(m.nickname||"").toLowerCase().includes(kw)||(m.file_name||"").toLowerCase().includes(kw));
+        if(results.length===0){searchResults.innerHTML='<div class="search-empty">没有找到相关消息</div>';return;}
+        searchResults.innerHTML=results.map(item=>{const isImg=item.msg_type==="image"||(item.file_url&&/\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(item.file_name||""));const preview=item.content||(isImg?"[图片]":item.file_name?`[文件] ${item.file_name}`:"");return `<div class="search-result-item" data-id="${item.id}"><div class="search-result-meta"><span class="search-result-nick">${escapeHtml2(item.nickname||"匿名用户")}</span><span>${formatTime(item.created_at)}</span></div><div class="search-result-content">${highlight(preview,keyword)}</div></div>`;}).join("");
+        searchResults.querySelectorAll(".search-result-item").forEach(el=>{el.addEventListener("click",()=>{const id=el.dataset.id;const target=document.querySelector(`.msg-item[data-id="${id}"]`);if(target){closeDrawer();setTimeout(()=>{target.scrollIntoView({behavior:"smooth",block:"center"});target.style.transition="background 0.3s ease";target.style.background="rgba(91,168,160,0.2)";setTimeout(()=>target.style.background="",1500);},350);}});});
     }
-
-    // 历史文件列表
     function renderFiles() {
-        if (!filesResults) return;
-        const files = allMessages.filter(m => m.file_url && (m.msg_type === "file" || m.msg_type === "image"));
-        if (files.length === 0) {
-            filesResults.innerHTML = '<div class="search-empty">暂无文件记录</div>';
-            return;
-        }
-        filesResults.innerHTML = files.map(item => {
-            const isImg = item.msg_type === "image" || /\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(item.file_name || "");
-            const icon = isImg ? "🖼️" : getFileIcon(item.file_name);
-            if (isImg) {
-                return `
-                    <div class="file-result-item" data-url="${item.file_url}" data-type="image">
-                        <img class="file-result-thumb" src="${item.file_url}" alt="${escapeHtml(item.file_name || '图片')}" loading="lazy">
-                        <div class="file-result-info">
-                            <div class="file-result-name">${escapeHtml(item.file_name || "图片")}</div>
-                            <div class="file-result-meta">${escapeHtml(item.nickname || "匿名")} · ${formatTime(item.created_at)}</div>
-                        </div>
-                    </div>
-                `;
-            }
-            return `
-                <div class="file-result-item" data-url="${item.file_url}" data-name="${escapeHtml(item.file_name || '文件')}" data-type="file">
-                    <div class="file-result-icon">${icon}</div>
-                    <div class="file-result-info">
-                        <div class="file-result-name">${escapeHtml(item.file_name || "文件")}</div>
-                        <div class="file-result-meta">${escapeHtml(item.nickname || "匿名")} · ${formatSize(item.file_size)} · ${formatTime(item.created_at)}</div>
-                    </div>
-                </div>
-            `;
-        }).join("");
-        // 点击文件结果：图片预览，文件下载
-        filesResults.querySelectorAll(".file-result-item").forEach(el => {
-            el.addEventListener("click", () => {
-                const url = el.dataset.url;
-                const type = el.dataset.type;
-                if (type === "image") {
-                    openImgModal(url);
-                } else {
-                    window.open(url, "_blank");
-                }
-            });
-        });
+        if(!filesResults)return;
+        const files=allMessages.filter(m=>m.file_url&&(m.msg_type==="file"||m.msg_type==="image"));
+        if(files.length===0){filesResults.innerHTML='<div class="search-empty">暂无文件记录</div>';return;}
+        filesResults.innerHTML=files.map(item=>{const isImg=item.msg_type==="image"||/\.(jpg|jpeg|png|gif|webp|bmp)$/i.test(item.file_name||"");const icon=isImg?"🖼️":getFileIcon(item.file_name);if(isImg)return `<div class="file-result-item" data-url="${item.file_url}" data-type="image"><img class="file-result-thumb" src="${item.file_url}" alt="${escapeHtml2(item.file_name||'图片')}" loading="lazy"><div class="file-result-info"><div class="file-result-name">${escapeHtml2(item.file_name||"图片")}</div><div class="file-result-meta">${escapeHtml2(item.nickname||"匿名")} · ${formatTime(item.created_at)}</div></div></div>`;return `<div class="file-result-item" data-url="${item.file_url}" data-name="${escapeHtml2(item.file_name||'文件')}" data-type="file"><div class="file-result-icon">${icon}</div><div class="file-result-info"><div class="file-result-name">${escapeHtml2(item.file_name||"文件")}</div><div class="file-result-meta">${escapeHtml2(item.nickname||"匿名")} · ${formatSize(item.file_size)} · ${formatTime(item.created_at)}</div></div></div>`;}).join("");
+        filesResults.querySelectorAll(".file-result-item").forEach(el=>{el.addEventListener("click",()=>{const url=el.dataset.url;const type=el.dataset.type;if(type==="image")openImgModal(url);else window.open(url,"_blank");});});
     }
 })();
 </script>

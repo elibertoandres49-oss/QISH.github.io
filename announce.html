@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>我的项目 - QISH</title>
+    <title>公告 - QISH</title>
     <link rel="icon" href="avatar.jpg">
     <link rel="stylesheet" href="style.css">
     <script>
@@ -25,59 +25,6 @@
     })();
     </script>
     <script src="common.js" defer></script>
-    <style>
-    .project-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-        gap: 20px;
-        margin-top: 24px;
-    }
-    .project-card {
-        background: var(--card-bg);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid var(--card-border);
-        border-radius: 20px;
-        padding: 24px;
-        box-shadow: var(--card-shadow);
-        transition: all 0.3s cubic-bezier(0.22,1,0.36,1);
-        text-decoration: none;
-        color: var(--text-main);
-        display: block;
-        position: relative;
-        overflow: hidden;
-    }
-    .project-card:hover {
-        transform: translateY(-6px);
-        box-shadow: var(--card-shadow-hover);
-    }
-    .project-icon {
-        font-size: 40px;
-        margin-bottom: 14px;
-        display: block;
-    }
-    .project-title {
-        font-size: 18px;
-        font-weight: 700;
-        margin-bottom: 8px;
-    }
-    .project-desc {
-        font-size: 13px;
-        color: var(--text-sub);
-        line-height: 1.6;
-        margin-bottom: 14px;
-    }
-    .project-tag {
-        display: inline-block;
-        padding: 3px 10px;
-        border-radius: 999px;
-        background: var(--accent-soft);
-        color: var(--accent);
-        font-size: 11px;
-        font-weight: 600;
-        margin-right: 6px;
-    }
-    </style>
 </head>
 <body>
     <button class="nav-fab" id="navFab" aria-label="导航菜单"><img src="avatar.jpg" alt="菜单" id="navAvatar"></button>
@@ -95,8 +42,8 @@
             <a href="index.html">首页</a>
             <a href="about.html">关于我</a>
             <a href="timeline.html">个人历程</a>
-            <a href="projects.html" class="nav-active">我的项目</a>
-            <a href="announce.html">公告</a>
+            <a href="projects.html">我的项目</a>
+            <a href="announce.html" class="nav-active">公告</a>
             <a href="chat.html">聊天室</a>
             <a href="album.html">成员相册</a>`n            <a href="userlist.html">用户列表</a>
             <a href="profile.html">个人资料</a>
@@ -110,38 +57,52 @@
     <main class="main-content">
         <div class="container">
             <a href="index.html" class="back-btn" style="margin-bottom:16px;">← 返回首页</a>
-            <h1>我的项目</h1>
-            <p>一些我做的小玩意，点进去玩玩吧 ~</p>
+            <h1>📢 网站公告</h1>
+            <p style="color:var(--text-sub);margin-bottom:24px;">记录小站的更新与动态</p>
 
-            <div class="project-grid">
-                <a href="anime.html" class="project-card">
-                    <span class="project-icon">🎬</span>
-                    <div class="project-title">动漫追番表</div>
-                    <div class="project-desc">记录正在追的番剧，管理观看进度，收藏喜欢的作品。</div>
-                    <span class="project-tag">Web App</span>
-                    <span class="project-tag">Supabase</span>
-                </a>
-                <a href="rhythm4k.html" class="project-card">
-                    <span class="project-icon">🎹</span>
-                    <div class="project-title">Rhythm 4K 音游</div>
-                    <div class="project-desc">4键下落式节奏游戏，支持自定义谱面，考验你的手速。</div>
-                    <span class="project-tag">游戏</span>
-                    <span class="project-tag">Canvas</span>
-                </a>
-                <a href="chat.html" class="project-card">
-                    <span class="project-icon">💬</span>
-                    <div class="project-title">实时聊天室</div>
-                    <div class="project-desc">和朋友们实时聊天，支持表情、在线状态、消息通知。</div>
-                    <span class="project-tag">实时</span>
-                    <span class="project-tag">Realtime</span>
-                </a>
-                <a href="album.html" class="project-card">
-                    <span class="project-icon">📷</span>
-                    <div class="project-title">成员相册</div>
-                    <div class="project-desc">上传和分享照片，记录大家的美好瞬间。</div>
-                    <span class="project-tag">存储</span>
-                    <span class="project-tag">Storage</span>
-                </a>
+            <!-- 最新公告 -->
+            <div class="announce-card announce-latest">
+                <div class="announce-badge">最新</div>
+                <div class="announce-date" id="announceDate">2026-08-24</div>
+                <h2 class="announce-title" id="announceTitle">网站公告 v1.0.0</h2>
+                <div class="announce-body" id="announceBody">欢迎来到 QISH 小站～
+
+• 支持新番查询功能啦
+• 聊天室支持发图、文件与一起听歌
+• 右下角可使用音乐播放器
+• 有问题可以在聊天室留言
+
+祝你玩得开心！</div>
+            </div>
+
+            <!-- 历史公告 -->
+            <h3 style="margin:32px 0 16px;font-size:16px;">历史公告</h3>
+
+            <div class="announce-card">
+                <div class="announce-date">2026-08-20</div>
+                <h2 class="announce-title">UI 全面升级</h2>
+                <div class="announce-body">• 全新玻璃拟态设计
+• 左侧边栏导航
+• Bento 网格布局
+• 页面切换平滑过渡动画</div>
+            </div>
+
+            <div class="announce-card">
+                <div class="announce-date">2026-08-15</div>
+                <h2 class="announce-title">聊天室上线</h2>
+                <div class="announce-body">• 实时消息收发
+• 支持图片和文件发送
+• 消息撤回与删除
+• 一起听歌功能</div>
+            </div>
+
+            <div class="announce-card">
+                <div class="announce-date">2026-08-10</div>
+                <h2 class="announce-title">小站初建</h2>
+                <div class="announce-body">• QISH 小站正式上线
+• 基础页面与导航
+• Supabase 后端接入
+• PWA 支持</div>
             </div>
         </div>
         <footer><p>© 2026 QISH 小站 · Made with ❤️</p></footer>
@@ -150,7 +111,7 @@
     <div class="right-image" id="rightImage">
         <span class="char-inner"><img src="qishi-expr-normal.gif" alt="Q版小人" id="rightCharImg"></span>
         <div class="char-bubble" id="charBubble" aria-hidden="true">
-            <span class="char-bubble-text">来看看我的项目吧~</span>
+            <span class="char-bubble-text">看看有什么新消息~</span>
         </div>
     </div>
 
@@ -162,7 +123,8 @@
             <p class="panel-desc">ovo</p>
             <p class="panel-email" id="panelEmail" style="display:none;"></p>
             <div class="panel-links" id="panelLinksBox">
-                <a href="index.html">首页</a><a href="about.html">关于我</a><a href="projects.html">我的项目</a>`n            <a href="userlist.html">用户列表</a><a href="profile.html">个人资料</a><a href="./album.html">相册</a>
+                <a href="index.html">首页</a><a href="about.html">关于我</a><a href="timeline.html">个人历程</a><a href="projects.html">我的项目</a>
+                <a href="announce.html">公告</a>`n            <a href="userlist.html">用户列表</a><a href="profile.html">个人资料</a><a href="./album.html">相册</a>
                 <a href="chat.html">聊天室</a><a href="auth.html">登录/注册</a>
             </div>
         </div>
@@ -171,6 +133,10 @@
     <div class="mouse-glow" id="glow"></div>
 
 <script>
+// 同步最新公告内容（与 common.js ANNOUNCE_CONFIG 一致）
+(function() {
+    // 如果 common.js 暴露了配置则同步，否则使用页面默认内容
+})();
 </script>
 </body>
 </html>

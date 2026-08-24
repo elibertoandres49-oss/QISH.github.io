@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>4K 音游 - QISH</title>
 <script>
-(function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="color"||t==="custom")?t:"color");}catch(e){document.documentElement.setAttribute("data-theme","color");}})();
+(function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="aqua"||t==="custom")?t:"aqua");}catch(e){document.documentElement.setAttribute("data-theme","aqua");}})();
 </script>
 <link rel="stylesheet" href="style.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
@@ -370,6 +370,32 @@ window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window
 </style>
 </head>
 <body>
+<button class="nav-fab" id="navFab" aria-label="导航菜单"><img src="avatar.jpg" alt="菜单" id="navAvatar"></button>
+<div class="nav-fab-ring" id="navFabRing"></div>
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        <img src="avatar.jpg" alt="头像" class="sidebar-avatar" id="sidebarAvatar">
+        <div class="sidebar-user-info">
+            <div class="sidebar-username" id="sidebarUsername">QISH</div>
+            <div class="sidebar-status" id="sidebarStatus">未登录</div>
+        </div>
+    </div>
+    <nav class="sidebar-nav">
+        <div class="sidebar-nav-label">导航</div>
+        <a href="index.html">首页</a>
+        <a href="about.html">关于我</a>
+        <a href="timeline.html">个人历程</a>
+        <a href="projects.html">我的项目</a>
+        <a href="announce.html">公告</a>
+        <a href="chat.html">聊天室</a>
+        <a href="album.html">成员相册</a>`n            <a href="userlist.html">用户列表</a>
+        <a href="profile.html">个人资料</a>
+        <div class="sidebar-nav-label">账号</div>
+        <a href="auth.html" id="sidebarAuthLink">登录/注册</a>
+        <button class="sidebar-logout-btn" id="sidebarLogoutBtn" style="display:none;">退出登录</button>
+    </nav>
+</aside>
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 <div class="side-panel" id="sidePanel">
   <div class="side-panel-content">
     <button class="close-btn" id="closePanel">×</button>
@@ -379,8 +405,7 @@ window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window
     <div class="panel-links" id="panelLinksBox">
       <a href="index.html">首页</a>
       <a href="about.html">关于我</a>
-      <a href="projects.html">我的项目</a>
-      <a href="userlist.html">用户列表</a>
+      <a href="projects.html">我的项目</a>`n            <a href="userlist.html">用户列表</a>
       <a href="profile.html">个人资料</a>
       <a href="album.html">相册</a>
       <a href="chat.html">聊天室</a>
@@ -399,8 +424,7 @@ window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window
   <div class="nav-links">
     <a href="index.html">首页</a>
     <a href="about.html">关于我</a>
-    <a href="projects.html">项目</a>
-    <a href="userlist.html">用户列表</a>
+    <a href="projects.html">项目</a>`n            <a href="userlist.html">用户列表</a>
     <a href="profile.html">个人资料</a>
     <a href="album.html">相册</a>
     <a href="chat.html">聊天室</a>

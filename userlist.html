@@ -1,702 +1,224 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>用户列表 - QISH</title>
-    <script>
-(function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="color"||t==="custom")?t:"color");}catch(e){document.documentElement.setAttribute("data-theme","color");}})();
-</script>
+    <link rel="icon" href="avatar.jpg">
     <link rel="stylesheet" href="style.css">
+    <script>
+    (function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="aqua"||t==="custom")?t:"aqua");}catch(e){document.documentElement.setAttribute("data-theme","aqua");}})();
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
     <script src="common.js" defer></script>
     <script>
+    (function initSupabase() {
         window.SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
         window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
-        let supabase = null;
-        if (window.supabase && window.supabase.createClient) {
-            window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
-                auth: {
-                    persistSession: true,
-                    autoRefreshToken: true,
-                    detectSessionInUrl: true,
-                    storage: window.localStorage,
-                    storageKey: "qish-auth-v1"
-                }
-            });
-            supabase = window.supabaseClient;
+        function tryCreate() {
+            if (window.supabase && typeof window.supabase.createClient === "function") {
+                window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+                    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage, storageKey: "qish-auth-v1" }
+                });
+            } else { setTimeout(tryCreate, 80); }
         }
+        tryCreate();
+    })();
     </script>
     <style>
-        .userlist-wrap {
-            max-width: 460px;
-            margin: 40px auto;
-        }
-
-        .userlist-card {
-            background: rgba(255, 255, 255, 0.20);
-            backdrop-filter: blur(22px);
-            -webkit-backdrop-filter: blur(22px);
-            border: 1px solid rgba(255, 255, 255, 0.35);
-            border-radius: 24px;
-            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
-            padding: 32px;
-            transition: transform 0.25s ease;
-        }
-
-        .userlist-card:hover {
-            transform: translateY(-4px);
-        }
-
-        .userlist-card h1 {
-            border-bottom: none;
-            text-align: center;
-            font-size: 1.8em;
-            margin-bottom: 8px;
-            color: #2c3e50;
-        }
-
-        .userlist-desc {
-            text-align: center;
-            color: #555;
-            margin-bottom: 8px;
-            font-size: 15px;
-        }
-
-        .online-count {
-            text-align: center;
-            font-size: 13px;
-            color: #64748b;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-        .online-count-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #22c55e;
-            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5);
-            animation: online-pulse 2s infinite;
-        }
-        @keyframes online-pulse {
-            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5); }
-            70% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-        }
-
-        .user-list-box {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .user-item {
-            background: rgba(255, 255, 255, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            border-radius: 16px;
-            padding: 14px 16px;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            transition: 0.2s ease;
-        }
-
-        .user-item:hover {
-            background: rgba(255, 255, 255, 0.35);
-            transform: translateY(-2px);
-        }
-
-        .user-avatar-wrap {
-            position: relative;
-            flex-shrink: 0;
-        }
-        .user-avatar {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid rgba(255, 255, 255, 0.45);
-            display: block;
-        }
-        .online-indicator {
-            position: absolute;
-            bottom: 1px;
-            right: 1px;
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.9);
-            transition: background 0.3s ease, box-shadow 0.3s ease;
-        }
-        .online-indicator.online {
-            background: #22c55e;
-            box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
-        }
-        .online-indicator.offline {
-            background: #94a3b8;
-            box-shadow: none;
-        }
-
-        .user-name {
-            font-size: 16px;
-            font-weight: 500;
-            color: #2c3e50;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .user-meta {
-            flex: 1;
-            min-width: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-        .user-bio {
-            font-size: 13px;
-            color: #64748b;
-            line-height: 1.35;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            word-break: break-word;
-        }
-
-        .empty-tip {
-            text-align: center;
-            color: #555;
-            padding: 20px 0;
-            font-size: 15px;
-        }
-
-        @media (max-width: 640px) {
-            .userlist-card {
-                padding: 24px;
-            }
-
-            .user-avatar {
-                width: 44px;
-                height: 44px;
-            }
-            .user-name {
-                font-size: 15px;
-            }
-        }
-
-        /* ========== 用户详情弹窗 ========== */
-        .user-modal-mask {
-            position: fixed;
-            inset: 0;
-            z-index: 10001;
-            background: rgba(15, 23, 42, 0.3);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.35s ease, visibility 0.35s ease;
-        }
-        .user-modal-mask.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        .user-modal-box {
-            position: relative;
-            width: min(380px, 92vw);
-            background: rgba(255, 255, 255, 0.32);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            border-radius: 28px;
-            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.6);
-            padding: 36px 28px 28px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            transform: translateY(120%) translateX(30px) scale(0.85) rotate(-6deg);
-            opacity: 0;
-            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
-                        opacity 0.4s ease;
-        }
-        .user-modal-mask.show .user-modal-box {
-            transform: translateY(0) translateX(0) scale(1) rotate(0deg);
-            opacity: 1;
-        }
-        .user-modal-box.closing {
-            transform: translateY(120%) translateX(30px) scale(0.85) rotate(-6deg) !important;
-            opacity: 0 !important;
-            transition: transform 0.4s cubic-bezier(0.5, 0, 0.75, 0),
-                        opacity 0.3s ease !important;
-        }
-        .user-modal-close {
-            position: absolute;
-            top: 14px;
-            right: 16px;
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            border: none;
-            background: rgba(255, 255, 255, 0.5);
-            color: #475569;
-            font-size: 20px;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.25s ease;
-            line-height: 1;
-        }
-        .user-modal-close:hover {
-            background: rgba(255, 255, 255, 0.8);
-            transform: rotate(90deg) scale(1.1);
-            color: #1e293b;
-        }
-        .user-modal-avatar-wrap {
-            position: relative;
-            margin-bottom: 18px;
-        }
-        .user-modal-avatar {
-            width: 110px;
-            height: 110px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 4px solid rgba(255, 255, 255, 0.7);
-            box-shadow: 0 10px 32px rgba(96, 165, 250, 0.35);
-            display: block;
-        }
-        .user-modal-online-dot {
-            position: absolute;
-            bottom: 6px;
-            right: 6px;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            border: 3px solid rgba(255, 255, 255, 0.9);
-        }
-        .user-modal-online-dot.online {
-            background: #22c55e;
-            box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
-        }
-        .user-modal-online-dot.offline {
-            background: #94a3b8;
-        }
-        .user-modal-name {
-            font-size: 1.5em;
-            font-weight: 800;
-            color: #1e293b;
-            margin: 0 0 4px;
-            letter-spacing: 0.02em;
-        }
-        .user-modal-status {
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 3px 12px;
-            border-radius: 999px;
-        }
-        .user-modal-status.online {
-            color: #15803d;
-            background: rgba(34, 197, 94, 0.18);
-        }
-        .user-modal-status.offline {
-            color: #64748b;
-            background: rgba(148, 163, 184, 0.2);
-        }
-        .user-modal-bio-label {
-            font-size: 12px;
-            font-weight: 700;
-            color: #60a5fa;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            margin-bottom: 8px;
-        }
-        .user-modal-bio {
-            font-size: 15px;
-            color: #334155;
-            line-height: 1.65;
-            white-space: pre-wrap;
-            word-break: break-word;
-            max-height: 160px;
-            overflow-y: auto;
-            padding: 0 8px;
-        }
-        .user-modal-bio.empty {
-            color: #94a3b8;
-            font-style: italic;
-        }
-        .user-modal-box::before {
-            content: "";
-            position: absolute;
-            top: -50px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 200px;
-            height: 100px;
-            background: radial-gradient(ellipse, rgba(96, 165, 250, 0.3), transparent 70%);
-            pointer-events: none;
-            z-index: -1;
-        }
-        @media (max-width: 640px) {
-            .user-modal-box {
-                padding: 28px 22px 22px;
-            }
-            .user-modal-avatar {
-                width: 90px;
-                height: 90px;
-            }
-            .user-modal-name {
-                font-size: 1.3em;
-            }
-        }
+    .user-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 16px;
+        margin-top: 20px;
+    }
+    .user-card {
+        background: var(--card-bg);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--card-border);
+        border-radius: 18px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: var(--card-shadow);
+        transition: all 0.3s ease;
+        position: relative;
+    }
+    .user-card:hover { transform: translateY(-4px); box-shadow: var(--card-shadow-hover); }
+    .user-card .online-dot {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #94a3b8;
+    }
+    .user-card.online .online-dot { background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,0.5); }
+    .user-avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-bottom: 10px;
+        border: 2px solid var(--card-border);
+    }
+    .user-name { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+    .user-bio { font-size: 12px; color: var(--text-sub); }
+    .search-box {
+        display: flex;
+        gap: 10px;
+        margin-top: 16px;
+    }
+    .search-box input { flex: 1; }
+    .stats-bar {
+        display: flex;
+        gap: 16px;
+        margin-top: 16px;
+        flex-wrap: wrap;
+    }
+    .stat-pill {
+        padding: 8px 16px;
+        border-radius: 999px;
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        font-size: 13px;
+        font-weight: 600;
+    }
+    .stat-pill .num { color: var(--accent); font-size: 18px; margin-right: 4px; }
     </style>
 </head>
 <body>
-<div class="side-panel" id="sidePanel">
-    <div class="side-panel-content">
-        <button class="close-btn" id="closePanel">×</button>
-        <img src="avatar.jpg" alt="头像" class="panel-avatar" id="panelAvatar">
-        <h2 id="panelUsername">QISH</h2>
-        <p class="panel-desc">ovo</p>
-        <div class="panel-links" id="panelLinksBox">
+    <button class="nav-fab" id="navFab" aria-label="导航菜单"><img src="avatar.jpg" alt="菜单" id="navAvatar"></button>
+    <div class="nav-fab-ring" id="navFabRing"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="avatar.jpg" alt="头像" class="sidebar-avatar" id="sidebarAvatar">
+            <div class="sidebar-user-info">
+                <div class="sidebar-username" id="sidebarUsername">QISH</div>
+                <div class="sidebar-status" id="sidebarStatus">未登录</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="sidebar-nav-label">导航</div>
             <a href="index.html">首页</a>
             <a href="about.html">关于我</a>
+            <a href="timeline.html">个人历程</a>
             <a href="projects.html">我的项目</a>
-            <a href="userlist.html">用户列表</a>
-            <a href="profile.html">个人资料</a>
-            <a href="./album.html">相册</a>
+            <a href="announce.html">公告</a>
             <a href="chat.html">聊天室</a>
-        </div>
-    </div>
-</div>
+            <a href="album.html">成员相册</a>`n            <a href="userlist.html" class="nav-active">用户列表</a>
+            <a href="profile.html">个人资料</a>
+            <div class="sidebar-nav-label">账号</div>
+            <a href="auth.html" id="sidebarAuthLink">登录/注册</a>
+            <button class="sidebar-logout-btn" id="sidebarLogoutBtn" style="display:none;">退出登录</button>
+        </nav>
+    </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-<div class="right-image" id="rightImage">
-    <img src="qishi-expr-normal.gif" alt="Q版小人" id="rightCharImg">
-    <div class="char-bubble" id="charBubble" aria-hidden="true">
-        <span class="char-bubble-text">欢迎来到QISH小站~</span>
-    </div>
-</div>
-
-<div class="overlay" id="overlay"></div>
-<div class="mouse-glow" id="glow"></div>
-
-<nav>
-    <div class="nav-avatar-area">
-        <img src="avatar.jpg" alt="头像" class="nav-avatar" id="navAvatar">
-        <span class="nav-nickname" id="navNickname" style="display: none;"></span>
-    </div>
-    <div class="nav-links">
-        <a href="index.html">首页</a>
-        <a href="about.html">关于我</a>
-        <a href="projects.html">项目</a>
-        <a href="userlist.html">用户列表</a>
-        <a href="profile.html">个人资料</a>
-        <a href="./album.html">相册</a>
-        <a href="chat.html">聊天室</a>
-        <span id="auth-nav">
-            <a href="auth.html">登录/注册</a>
-        </span>
-    </div>
-</nav>
-
-<div class="container" style="background: transparent; backdrop-filter: none; border: none; box-shadow: none;">
-    <div class="userlist-wrap">
-        <div class="userlist-card">
+    <main class="main-content">
+        <div class="container">
+            <a href="index.html" class="back-btn" style="margin-bottom:16px;">← 返回首页</a>
             <h1>用户列表</h1>
-            <p class="userlist-desc">查看所有注册用户</p>
-            <div class="online-count" id="onlineCount">
-                <span class="online-count-dot"></span>
-                <span id="onlineCountText">正在获取在线状态...</span>
+            <p>看看都有谁在小站里 ~</p>
+
+            <div class="stats-bar">
+                <div class="stat-pill"><span class="num" id="totalCount">0</span>总用户</div>
+                <div class="stat-pill"><span class="num" id="onlineCount">0</span>在线</div>
             </div>
 
-            <div id="userListBox" class="user-list-box"></div>
+            <div class="search-box">
+                <input type="text" class="form-input" id="searchInput" placeholder="搜索昵称...">
+            </div>
+
+            <div class="user-grid" id="userGrid"></div>
+        </div>
+        <footer><p>© 2026 QISH 小站 · Made with ❤️</p></footer>
+    </main>
+
+    <div class="right-image" id="rightImage">
+        <span class="char-inner"><img src="qishi-expr-normal.gif" alt="Q版小人" id="rightCharImg"></span>
+        <div class="char-bubble" id="charBubble" aria-hidden="true">
+            <span class="char-bubble-text">大家好呀~</span>
         </div>
     </div>
-</div>
 
-<!-- 用户详情弹窗 -->
-<div class="user-modal-mask" id="userModalMask">
-    <div class="user-modal-box" id="userModalBox" role="dialog" aria-modal="true">
-        <button class="user-modal-close" id="userModalClose" aria-label="关闭">×</button>
-        <div class="user-modal-avatar-wrap">
-            <img class="user-modal-avatar" id="userModalAvatar" src="" alt="用户头像">
-            <span class="user-modal-online-dot offline" id="userModalDot"></span>
+    <div class="side-panel" id="sidePanel">
+        <div class="side-panel-content">
+            <button class="close-btn" id="closePanel">×</button>
+            <img src="avatar.jpg" alt="头像" class="panel-avatar" id="panelAvatar">
+            <h2 id="panelUsername">QISH</h2>
+            <p class="panel-desc">ovo</p>
+            <p class="panel-email" id="panelEmail" style="display:none;"></p>
+            <div class="panel-links" id="panelLinksBox">
+                <a href="index.html">首页</a><a href="about.html">关于我</a><a href="projects.html">我的项目</a>`n            <a href="userlist.html">用户列表</a><a href="profile.html">个人资料</a><a href="./album.html">相册</a>
+                <a href="chat.html">聊天室</a><a href="auth.html">登录/注册</a>
+            </div>
         </div>
-        <h3 class="user-modal-name" id="userModalName">用户名</h3>
-        <span class="user-modal-status offline" id="userModalStatus">离线</span>
-        <div class="user-modal-bio-label">个人简介</div>
-        <div class="user-modal-bio" id="userModalBio">这个人很懒，什么都没写~</div>
     </div>
-</div>
-
-<footer>© 2026 QISH · </footer>
+    <div class="overlay" id="overlay"></div>
+    <div class="mouse-glow" id="glow"></div>
 
 <script>
-const userListBox = document.getElementById("userListBox");
-const onlineCountText = document.getElementById("onlineCountText");
-
-const defaultAvatar = "avatar.jpg";
-let currentUser = null;
-let onlineUserIds = new Set();
-
-
-async function waitForQISH(ms) {
-    ms = ms || 4000;
-    const t0 = Date.now();
-    while (!window.QISH || !QISH.updateAuthNav) {
-        if (Date.now() - t0 > ms) break;
-        await new Promise(function (r) { setTimeout(r, 30); });
-    }
-    return window.QISH;
-}
-
-async function updateAuthNav() {
-    await waitForQISH();
-    if (!window.QISH || !QISH.updateAuthNav || !supabase) return;
-    const r = await QISH.updateAuthNav({ supabase });
-    if (r && r.user) {
-        currentUser = r.user;
-    } else {
-        currentUser = null;
-    }
-}
-
-let _userListLoadSeq = 0;
-
-async function loadUserList() {
-    const seq = ++_userListLoadSeq;
-    userListBox.innerHTML = "";
-
-    const { data, error } = await supabase
-        .from("public_user_list")
-        .select("user_id, nickname, avatar_url, bio")
-        .order("created_at", { ascending: true });
-
-    // 并发加载时只采用最后一次结果，避免列表翻倍
-    if (seq !== _userListLoadSeq) return;
-
-    if (error) {
-        userListBox.innerHTML = `<p class="empty-tip">加载用户失败：${error.message}</p>`;
-        return;
-    }
-
-    if (!data || data.length === 0) {
-        userListBox.innerHTML = `<p class="empty-tip">暂无注册用户</p>`;
-        return;
-    }
-
-    // 按 user_id 去重（库中若有重复行也不翻倍）
-    const seen = new Set();
-    const uniqueRows = [];
-    for (const row of data) {
-        const uid = row && row.user_id;
-        if (!uid || seen.has(uid)) continue;
-        seen.add(uid);
-        uniqueRows.push(row);
-    }
-
-    userListBox.innerHTML = "";
-    for (const row of uniqueRows) {
-        const userItem = document.createElement("div");
-        userItem.className = "user-item";
-        userItem.dataset.userId = row.user_id;
-
-        // 头像容器（含在线指示器）
-        const avatarWrap = document.createElement("div");
-        avatarWrap.className = "user-avatar-wrap";
-        avatarWrap.style.cursor = "pointer";
-        const avatar = document.createElement("img");
-        avatar.className = "user-avatar";
-        avatar.src = row.avatar_url || "avatar.jpg";
-        avatar.alt = row.nickname || "用户头像";
-        avatar.onerror = function () { this.src = "avatar.jpg"; };
-        const indicator = document.createElement("span");
-        indicator.className = "online-indicator " + (onlineUserIds.has(row.user_id) ? "online" : "offline");
-        indicator.title = onlineUserIds.has(row.user_id) ? "在线" : "离线";
-        avatarWrap.appendChild(avatar);
-        avatarWrap.appendChild(indicator);
-        // 点击头像弹出详情
-        avatarWrap.addEventListener("click", () => {
-            openUserModal(row);
-        });
-
-        const meta = document.createElement("div");
-        meta.className = "user-meta";
-        const name = document.createElement("div");
-        name.className = "user-name";
-        name.innerText = row.nickname || "匿名用户";
-        meta.appendChild(name);
-        if (row.bio) {
-            const bio = document.createElement("div");
-            bio.className = "user-bio";
-            bio.innerText = row.bio;
-            meta.appendChild(bio);
-        }
-        userItem.appendChild(avatarWrap);
-        userItem.appendChild(meta);
-        userListBox.appendChild(userItem);
-    }
-    updateOnlineCount();
-}
-
-// 更新所有用户项的在线状态
-function refreshOnlineIndicators() {
-    const items = userListBox.querySelectorAll(".user-item");
-    items.forEach(item => {
-        const userId = item.dataset.userId;
-        const indicator = item.querySelector(".online-indicator");
-        if (!indicator) return;
-        if (onlineUserIds.has(userId)) {
-            indicator.className = "online-indicator online";
-            indicator.title = "在线";
-        } else {
-            indicator.className = "online-indicator offline";
-            indicator.title = "离线";
-        }
-    });
-    updateOnlineCount();
-}
-
-function updateOnlineCount() {
-    if (!onlineCountText) return;
-    const total = userListBox.querySelectorAll(".user-item").length;
-    const online = onlineUserIds.size;
-    if (total === 0) {
-        onlineCountText.textContent = "暂无用户";
-    } else {
-        onlineCountText.textContent = `${online} 人在线 / 共 ${total} 人`;
-    }
-}
-
-// 订阅 Presence 频道，实时更新在线状态
-async function initPresenceListener() {
-    if (!supabase) return;
-    // 优先使用 common.js 已建立的频道状态
-    if (window.QISH && typeof QISH.getOnlineUserIds === "function") {
-        onlineUserIds = QISH.getOnlineUserIds();
-        refreshOnlineIndicators();
-    }
-    // 监听自定义事件（common.js 在 presence sync 时派发）
-    window.addEventListener("qish-presence-sync", (e) => {
-        if (e.detail && e.detail.ids) {
-            onlineUserIds = new Set(e.detail.ids);
-            refreshOnlineIndicators();
-        }
-    });
-    // 兜底：如果 common.js 未初始化成功，自己订阅一个频道监听
-    setTimeout(() => {
-        if (onlineUserIds.size === 0 && window.QISH && typeof QISH.getOnlineUserIds === "function") {
-            onlineUserIds = QISH.getOnlineUserIds();
-            refreshOnlineIndicators();
-        }
-    }, 1500);
-}
-
-// ========== 用户详情弹窗 ==========
-const userModalMask = document.getElementById("userModalMask");
-const userModalBox = document.getElementById("userModalBox");
-const userModalAvatar = document.getElementById("userModalAvatar");
-const userModalName = document.getElementById("userModalName");
-const userModalBio = document.getElementById("userModalBio");
-const userModalDot = document.getElementById("userModalDot");
-const userModalStatus = document.getElementById("userModalStatus");
-const userModalClose = document.getElementById("userModalClose");
-
-let modalClosing = false;
-
-function openUserModal(row) {
-    if (!row || modalClosing) return;
-    // 填充数据
-    userModalAvatar.src = row.avatar_url || "avatar.jpg";
-    userModalAvatar.onerror = function () { this.src = "avatar.jpg"; };
-    userModalName.textContent = row.nickname || "匿名用户";
-    if (row.bio && row.bio.trim()) {
-        userModalBio.textContent = row.bio;
-        userModalBio.classList.remove("empty");
-    } else {
-        userModalBio.textContent = "这个人很懒，什么都没写~";
-        userModalBio.classList.add("empty");
-    }
-    // 在线状态
-    const isOnline = onlineUserIds.has(row.user_id);
-    if (isOnline) {
-        userModalDot.className = "user-modal-online-dot online";
-        userModalStatus.className = "user-modal-status online";
-        userModalStatus.textContent = "在线";
-    } else {
-        userModalDot.className = "user-modal-online-dot offline";
-        userModalStatus.className = "user-modal-status offline";
-        userModalStatus.textContent = "离线";
-    }
-    // 重置关闭动画状态
-    userModalBox.classList.remove("closing");
-    // 显示（下一帧触发过渡动画）
-    requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-            userModalMask.classList.add("show");
-        });
-    });
-    // 锁定背景滚动
-    document.body.style.overflow = "hidden";
-}
-
-function closeUserModal() {
-    if (!userModalMask.classList.contains("show") || modalClosing) return;
-    modalClosing = true;
-    userModalBox.classList.add("closing");
-    userModalMask.classList.remove("show");
-    setTimeout(() => {
-        userModalBox.classList.remove("closing");
-        modalClosing = false;
-        document.body.style.overflow = "";
-    }, 420);
-}
-
-// 关闭按钮
-userModalClose.addEventListener("click", closeUserModal);
-// 点击遮罩空白处关闭
-userModalMask.addEventListener("click", (e) => {
-    if (e.target === userModalMask) closeUserModal();
+const SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage, storageKey: "qish-auth-v1" }
 });
-// Esc 关闭
-document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && userModalMask.classList.contains("show")) {
-        closeUserModal();
-    }
-});
+window.supabaseClient = sb;
 
-let _userListBootTimer = null;
-async function bootUserList() {
-    await updateAuthNav();
-    await loadUserList();
-    await initPresenceListener();
+let allUsers = [];
+let onlineIds = new Set();
+
+function escapeHtml(s) {
+    return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
-bootUserList();
+function renderUsers(filter) {
+    const grid = document.getElementById("userGrid");
+    const f = (filter || "").toLowerCase().trim();
+    const list = f ? allUsers.filter(u => (u.nickname || "").toLowerCase().includes(f)) : allUsers;
+    grid.innerHTML = list.map(u => {
+        const isOnline = onlineIds.has(u.user_id);
+        const avatar = u.avatar_url || "avatar.jpg";
+        return '<div class="user-card' + (isOnline ? ' online' : '') + '">' +
+            '<div class="online-dot"></div>' +
+            '<img src="' + escapeHtml(avatar) + '" class="user-avatar" alt="">' +
+            '<div class="user-name">' + escapeHtml(u.nickname || "匿名用户") + '</div>' +
+            '<div class="user-bio">' + escapeHtml(u.bio || (isOnline ? "在线中" : "离线")) + '</div>' +
+            '</div>';
+    }).join("") || '<div style="grid-column:1/-1;text-align:center;color:var(--text-sub);padding:40px;">暂无用户</div>';
+}
 
-if (supabase) {
-    supabase.auth.onAuthStateChange(function (event) {
-        if (event === "INITIAL_SESSION") return;
-        // 防抖：短时间内多次 auth 事件只刷新一次，避免列表重复渲染
-        clearTimeout(_userListBootTimer);
-        _userListBootTimer = setTimeout(function () {
-            bootUserList();
-        }, 200);
+async function loadUsers() {
+    const { data, error } = await sb.from("public_user_list").select("*").order("nickname");
+    if (error) { console.error(error); return; }
+    allUsers = data || [];
+    document.getElementById("totalCount").textContent = allUsers.length;
+    renderUsers();
+}
+
+function subscribePresence() {
+    const channel = sb.channel("online-users");
+    channel.on("presence", { event: "sync" }, () => {
+        const state = channel.presenceState();
+        onlineIds = new Set(Object.keys(state));
+        document.getElementById("onlineCount").textContent = onlineIds.size;
+        renderUsers(document.getElementById("searchInput").value);
+    }).subscribe(async (status) => {
+        if (status === "SUBSCRIBED") {
+            const { data: { user } } = await sb.auth.getUser();
+            if (user) {
+                await channel.track({ user_id: user.id, online_at: new Date().toISOString() });
+            }
+        }
     });
 }
+
+document.getElementById("searchInput").addEventListener("input", e => renderUsers(e.target.value));
+
+loadUsers();
+subscribePresence();
 </script>
-
 </body>
 </html>

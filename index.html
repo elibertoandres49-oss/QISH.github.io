@@ -1,1113 +1,724 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>首页 - QISH</title>
-    <script>
-(function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="color"||t==="custom")?t:"color");}catch(e){document.documentElement.setAttribute("data-theme","color");}})();
-</script>
-    <link rel="stylesheet" href="style.css">
+    <title>QISH 小站</title>
+    <link rel="icon" href="avatar.jpg">
+    <link rel="apple-touch-icon" href="avatar.jpg">
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#60a5fa">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <script>
+    (function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="aqua"||t==="custom")?t:"aqua");}catch(e){document.documentElement.setAttribute("data-theme","aqua");}})();
+    </script>
+    <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
     <script>
+    (function initSupabase() {
         window.SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
         window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
-        window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
-            auth: {
-                persistSession: true,
-                autoRefreshToken: true,
-                detectSessionInUrl: true,
-                storage: window.localStorage,
-                storageKey: "qish-auth-v1"
-            }
-        });
-        const supabase = window.supabaseClient;
+        function tryCreate() {
+            if (window.supabase && typeof window.supabase.createClient === "function") {
+                window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+                    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage, storageKey: "qish-auth-v1" }
+                });
+            } else { setTimeout(tryCreate, 80); }
+        }
+        tryCreate();
+    })();
     </script>
     <script src="common.js" defer></script>
-    <style>
-        .home-announce-card {
-            margin-top: 28px;
-            padding: 18px 20px;
-            border-radius: 18px;
-            background: rgba(255, 255, 255, 0.22);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            text-align: left;
-        }
-        .home-announce-card:hover {
-            transform: translateY(-3px);
-            background: rgba(255, 255, 255, 0.32);
-            box-shadow: 0 10px 28px rgba(96, 165, 250, 0.2);
-        }
-        .home-announce-icon {
-            width: 52px;
-            height: 52px;
-            border-radius: 14px;
-            background: linear-gradient(135deg, #60a5fa, #93c5fd);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
-            flex-shrink: 0;
-            box-shadow: 0 4px 14px rgba(96, 165, 250, 0.35);
-            overflow: hidden;
-            padding: 0;
-        }
-        .home-announce-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-        .home-announce-info {
-            flex: 1;
-            min-width: 0;
-        }
-        .home-announce-info h3 {
-            margin: 0 0 4px;
-            font-size: 16px;
-            color: #1e293b;
-            font-weight: 700;
-            border: none;
-        }
-        .home-announce-info p {
-            margin: 0;
-            font-size: 13px;
-            color: #64748b;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .home-announce-arrow {
-            color: #3b82f6;
-            font-size: 18px;
-            font-weight: 700;
-            flex-shrink: 0;
-        }
-        /* 时间日期卡片 */
-        .home-time-card {
-            margin-top: 16px;
-            padding: 16px 20px;
-            border-radius: 18px;
-            background: rgba(255, 255, 255, 0.35);
-            border: 1px solid rgba(255, 255, 255, 0.5);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 14px;
-        }
-        .home-time-card:hover {
-            transform: translateY(-3px);
-            background: rgba(255, 255, 255, 0.5);
-            box-shadow: 0 10px 28px rgba(59, 130, 246, 0.2);
-        }
-        .home-time-main {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            min-width: 0;
-        }
-        .home-time-clock {
-            font-size: 28px;
-            font-weight: 800;
-            color: #0f172a;
-            font-family: "Segoe UI", "Microsoft YaHei", monospace;
-            letter-spacing: 1px;
-            line-height: 1.2;
-        }
-        .home-time-date {
-            font-size: 13px;
-            color: #334155;
-            font-weight: 500;
-        }
-        .home-time-icon {
-            font-size: 32px;
-            flex-shrink: 0;
-            animation: time-icon-spin 20s linear infinite;
-        }
-        @keyframes time-icon-spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        /* 时间详情弹窗 */
-        .time-modal-mask {
-            position: fixed;
-            inset: 0;
-            z-index: 10002;
-            background: rgba(15, 23, 42, 0.3);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.35s ease, visibility 0.35s ease;
-        }
-        .time-modal-mask.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        .time-modal-box {
-            width: min(380px, 92vw);
-            background: rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            border: 1px solid rgba(255, 255, 255, 0.55);
-            border-radius: 28px;
-            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.25);
-            padding: 32px 28px 24px;
-            text-align: center;
-            transform: translateY(24px) scale(0.9);
-            opacity: 0;
-            transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease;
-            position: relative;
-        }
-        .time-modal-mask.show .time-modal-box {
-            transform: translateY(0) scale(1);
-            opacity: 1;
-        }
-        .time-modal-close {
-            position: absolute;
-            top: 14px;
-            right: 16px;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            border: none;
-            background: rgba(255, 255, 255, 0.5);
-            color: #475569;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.25s ease;
-        }
-        .time-modal-close:hover {
-            background: rgba(255, 255, 255, 0.8);
-            transform: rotate(90deg);
-        }
-        .time-modal-big-clock {
-            font-size: 48px;
-            font-weight: 900;
-            color: #0f172a;
-            font-family: "Segoe UI", monospace;
-            letter-spacing: 2px;
-            margin-bottom: 4px;
-            line-height: 1.1;
-        }
-        .time-modal-full-date {
-            font-size: 16px;
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 20px;
-        }
-        .time-modal-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-        .time-modal-item {
-            background: rgba(255, 255, 255, 0.4);
-            border-radius: 14px;
-            padding: 12px 10px;
-            border: 1px solid rgba(255, 255, 255, 0.4);
-        }
-        .time-modal-item-label {
-            font-size: 11px;
-            color: #64748b;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 4px;
-        }
-        .time-modal-item-value {
-            font-size: 15px;
-            font-weight: 700;
-            color: #0f172a;
-        }
-        @media (max-width: 640px) {
-            .home-time-clock {
-                font-size: 22px;
-            }
-            .time-modal-big-clock {
-                font-size: 38px;
-            }
-        }
-
-        /* ========== 访问统计板块 ========== */
-        .home-stats-card {
-            margin-top: 16px;
-            padding: 18px 20px;
-            border-radius: 18px;
-            background: linear-gradient(135deg, rgba(255,255,255,0.28), rgba(147,197,253,0.18));
-            border: 1px solid rgba(255, 255, 255, 0.45);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            text-align: left;
-            position: relative;
-            overflow: hidden;
-        }
-        .home-stats-card::before {
-            content: "";
-            position: absolute;
-            top: -40%;
-            right: -10%;
-            width: 140px;
-            height: 140px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(96,165,250,0.25), transparent 70%);
-            pointer-events: none;
-        }
-        .home-stats-card:hover {
-            transform: translateY(-3px);
-            background: linear-gradient(135deg, rgba(255,255,255,0.38), rgba(147,197,253,0.28));
-            box-shadow: 0 10px 28px rgba(59, 130, 246, 0.22);
-        }
-        .home-stats-icon {
-            width: 52px;
-            height: 52px;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #34d399, #60a5fa);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
-            flex-shrink: 0;
-            box-shadow: 0 6px 18px rgba(52, 211, 153, 0.35);
-            z-index: 1;
-            overflow: hidden;
-            padding: 0;
-        }
-        .home-stats-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-        .home-stats-info {
-            flex: 1;
-            min-width: 0;
-            z-index: 1;
-        }
-        .home-stats-info h3 {
-            margin: 0 0 8px;
-            font-size: 15px;
-            color: #0f172a;
-            font-weight: 800;
-            border: none;
-        }
-        .home-stats-nums {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px 18px;
-        }
-        .home-stats-num-item {
-            display: flex;
-            flex-direction: column;
-            gap: 1px;
-        }
-        .home-stats-num-val {
-            font-size: 22px;
-            font-weight: 900;
-            color: #1d4ed8;
-            font-variant-numeric: tabular-nums;
-            line-height: 1.15;
-        }
-        .home-stats-num-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: #64748b;
-            letter-spacing: 0.02em;
-        }
-        .home-stats-arrow {
-            color: #3b82f6;
-            font-size: 18px;
-            font-weight: 700;
-            flex-shrink: 0;
-            z-index: 1;
-        }
-        [data-theme="dark"] .home-stats-card {
-            background: linear-gradient(135deg, rgba(30,41,59,0.75), rgba(59,130,246,0.15));
-            border-color: rgba(255,255,255,0.12);
-        }
-        [data-theme="dark"] .home-stats-info h3 { color: #f1f5f9; }
-        [data-theme="dark"] .home-stats-num-val { color: #93c5fd; }
-        [data-theme="dark"] .home-stats-num-label { color: #94a3b8; }
-
-        .stats-modal-mask {
-            position: fixed;
-            inset: 0;
-            z-index: 10002;
-            background: rgba(15, 23, 42, 0.35);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.35s ease, visibility 0.35s ease;
-        }
-        .stats-modal-mask.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        .stats-modal-box {
-            width: min(440px, 94vw);
-            max-height: 88vh;
-            overflow-y: auto;
-            background: rgba(255, 255, 255, 0.42);
-            backdrop-filter: blur(28px);
-            -webkit-backdrop-filter: blur(28px);
-            border: 1px solid rgba(255, 255, 255, 0.55);
-            border-radius: 28px;
-            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.25);
-            padding: 28px 24px 22px;
-            transform: translateY(24px) scale(0.92);
-            opacity: 0;
-            transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease;
-            position: relative;
-        }
-        .stats-modal-mask.show .stats-modal-box {
-            transform: translateY(0) scale(1);
-            opacity: 1;
-        }
-        .stats-modal-close {
-            position: absolute;
-            top: 14px;
-            right: 16px;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            border: none;
-            background: rgba(255, 255, 255, 0.55);
-            color: #475569;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.25s ease;
-        }
-        .stats-modal-close:hover {
-            background: rgba(255, 255, 255, 0.85);
-            transform: rotate(90deg);
-        }
-        .stats-modal-title {
-            margin: 0 0 6px;
-            font-size: 1.25em;
-            font-weight: 800;
-            color: #0f172a;
-            border: none;
-            text-align: center;
-        }
-        .stats-modal-sub {
-            text-align: center;
-            font-size: 12px;
-            color: #64748b;
-            margin-bottom: 18px;
-        }
-        .stats-hero {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 18px;
-        }
-        .stats-hero-item {
-            background: rgba(255,255,255,0.45);
-            border: 1px solid rgba(255,255,255,0.5);
-            border-radius: 16px;
-            padding: 14px 10px;
-            text-align: center;
-        }
-        .stats-hero-val {
-            font-size: 24px;
-            font-weight: 900;
-            color: #1d4ed8;
-            font-variant-numeric: tabular-nums;
-            line-height: 1.2;
-        }
-        .stats-hero-label {
-            font-size: 11px;
-            font-weight: 600;
-            color: #64748b;
-            margin-top: 4px;
-        }
-        .stats-section {
-            margin-bottom: 16px;
-        }
-        .stats-section h4 {
-            margin: 0 0 10px;
-            font-size: 13px;
-            font-weight: 800;
-            color: #334155;
-            border: none;
-        }
-        .stats-bar-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .stats-bar-row {
-            display: grid;
-            grid-template-columns: 88px 1fr 36px;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-        }
-        .stats-bar-name {
-            color: #475569;
-            font-weight: 600;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .stats-bar-track {
-            height: 8px;
-            border-radius: 999px;
-            background: rgba(148,163,184,0.25);
-            overflow: hidden;
-        }
-        .stats-bar-fill {
-            height: 100%;
-            border-radius: 999px;
-            background: linear-gradient(90deg, #60a5fa, #34d399);
-            min-width: 4px;
-            transition: width 0.5s ease;
-        }
-        .stats-bar-fill.device { background: linear-gradient(90deg, #a78bfa, #60a5fa); }
-        .stats-bar-fill.source { background: linear-gradient(90deg, #f472b6, #fb923c); }
-        .stats-bar-cnt {
-            text-align: right;
-            font-weight: 800;
-            color: #1e293b;
-            font-variant-numeric: tabular-nums;
-        }
-        .stats-recent {
-            max-height: 160px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .stats-recent-item {
-            display: flex;
-            justify-content: space-between;
-            gap: 8px;
-            padding: 8px 10px;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.4);
-            border: 1px solid rgba(255,255,255,0.4);
-            font-size: 12px;
-            color: #475569;
-        }
-        .stats-recent-item strong { color: #0f172a; font-weight: 700; }
-        .stats-empty {
-            text-align: center;
-            color: #94a3b8;
-            font-size: 13px;
-            padding: 12px;
-        }
-        .stats-error {
-            text-align: center;
-            color: #dc2626;
-            font-size: 12px;
-            margin-top: 8px;
-            line-height: 1.5;
-        }
-        [data-theme="dark"] .stats-modal-box {
-            background: rgba(30, 41, 59, 0.92);
-            border-color: rgba(255,255,255,0.12);
-        }
-        [data-theme="dark"] .stats-modal-title { color: #f1f5f9; }
-        [data-theme="dark"] .stats-hero-item {
-            background: rgba(15,23,42,0.55);
-            border-color: rgba(255,255,255,0.1);
-        }
-        [data-theme="dark"] .stats-hero-val { color: #93c5fd; }
-        [data-theme="dark"] .stats-section h4 { color: #e2e8f0; }
-        [data-theme="dark"] .stats-bar-name { color: #cbd5e1; }
-        [data-theme="dark"] .stats-bar-cnt { color: #f1f5f9; }
-        [data-theme="dark"] .stats-recent-item {
-            background: rgba(15,23,42,0.5);
-            border-color: rgba(255,255,255,0.1);
-            color: #94a3b8;
-        }
-        [data-theme="dark"] .stats-recent-item strong { color: #f1f5f9; }
-        @media (max-width: 640px) {
-            .home-stats-num-val { font-size: 18px; }
-            .stats-hero-val { font-size: 20px; }
-            .stats-bar-row { grid-template-columns: 72px 1fr 32px; }
-        }
-    </style>
 </head>
 <body>
-<div class="side-panel" id="sidePanel">
-    <div class="side-panel-content">
-        <button class="close-btn" id="closePanel">×</button>
-        <img src="avatar.jpg" alt="头像" class="panel-avatar" id="panelAvatar">
-        <h2 id="panelUsername">QISH</h2>
-        <p class="panel-desc">ovo</p>
-        <div class="panel-links" id="panelLinksBox">
-            <a href="index.html">首页</a>
+    <!-- 左上角圆形导航按钮 -->
+    <button class="nav-fab" id="navFab" aria-label="导航菜单">
+        <img src="avatar.jpg" alt="菜单" id="navAvatar">
+    </button>
+    <div class="nav-fab-ring" id="navFabRing"></div>
+
+    <!-- 侧边栏导航 -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="avatar.jpg" alt="头像" class="sidebar-avatar" id="sidebarAvatar">
+            <div class="sidebar-user-info">
+                <div class="sidebar-username" id="sidebarUsername">QISH</div>
+                <div class="sidebar-status" id="sidebarStatus">未登录</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="sidebar-nav-label">导航</div>
+            <a href="index.html" class="nav-active">首页</a>
             <a href="about.html">关于我</a>
+            <a href="timeline.html">个人历程</a>
             <a href="projects.html">我的项目</a>
-            <a href="userlist.html">用户列表</a>
-            <a href="profile.html">个人资料</a>
-            <a href="album.html">相册</a>
+            <a href="announce.html">公告</a>
             <a href="chat.html">聊天室</a>
-            <a href="auth.html">登录/注册</a>
-        </div>
-    </div>
-</div>
+            <a href="album.html">成员相册</a>`n            <a href="userlist.html">用户列表</a>
+            <a href="profile.html">个人资料</a>
+            <div class="sidebar-nav-label">账号</div>
+            <a href="auth.html" id="sidebarAuthLink">登录/注册</a>
+            <button class="sidebar-logout-btn" id="sidebarLogoutBtn" style="display:none;">退出登录</button>
+        </nav>
+    </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-<!-- 左侧大立绘（主页显示） -->
-<div class="left-image" id="leftImage">
-    <img src="right-photo.png" alt="角色立绘" id="leftCharImg">
-    <div class="char-bubble" id="leftCharBubble" aria-hidden="true">
-        <span class="char-bubble-text">欢迎来到QISH小站~</span>
-    </div>
-</div>
+    <!-- 主内容 -->
+    <main class="main-content">
+        <div class="bubble-page">
 
-<div class="right-image" id="rightImage">
-    <img src="qishi-expr-normal.gif" alt="Q版小人" id="rightCharImg">
-    <div class="char-bubble" id="charBubble" aria-hidden="true">
-        <span class="char-bubble-text">欢迎来到QISH小站~</span>
-    </div>
-</div>
-<div class="overlay" id="overlay"></div>
-<div class="mouse-glow" id="glow"></div>
-
-<nav>
-    <div class="nav-avatar-area">
-        <img src="avatar.jpg" alt="头像" class="nav-avatar" id="navAvatar">
-        <span class="nav-nickname" id="navNickname" style="display: none;"></span>
-    </div>
-    <div class="nav-links">
-        <a href="index.html">首页</a>
-        <a href="about.html">关于我</a>
-        <a href="projects.html">项目</a>
-        <a href="userlist.html">用户列表</a>
-        <a href="profile.html">个人资料</a>
-        <a href="album.html">相册</a>
-        <a href="chat.html">聊天室</a>
-        <span id="auth-nav">
-            <a href="auth.html">登录/注册</a>
-        </span>
-    </div>
-</nav>
-
-<div class="container">
-    <h1>欢迎来到 QISH</h1>
-    <p>欢迎来到我的小站，点击下方按钮进入聊天室和大家一起聊天吧～</p>
-    <div style="text-align:center; margin-top: 28px;">
-        <a href="chat.html" class="chat-enter-btn">💬 进入聊天室</a>
-    </div>
-
-    <!-- 时间日期板块：点击查看详情 -->
-    <div class="home-time-card" id="homeTimeCard" title="点击查看详细时间">
-        <div class="home-time-main">
-            <span class="home-time-clock" id="homeTimeClock">--:--:--</span>
-            <span class="home-time-date" id="homeTimeDate">加载中...</span>
-        </div>
-        <div class="home-time-icon">🕐</div>
-    </div>
-
-    <!-- 公告板块：点击弹出完整公告 -->
-    <div class="home-announce-card" id="homeAnnounceCard" title="点击查看完整公告">
-        <div class="home-announce-icon"><img src="qishi-gif-01.gif" alt=""></div>
-        <div class="home-announce-info">
-            <h3>网站公告</h3>
-            <p>点击查看最新公告与站内说明</p>
-        </div>
-        <span class="home-announce-arrow">›</span>
-    </div>
-
-    <!-- 新番时刻表入口 -->
-    <a class="home-announce-card" href="anime.html" title="进入新番时刻表" style="text-decoration:none;color:inherit;">
-        <div class="home-announce-icon" style="background:linear-gradient(135deg,#f472b6,#fb923c);box-shadow:0 4px 14px rgba(244,114,182,0.35);"><img src="qishi-gif-02.gif" alt=""></div>
-        <div class="home-announce-info">
-            <h3>新番时刻表</h3>
-            <p>本周放送 · 季度新番 · 本地追番标记</p>
-        </div>
-        <span class="home-announce-arrow">›</span>
-    </a>
-
-    <!-- 访问统计：点击查看详情 -->
-    <div class="home-stats-card" id="homeStatsCard" title="点击查看访问详情">
-        <div class="home-stats-icon"><img src="qishi-gif-15.gif" alt=""></div>
-        <div class="home-stats-info">
-            <h3>访问热度</h3>
-            <div class="home-stats-nums">
-                <div class="home-stats-num-item">
-                    <span class="home-stats-num-val" id="statsTotalVal">—</span>
-                    <span class="home-stats-num-label">总访问</span>
+            <!-- 第一组：头像 + 时钟 + 日历 -->
+            <div class="bubble-cluster">
+                <a href="profile.html" class="bubble-circle bubble-xl bubble-in" style="width:232px;height:232px;">
+                    <img src="qishi-expr-normal.gif" alt="QISH" class="bubble-hero-img" id="heroChar" style="width:100px;height:100px;">
+                    <div class="bubble-hero-name" id="heroGreeting">Good Afternoon</div>
+                    <div class="bubble-hero-sub">I'm QISH ✦</div>
+                </a>
+                <div class="bubble-circle bubble-lg bubble-in" style="width:162px;height:162px;margin-top:52px;cursor:pointer;" onclick="openTimeModal()">
+                    <div class="bubble-clock-time" id="clockDisplay" style="font-size:32px;">--:--</div>
+                    <div class="bubble-clock-date" id="clockDate">加载中...</div>
                 </div>
-                <div class="home-stats-num-item">
-                    <span class="home-stats-num-val" id="statsTodayVal">—</span>
-                    <span class="home-stats-num-label">今日访问</span>
+                <a href="timeline.html" class="bubble-circle bubble-lg bubble-in" style="width:146px;height:146px;margin-top:-30px;">
+                    <div class="bubble-cal-title" id="calTitle">2026年8月</div>
+                    <div class="bubble-cal-grid" id="calendarGrid" style="width:92px;"></div>
+                </a>
+            </div>
+
+            <!-- 第二组：音乐 + 快捷导航 -->
+            <div class="bubble-cluster">
+                <div class="bubble-circle bubble-md bubble-in" id="musicPlayBtn" style="cursor:pointer;width:142px;height:142px;margin-top:20px;" onclick="openMusicModal()">
+                    <div class="bubble-music-cover" style="font-size:24px;font-weight:700;">♪</div>
+                    <div class="bubble-music-title" style="font-size:12px;max-width:96px;">暂无歌曲</div>
+                </div>
+                <a href="chat.html" class="bubble-circle bubble-sm bubble-in" style="width:108px;height:108px;margin-top:-20px;">
+                    <div class="bubble-label" style="font-size:14px;font-weight:600;">聊天室</div>
+                </a>
+                <a href="album.html" class="bubble-circle bubble-sm bubble-in" style="width:84px;height:84px;margin-top:44px;">
+                    <div class="bubble-label" style="font-size:12px;font-weight:600;">相册</div>
+                </a>
+                <a href="projects.html" class="bubble-circle bubble-sm bubble-in" style="width:120px;height:120px;margin-top:12px;">
+                    <div class="bubble-label" style="font-size:15px;font-weight:600;">项目</div>
+                </a>
+                <a href="userlist.html" class="bubble-circle bubble-sm bubble-in" style="width:80px;height:80px;margin-top:-34px;">
+                    <div class="bubble-label" style="font-size:11px;font-weight:600;">成员</div>
+                </a>
+                <a href="about.html" class="bubble-circle bubble-sm bubble-in" style="width:94px;height:94px;margin-top:-14px;">
+                    <div class="bubble-label" style="font-size:13px;font-weight:600;">关于</div>
+                </a>
+            </div>
+
+            <!-- 第三组：追番大圆形气泡 + 统计 + 社交 -->
+            <div class="bubble-cluster" style="max-width:900px;">
+                <div class="bubble-circle bubble-anime-circle bubble-in" style="width:238px;height:238px;margin-top:-10px;" onclick="location.href='anime.html'">
+                    <div class="anime-circle-title" style="margin-bottom:8px;font-size:16px;">今日追番</div>
+                    <div style="font-size:36px;font-weight:900;color:var(--accent);" id="animeCount">--</div>
+                    <div style="font-size:12px;color:var(--text-sub);margin-top:4px;">部新番更新</div>
+                </div>
+                <a href="userlist.html" class="bubble-circle bubble-sm bubble-in" style="width:104px;height:104px;margin-top:42px;">
+                    <div class="bubble-stats-num" id="onlineCount" style="font-size:30px;">--</div>
+                    <div class="bubble-stats-label" style="font-size:11px;">当前在线</div>
+                </a>
+                <div class="bubble-circle bubble-sm bubble-in" style="width:82px;height:82px;margin-top:-26px;cursor:pointer;" onclick="openVisitModal()">
+                    <div class="bubble-stats-num" id="visitCount" style="font-size:24px;">--</div>
+                    <div class="bubble-stats-label" style="font-size:10px;">累计访问</div>
+                </div>
+                <a href="https://github.com" target="_blank" class="bubble-circle bubble-xs bubble-in" style="width:68px;height:68px;margin-top:36px;">
+                    <div class="bubble-label" style="font-size:10px;font-weight:600;">GitHub</div>
+                </a>
+                <a href="https://bilibili.com" target="_blank" class="bubble-circle bubble-xs bubble-in" style="width:78px;height:78px;margin-top:-18px;">
+                    <div class="bubble-label" style="font-size:11px;font-weight:600;">B站</div>
+                </a>
+                <a href="mailto:qish@example.com" class="bubble-circle bubble-xs bubble-in" style="width:62px;height:62px;margin-top:28px;">
+                    <div class="bubble-label" style="font-size:10px;font-weight:600;">邮箱</div>
+                </a>
+            </div>
+
+            <!-- 公告（默认隐藏） -->
+            <div class="bubble-anime-bar bubble-in" id="homeAnnounceCard" style="display:none;max-width:560px;">
+                <div style="display:flex;gap:12px;align-items:flex-start;">
+                    <div>
+                        <div style="font-weight:800;font-size:14px;color:var(--text-main);margin-bottom:4px;">最新公告</div>
+                        <div style="font-size:13px;color:var(--text-body);" id="homeAnnounceText"></div>
+                    </div>
                 </div>
             </div>
-        </div>
-        <span class="home-stats-arrow">›</span>
-    </div>
-</div>
 
-<!-- 时间详情弹窗 -->
-<div class="time-modal-mask" id="timeModalMask">
-    <div class="time-modal-box" role="dialog" aria-modal="true">
-        <button class="time-modal-close" id="timeModalClose" aria-label="关闭">×</button>
-        <div class="time-modal-big-clock" id="timeModalClock">--:--:--</div>
-        <div class="time-modal-full-date" id="timeModalDate">加载中...</div>
-        <div class="time-modal-grid">
-            <div class="time-modal-item">
-                <div class="time-modal-item-label">星期</div>
-                <div class="time-modal-item-value" id="timeModalWeekday">-</div>
-            </div>
-            <div class="time-modal-item">
-                <div class="time-modal-item-label">一年中第几天</div>
-                <div class="time-modal-item-value" id="timeModalDayOfYear">-</div>
-            </div>
-            <div class="time-modal-item">
-                <div class="time-modal-item-label">距周末</div>
-                <div class="time-modal-item-value" id="timeModalToWeekend">-</div>
-            </div>
-            <div class="time-modal-item">
-                <div class="time-modal-item-label">当前季节</div>
-                <div class="time-modal-item-value" id="timeModalSeason">-</div>
-            </div>
+        </div>
+
+        <footer>
+            <p>© 2026 QISH 小站 · Made with ❤️</p>
+        </footer>
+    </main>
+
+    <!-- 右侧角色立绘 -->
+    <div class="right-image" id="rightImage">
+        <span class="char-inner"><img src="qishi-expr-normal.gif" alt="Q版小人" id="rightCharImg"></span>
+        <div class="char-bubble" id="charBubble" aria-hidden="true">
+            <span class="char-bubble-text">欢迎来到QISH小站~</span>
         </div>
     </div>
-</div>
 
-<!-- 访问统计详情弹窗 -->
-<div class="stats-modal-mask" id="statsModalMask">
-    <div class="stats-modal-box" role="dialog" aria-modal="true" aria-labelledby="statsModalTitle">
-        <button class="stats-modal-close" id="statsModalClose" aria-label="关闭">×</button>
-        <h2 class="stats-modal-title" id="statsModalTitle">访问统计</h2>
-        <p class="stats-modal-sub">个人小站热度 · 无第三方追踪</p>
-        <div class="stats-hero">
-            <div class="stats-hero-item">
-                <div class="stats-hero-val" id="statsModalTotal">0</div>
-                <div class="stats-hero-label">总访问</div>
-            </div>
-            <div class="stats-hero-item">
-                <div class="stats-hero-val" id="statsModalToday">0</div>
-                <div class="stats-hero-label">今日访问</div>
-            </div>
-            <div class="stats-hero-item">
-                <div class="stats-hero-val" id="statsModalUnique">0</div>
-                <div class="stats-hero-label">今日访客</div>
-            </div>
-        </div>
-        <div class="stats-section">
-            <h4>📱 设备分布</h4>
-            <div class="stats-bar-list" id="statsDeviceList"><div class="stats-empty">加载中…</div></div>
-        </div>
-        <div class="stats-section">
-            <h4>🔗 来源分布</h4>
-            <div class="stats-bar-list" id="statsSourceList"><div class="stats-empty">加载中…</div></div>
-        </div>
-        <div class="stats-section">
-            <h4>📄 热门页面</h4>
-            <div class="stats-bar-list" id="statsPageList"><div class="stats-empty">加载中…</div></div>
-        </div>
-        <div class="stats-section">
-            <h4>🕐 最近访问</h4>
-            <div class="stats-recent" id="statsRecentList"><div class="stats-empty">加载中…</div></div>
-        </div>
-        <div class="stats-error" id="statsErrorMsg"></div>
+    <!-- 页面间箭头：主页 → 聊天室 -->
+    <div class="page-nav-arrow" id="homeToChat" onclick="navigateWithSlide('chat.html','left')" title="前往聊天室" style="cursor:pointer;">
+        <span class="arrow-label">聊天室</span>
+        →
     </div>
-</div>
 
-<footer>© 2026 QISH · </footer>
+    <!-- 详情模态框 -->
+    <div class="detail-modal-overlay" id="musicModal">
+        <div class="detail-modal">
+            <button class="detail-modal-close" onclick="closeModal('musicModal')">×</button>
+            <div class="detail-modal-title">音乐播放器</div>
+            <div class="detail-modal-body" id="musicModalBody">
+                <div style="text-align:center;padding:20px 0;">
+                    <div style="font-size:64px;margin-bottom:16px;" id="mmIcon">🎵</div>
+                    <div style="font-size:18px;font-weight:700;color:var(--text-main);" id="mmTitle">暂无歌曲</div>
+                    <div style="font-size:13px;color:var(--text-sub);margin-top:4px;" id="mmArtist">去聊天室点歌吧~</div>
+                </div>
+                <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;">
+                    <button onclick="musicModalPrev()" style="padding:10px 20px;border-radius:12px;border:none;background:var(--accent-soft);color:var(--accent);cursor:pointer;font-size:16px;">⏮</button>
+                    <button onclick="musicModalToggle()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:18px;" id="mmPlayBtn">▶</button>
+                    <button onclick="musicModalNext()" style="padding:10px 20px;border-radius:12px;border:none;background:var(--accent-soft);color:var(--accent);cursor:pointer;font-size:16px;">⏭</button>
+                </div>
+                <div style="margin-top:16px;font-size:12px;color:var(--text-sub);text-align:center;">点击右下角迷你播放器可展开完整播放列表</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-modal-overlay" id="timeModal">
+        <div class="detail-modal">
+            <button class="detail-modal-close" onclick="closeModal('timeModal')">×</button>
+            <div class="detail-modal-title">详细时间</div>
+            <div class="detail-modal-body">
+                <div class="detail-big-time" id="tmTime">--:--:--</div>
+                <div class="detail-big-date" id="tmDate">加载中...</div>
+                <div class="detail-stat-row"><span class="detail-stat-label">星期</span><span class="detail-stat-value" id="tmWeekday">--</span></div>
+                <div class="detail-stat-row"><span class="detail-stat-label">时区</span><span class="detail-stat-value" id="tmTZ">--</span></div>
+                <div class="detail-stat-row"><span class="detail-stat-label">一年中第</span><span class="detail-stat-value" id="tmDayOfYear">-- 天</span></div>
+                <div class="detail-stat-row"><span class="detail-stat-label">当前季度</span><span class="detail-stat-value" id="tmQuarter">--</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="detail-modal-overlay" id="visitModal">
+        <div class="detail-modal">
+            <button class="detail-modal-close" onclick="closeModal('visitModal')">×</button>
+            <div class="detail-modal-title">访问统计</div>
+            <div class="detail-modal-body">
+                <div class="detail-stat-row"><span class="detail-stat-label">累计访问</span><span class="detail-stat-value" id="vmTotal">--</span></div>
+                <div class="detail-stat-row"><span class="detail-stat-label">今日访问</span><span class="detail-stat-value" id="vmToday">--</span></div>
+                <div class="detail-stat-row"><span class="detail-stat-label">当前在线</span><span class="detail-stat-value" id="vmOnline">--</span></div>
+                <div class="detail-stat-row"><span class="detail-stat-label">首次访问</span><span class="detail-stat-value" id="vmFirst">--</span></div>
+                <div style="margin-top:16px;font-size:12px;color:var(--text-sub);text-align:center;">数据基于本地存储统计，仅供参考</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 旧侧栏面板（兼容） -->
+    <div class="side-panel" id="sidePanel">
+        <div class="side-panel-content">
+            <button class="close-btn" id="closePanel">×</button>
+            <img src="avatar.jpg" alt="头像" class="panel-avatar" id="panelAvatar">
+            <h2 id="panelUsername">QISH</h2>
+            <p class="panel-desc">ovo</p>
+            <p class="panel-email" id="panelEmail" style="display:none;"></p>
+            <div class="panel-links" id="panelLinksBox">
+                <a href="index.html">首页</a>
+                <a href="about.html">关于我</a>
+                <a href="projects.html">我的项目</a>`n            <a href="userlist.html">用户列表</a>
+                <a href="profile.html">个人资料</a>
+                <a href="./album.html">相册</a>
+                <a href="chat.html">聊天室</a>
+                <a href="auth.html">登录/注册</a>
+            </div>
+        </div>
+    </div>
+    <div class="overlay" id="overlay"></div>
+    <div class="mouse-glow" id="glow"></div>
 
 <script>
-// ========== 时间日期板块 ==========
-(function initTimeCard() {
-    const clockEl = document.getElementById("homeTimeClock");
-    const dateEl = document.getElementById("homeTimeDate");
-    const cardEl = document.getElementById("homeTimeCard");
-    const modalMask = document.getElementById("timeModalMask");
-    const modalClose = document.getElementById("timeModalClose");
-    const modalClock = document.getElementById("timeModalClock");
-    const modalDate = document.getElementById("timeModalDate");
-    const modalWeekday = document.getElementById("timeModalWeekday");
-    const modalDayOfYear = document.getElementById("timeModalDayOfYear");
-    const modalToWeekend = document.getElementById("timeModalToWeekend");
-    const modalSeason = document.getElementById("timeModalSeason");
-    if (!clockEl || !dateEl || !cardEl) return;
+// ========== 时钟 & 问候语 ==========
+function updateClock() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2, '0');
+    const m = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('clockDisplay').textContent = h + ':' + m;
+    const weekdays = ['周日','周一','周二','周三','周四','周五','周六'];
+    document.getElementById('clockDate').textContent =
+        now.getFullYear() + '/' + (now.getMonth()+1) + '/' + now.getDate() + ' ' + weekdays[now.getDay()];
+    const hour = now.getHours();
+    let greet = 'Good Evening';
+    if (hour < 6) greet = 'Good Night';
+    else if (hour < 12) greet = 'Good Morning';
+    else if (hour < 14) greet = 'Good Noon';
+    else if (hour < 18) greet = 'Good Afternoon';
+    document.getElementById('heroGreeting').textContent = greet;
+}
+updateClock();
+setInterval(updateClock, 1000);
 
-    const weekdays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
-    const seasons = ["冬季", "冬季", "春季", "春季", "春季", "夏季", "夏季", "夏季", "秋季", "秋季", "秋季", "冬季"];
-
-    function pad(n) { return String(n).padStart(2, "0"); }
-
-    function getDayOfYear(d) {
-        const start = new Date(d.getFullYear(), 0, 0);
-        const diff = d - start;
-        return Math.floor(diff / (1000 * 60 * 60 * 24));
-    }
-
-    function getDaysToWeekend(d) {
-        const day = d.getDay(); // 0=周日, 6=周六
-        if (day === 0 || day === 6) return "今天就是周末🎉";
-        return (6 - day) + " 天";
-    }
-
-    function updateTime() {
-        const now = new Date();
-        const timeStr = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-        const dateStr = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ${weekdays[now.getDay()]}`;
-        clockEl.textContent = timeStr;
-        dateEl.textContent = dateStr;
-        if (modalClock) modalClock.textContent = timeStr;
-        if (modalDate) modalDate.textContent = dateStr;
-        if (modalWeekday) modalWeekday.textContent = weekdays[now.getDay()];
-        if (modalDayOfYear) modalDayOfYear.textContent = `第 ${getDayOfYear(now)} 天`;
-        if (modalToWeekend) modalToWeekend.textContent = getDaysToWeekend(now);
-        if (modalSeason) modalSeason.textContent = seasons[now.getMonth()];
-    }
-
-    updateTime();
-    setInterval(updateTime, 1000);
-
-    // 点击卡片打开弹窗
-    cardEl.addEventListener("click", () => {
-        updateTime();
-        modalMask.classList.add("show");
-        document.body.style.overflow = "hidden";
+// ========== 日历（迷你周视图）==========
+function renderCalendar() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const today = now.getDate();
+    const dayOfWeek = now.getDay(); // 0=周日
+    document.getElementById('calTitle').textContent = (month+1) + '月' + today + '日';
+    // 计算本周一到周日
+    const monday = new Date(now);
+    monday.setDate(today - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+    let html = '';
+    ['一','二','三','四','五','六','日'].forEach((label, i) => {
+        const d = new Date(monday);
+        d.setDate(monday.getDate() + i);
+        const isToday = d.getDate() === today && d.getMonth() === month;
+        html += '<span class="' + (isToday ? 'today' : '') + '">' + d.getDate() + '</span>';
     });
+    document.getElementById('calendarGrid').innerHTML = html;
+}
+renderCalendar();
 
-    function closeModal() {
-        modalMask.classList.remove("show");
-        document.body.style.overflow = "";
-    }
-    if (modalClose) modalClose.addEventListener("click", closeModal);
-    if (modalMask) modalMask.addEventListener("click", (e) => {
-        if (e.target === modalMask) closeModal();
-    });
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && modalMask && modalMask.classList.contains("show")) closeModal();
-    });
-})();
-
-// ========== 访问统计板块 ==========
-(function initVisitStats() {
-    const card = document.getElementById("homeStatsCard");
-    const mask = document.getElementById("statsModalMask");
-    const closeBtn = document.getElementById("statsModalClose");
-    const totalEl = document.getElementById("statsTotalVal");
-    const todayEl = document.getElementById("statsTodayVal");
-    const errEl = document.getElementById("statsErrorMsg");
-    if (!card || !mask) return;
-
-    const DEVICE_LABEL = { desktop: "电脑", mobile: "手机", tablet: "平板" };
-    const PAGE_LABEL = {
-        "index.html": "首页",
-        "about.html": "关于我",
-        "chat.html": "聊天室",
-        "album.html": "相册",
-        "projects.html": "项目",
-        "userlist.html": "用户列表",
-        "profile.html": "个人资料",
-        "auth.html": "登录",
-        "rhythm4k.html": "4K音游"
-    };
-
-    function fmtNum(n) {
-        n = Number(n) || 0;
-        if (n >= 10000) return (n / 10000).toFixed(1).replace(/\.0$/, "") + "万";
-        return String(n);
-    }
-
-    function sortEntries(obj) {
-        return Object.keys(obj || {})
-            .map(function (k) { return { name: k, count: obj[k] || 0 }; })
-            .sort(function (a, b) { return b.count - a.count; });
-    }
-
-    function renderBars(containerId, entries, fillClass, nameMap) {
-        const box = document.getElementById(containerId);
-        if (!box) return;
-        if (!entries.length) {
-            box.innerHTML = '<div class="stats-empty">暂无数据</div>';
-            return;
-        }
-        const max = Math.max.apply(null, entries.map(function (e) { return e.count; })) || 1;
-        box.innerHTML = entries.slice(0, 8).map(function (e) {
-            const label = (nameMap && nameMap[e.name]) || e.name;
-            const pct = Math.round((e.count / max) * 100);
-            return (
-                '<div class="stats-bar-row">' +
-                  '<span class="stats-bar-name" title="' + label + '">' + label + "</span>" +
-                  '<div class="stats-bar-track"><div class="stats-bar-fill ' + (fillClass || "") + '" style="width:' + pct + '%"></div></div>' +
-                  '<span class="stats-bar-cnt">' + e.count + "</span>" +
-                "</div>"
-            );
-        }).join("");
-    }
-
-    function formatRecentTime(iso) {
-        try {
-            const d = new Date(iso);
-            const pad = function (n) { return String(n).padStart(2, "0"); };
-            return pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
-        } catch (_) {
-            return "";
-        }
-    }
-
-    function applyStats(stats) {
-        if (!stats) return;
-        if (totalEl) totalEl.textContent = fmtNum(stats.total);
-        if (todayEl) todayEl.textContent = fmtNum(stats.today);
-        const mt = document.getElementById("statsModalTotal");
-        const md = document.getElementById("statsModalToday");
-        const mu = document.getElementById("statsModalUnique");
-        if (mt) mt.textContent = fmtNum(stats.total);
-        if (md) md.textContent = fmtNum(stats.today);
-        if (mu) mu.textContent = fmtNum(stats.uniqueToday);
-
-        renderBars("statsDeviceList", sortEntries(stats.devices).map(function (e) {
-            return { name: DEVICE_LABEL[e.name] || e.name, count: e.count };
-        }), "device");
-        renderBars("statsSourceList", sortEntries(stats.sources), "source");
-        renderBars("statsPageList", sortEntries(stats.pages), "", PAGE_LABEL);
-
-        const recentBox = document.getElementById("statsRecentList");
-        if (recentBox) {
-            const recent = stats.recent || [];
-            if (!recent.length) {
-                recentBox.innerHTML = '<div class="stats-empty">暂无最近记录</div>';
-            } else {
-                recentBox.innerHTML = recent.map(function (r) {
-                    const page = PAGE_LABEL[r.path] || r.path || "页面";
-                    const src = r.referrer_host || "直接访问";
-                    const dev = DEVICE_LABEL[r.device] || r.device || "";
-                    return (
-                        '<div class="stats-recent-item">' +
-                          "<span><strong>" + page + "</strong> · " + src + (dev ? " · " + dev : "") + "</span>" +
-                          "<span>" + formatRecentTime(r.created_at) + "</span>" +
-                        "</div>"
-                    );
-                }).join("");
-            }
-        }
-
-        if (errEl) {
-            if (stats.error) {
-                errEl.innerHTML = "读取失败：" + stats.error +
-                    "<br><small>请在 Supabase 创建表 public_site_visits 并开启 anon 的 SELECT/INSERT</small>";
-            } else {
-                errEl.textContent = "";
-            }
-        }
-    }
-
-    function getSb() {
-        return window.supabaseClient || window.__qish_sb || (typeof supabase !== "undefined" ? supabase : null);
-    }
-
-    /** 本页内置统计查询，不依赖 common.js 是否已更新 */
-    async function fetchStatsLocal(sb) {
-        const empty = { total: 0, today: 0, uniqueToday: 0, devices: {}, sources: {}, pages: {}, recent: [], error: null };
-        if (!sb || typeof sb.from !== "function") {
-            empty.error = "Supabase 客户端未初始化";
-            return empty;
-        }
-        try {
-            const start = new Date();
-            start.setHours(0, 0, 0, 0);
-            const todayIso = start.toISOString();
-            const TABLE = "public_site_visits";
-
-            const totalRes = await sb.from(TABLE).select("*", { count: "exact", head: true });
-            if (totalRes.error) {
-                empty.error = totalRes.error.message || String(totalRes.error);
-                return empty;
-            }
-            const todayRes = await sb.from(TABLE).select("*", { count: "exact", head: true }).gte("created_at", todayIso);
-            const recentRes = await sb
-                .from(TABLE)
-                .select("path,referrer_host,device,browser,created_at,visitor_key")
-                .order("created_at", { ascending: false })
-                .limit(1000);
-
-            const rows = recentRes.data || [];
-            const devices = {}, sources = {}, pages = {};
-            const uniqueSet = new Set();
-            const todayMs = start.getTime();
-            rows.forEach(function (r) {
-                devices[r.device || "desktop"] = (devices[r.device || "desktop"] || 0) + 1;
-                sources[r.referrer_host || "直接访问"] = (sources[r.referrer_host || "直接访问"] || 0) + 1;
-                pages[r.path || "index.html"] = (pages[r.path || "index.html"] || 0) + 1;
-                if (r.created_at && new Date(r.created_at).getTime() >= todayMs && r.visitor_key) {
-                    uniqueSet.add(r.visitor_key);
-                }
-            });
-            return {
-                total: totalRes.count || 0,
-                today: (todayRes && todayRes.count) || 0,
-                uniqueToday: uniqueSet.size,
-                devices: devices,
-                sources: sources,
-                pages: pages,
-                recent: rows.slice(0, 12),
-                error: null
-            };
-        } catch (e) {
-            empty.error = e && e.message ? e.message : String(e);
-            return empty;
-        }
-    }
-
-    async function recordVisitLocal(sb) {
-        if (!sb || typeof sb.from !== "function") return;
-        try {
-            const path = (location.pathname.split("/").pop() || "index.html").toLowerCase() || "index.html";
-            const dedupKey = "qish_visit_" + path;
-            try {
-                const last = parseInt(sessionStorage.getItem(dedupKey) || "0", 10);
-                if (last && Date.now() - last < 30 * 60 * 1000) return;
-                sessionStorage.setItem(dedupKey, String(Date.now()));
-            } catch (_) {}
-            let vid = "anon";
-            try {
-                vid = localStorage.getItem("qish_vid");
-                if (!vid) {
-                    vid = "v_" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
-                    localStorage.setItem("qish_vid", vid);
-                }
-            } catch (_) {}
-            const ua = navigator.userAgent || "";
-            let device = "desktop";
-            if (/iPad|Tablet/i.test(ua)) device = "tablet";
-            else if (/Mobile|Android.*Mobile|iPhone|iPod/i.test(ua)) device = "mobile";
-            let browser = "其他";
-            if (/MicroMessenger/i.test(ua)) browser = "微信";
-            else if (/Edg\//i.test(ua)) browser = "Edge";
-            else if (/Chrome\//i.test(ua)) browser = "Chrome";
-            else if (/Firefox\//i.test(ua)) browser = "Firefox";
-            else if (/Safari\//i.test(ua)) browser = "Safari";
-            let refHost = "直接访问";
-            const ref = document.referrer || "";
-            if (ref) {
-                try {
-                    const u = new URL(ref);
-                    refHost = u.hostname === location.hostname ? "站内跳转" : (u.hostname || "").replace(/^www\./, "") || "其他";
-                } catch (_) { refHost = "其他"; }
-            }
-            await sb.from("public_site_visits").insert({
-                path: path,
-                referrer: String(ref).slice(0, 500),
-                referrer_host: refHost,
-                device: device,
-                browser: browser,
-                visitor_key: vid,
-                page_title: String(document.title || "").slice(0, 120)
-            });
-        } catch (e) {
-            console.warn("[stats] record", e);
-        }
-    }
-
-    async function loadStats() {
-        const client = getSb();
-        if (!client) {
-            if (totalEl) totalEl.textContent = "—";
-            if (todayEl) todayEl.textContent = "—";
-            if (errEl) errEl.textContent = "Supabase 未加载，请刷新页面";
-            return null;
-        }
-        let stats;
-        if (window.QISH && typeof QISH.fetchVisitStats === "function") {
-            stats = await QISH.fetchVisitStats(client);
-        } else {
-            stats = await fetchStatsLocal(client);
-        }
-        applyStats(stats);
-        return stats;
-    }
-
-    function openModal() {
-        mask.classList.add("show");
-        document.body.style.overflow = "hidden";
-        loadStats();
-    }
-    function closeModal() {
-        mask.classList.remove("show");
-        document.body.style.overflow = "";
-    }
-
-    card.addEventListener("click", openModal);
-    if (closeBtn) closeBtn.addEventListener("click", closeModal);
-    mask.addEventListener("click", function (e) {
-        if (e.target === mask) closeModal();
-    });
-    document.addEventListener("keydown", function (e) {
-        if (e.key === "Escape" && mask.classList.contains("show")) closeModal();
-    });
-
-    window.__qishLoadVisitStats = loadStats;
-    window.__qishRecordVisit = recordVisitLocal;
-})();
-
-document.addEventListener("DOMContentLoaded", async () => {
-    const client = window.supabaseClient || (typeof supabase !== "undefined" ? supabase : null);
-    async function waitQ() {
-        const t0 = Date.now();
-        while (!window.QISH && Date.now() - t0 < 4000) {
-            await new Promise(function (r) { setTimeout(r, 30); });
-        }
-    }
-    await waitQ();
-    if (window.QISH && client) {
-        await QISH.updateAuthNav({ supabase: client });
-        client.auth.onAuthStateChange(function (event) {
-            if (event === "INITIAL_SESSION") return;
-            QISH.updateAuthNav({ supabase: client });
-        });
-    }
-    const card = document.getElementById("homeAnnounceCard");
-    if (card) {
-        card.addEventListener("click", function () {
-            if (window.QISH && typeof QISH.showAnnounce === "function") QISH.showAnnounce();
-        });
-    }
-
-    // 写入本页访问 + 刷新统计（不依赖 common.js 新版本）
-    const sb = window.supabaseClient || client;
-    if (sb && typeof window.__qishRecordVisit === "function") {
-        window.__qishRecordVisit(sb).then(function () {
-            if (typeof window.__qishLoadVisitStats === "function") window.__qishLoadVisitStats();
-        });
-    }
-    if (typeof window.__qishLoadVisitStats === "function") {
-        setTimeout(function () { window.__qishLoadVisitStats(); }, 600);
-        setTimeout(function () { window.__qishLoadVisitStats(); }, 2000);
-    }
+// ========== 详情模态框 ==========
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+document.querySelectorAll('.detail-modal-overlay').forEach(function(ov) {
+    ov.addEventListener('click', function(e) { if (e.target === ov) ov.classList.remove('show'); });
 });
+
+// 时间详情
+function openTimeModal() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const s = String(now.getSeconds()).padStart(2,'0');
+    document.getElementById('tmTime').textContent = h+':'+m+':'+s;
+    const weekdays = ['星期日','星期一','星期二','星期三','星期四','星期五','星期六'];
+    document.getElementById('tmDate').textContent = now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日';
+    document.getElementById('tmWeekday').textContent = weekdays[now.getDay()];
+    document.getElementById('tmTZ').textContent = 'UTC' + (-now.getTimezoneOffset()/60 >= 0 ? '+' : '') + (-now.getTimezoneOffset()/60);
+    const start = new Date(now.getFullYear(),0,0);
+    const diff = now - start;
+    const dayOfYear = Math.floor(diff / 86400000);
+    document.getElementById('tmDayOfYear').textContent = dayOfYear + ' 天';
+    document.getElementById('tmQuarter').textContent = 'Q' + (Math.floor(now.getMonth()/3)+1);
+    openModal('timeModal');
+    // 实时更新秒数
+    if (window._tmInterval) clearInterval(window._tmInterval);
+    window._tmInterval = setInterval(function() {
+        const n = new Date();
+        document.getElementById('tmTime').textContent = String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
+    }, 1000);
+}
+
+// 访问统计详情
+function openVisitModal() {
+    const total = parseInt(localStorage.getItem('qish_visit_count') || '0', 10);
+    const todayKey = 'qish_visit_today_' + new Date().toISOString().slice(0,10);
+    const today = parseInt(localStorage.getItem(todayKey) || '0', 10);
+    const onlineEl = document.getElementById('onlineCount');
+    const online = onlineEl ? onlineEl.textContent : '--';
+    const firstVisit = localStorage.getItem('qish_first_visit') || new Date().toLocaleDateString('zh-CN');
+    if (!localStorage.getItem('qish_first_visit')) localStorage.setItem('qish_first_visit', firstVisit);
+    document.getElementById('vmTotal').textContent = total;
+    document.getElementById('vmToday').textContent = today || '1';
+    document.getElementById('vmOnline').textContent = online;
+    document.getElementById('vmFirst').textContent = firstVisit;
+    openModal('visitModal');
+}
+
+// 音乐详情
+function openMusicModal() {
+    updateMusicModal();
+    openModal('musicModal');
+}
+function updateMusicModal() {
+    const titleEl = document.querySelector('.bubble-music-title');
+    const iconEl = document.querySelector('.bubble-music-cover');
+    const mmTitle = document.getElementById('mmTitle');
+    const mmIcon = document.getElementById('mmIcon');
+    const mmPlayBtn = document.getElementById('mmPlayBtn');
+    if (mmTitle && titleEl) mmTitle.textContent = titleEl.textContent;
+    if (mmIcon && iconEl) mmIcon.textContent = iconEl.textContent;
+    if (mmPlayBtn) {
+        const miniPlay = document.getElementById('qmMiniPlay');
+        const playing = miniPlay && miniPlay.textContent === '⏸';
+        mmPlayBtn.textContent = playing ? '⏸' : '▶';
+    }
+}
+function musicModalToggle() {
+    const btn = document.getElementById('qmMiniPlay');
+    if (btn) btn.click();
+    setTimeout(updateMusicModal, 100);
+}
+function musicModalPrev() {
+    const btn = document.getElementById('qmPrev');
+    if (btn) btn.click();
+    setTimeout(updateMusicModal, 100);
+}
+function musicModalNext() {
+    const btn = document.getElementById('qmNext');
+    if (btn) btn.click();
+    setTimeout(updateMusicModal, 100);
+}
+
+// 今日访问计数
+(function() {
+    const todayKey = 'qish_visit_today_' + new Date().toISOString().slice(0,10);
+    let t = parseInt(localStorage.getItem(todayKey) || '0', 10);
+    t++;
+    localStorage.setItem(todayKey, String(t));
+})();
+
+// ========== 累计访问统计 ==========
+(function updateVisitCount() {
+    const VISIT_KEY = 'qish_visit_count';
+    let count = parseInt(localStorage.getItem(VISIT_KEY) || '0', 10);
+    count++;
+    localStorage.setItem(VISIT_KEY, String(count));
+    // 数字滚动动画
+    const el = document.getElementById('visitCount');
+    let cur = 0;
+    const step = Math.max(1, Math.floor(count / 30));
+    const timer = setInterval(() => {
+        cur += step;
+        if (cur >= count) { cur = count; clearInterval(timer); }
+        el.textContent = cur;
+    }, 30);
+})();
+
+// ========== 在线人数（Supabase Presence）==========
+(function updateOnlineCount() {
+    const el = document.getElementById('onlineCount');
+    function waitSb(cb) {
+        if (window.supabaseClient) cb(window.supabaseClient);
+        else setTimeout(() => waitSb(cb), 100);
+    }
+    waitSb(async (sb) => {
+        try {
+            const channel = sb.channel('home-online');
+            channel.on('presence', { event: 'sync' }, () => {
+                const state = channel.presenceState();
+                const count = Object.keys(state).length;
+                el.textContent = count > 0 ? count : '1';
+            }).subscribe(async (status) => {
+                if (status === 'SUBSCRIBED') {
+                    const { data: { user } } = await sb.auth.getUser();
+                    const uid = user ? user.id : 'guest-' + Math.random().toString(36).slice(2, 8);
+                    await channel.track({ user_id: uid, online_at: new Date().toISOString() });
+                }
+            });
+        } catch (e) {
+            el.textContent = '1';
+        }
+    });
+})();
+
+// ========== 今日追番数量（Bangumi API）==========
+(function loadTodayAnime() {
+    const countEl = document.getElementById('animeCount');
+    if (!countEl) return;
+    const weekday = new Date().getDay();
+    const bgmWeekday = weekday === 0 ? 7 : weekday;
+
+    fetch('https://api.bgm.tv/calendar', {
+        headers: { 'User-Agent': 'QISH-Personal-Site/1.0' }
+    })
+    .then(r => r.json())
+    .then(data => {
+        const dayData = data.find(d => d.weekday.id === bgmWeekday);
+        const count = dayData && dayData.items ? dayData.items.length : 0;
+        countEl.textContent = count;
+    })
+    .catch(() => {
+        countEl.textContent = '0';
+    });
+})();
+
+// 入场动画完成后移除 bubble-in 类，避免 animation forwards 锁定 transform
+setTimeout(function () {
+    document.querySelectorAll('.bubble-in').forEach(function (el) {
+        el.classList.remove('bubble-in');
+    });
+}, 1800);
+
+// ========== 自定义 UI 编辑模式 ==========
+var UI_EDIT_KEY = 'qish_custom_ui_v1';
+var uiEditMode = false;
+var uiSelectedBubble = null;
+var uiDragState = null;
+var uiOriginalConfig = null;
+
+// 给气泡分配编辑ID
+function assignBubbleIds() {
+    var bubbles = document.querySelectorAll('.bubble-circle');
+    bubbles.forEach(function (b, i) {
+        if (!b.dataset.uiId) b.dataset.uiId = 'bubble_' + i;
+    });
+}
+assignBubbleIds();
+
+// 加载保存的配置
+function loadCustomUI() {
+    try {
+        var cfg = JSON.parse(localStorage.getItem(UI_EDIT_KEY) || '{}');
+        var hasPosition = false;
+        var bubbles = document.querySelectorAll('.bubble-circle');
+        bubbles.forEach(function (b) {
+            var id = b.dataset.uiId;
+            if (cfg[id]) {
+                if (cfg[id].w) b.style.width = cfg[id].w + 'px';
+                if (cfg[id].h) b.style.height = cfg[id].h + 'px';
+                if (cfg[id].r !== undefined) b.style.borderRadius = cfg[id].r + '%';
+                if (cfg[id].x !== undefined && cfg[id].y !== undefined) {
+                    b.style.left = cfg[id].x + 'px';
+                    b.style.top = cfg[id].y + 'px';
+                    b.style.marginTop = '0';
+                    hasPosition = true;
+                }
+            }
+        });
+        if (hasPosition) {
+            document.body.classList.add('ui-custom');
+        }
+    } catch (e) { console.warn('加载自定义UI失败', e); }
+}
+loadCustomUI();
+
+// 进入编辑模式
+function enterEditMode() {
+    assignBubbleIds();
+    uiEditMode = true;
+    document.body.classList.add('ui-edit-mode');
+    // 记录原始配置
+    uiOriginalConfig = collectBubbleConfig();
+    // 转为绝对定位
+    var page = document.querySelector('.bubble-page');
+    var pageRect = page.getBoundingClientRect();
+    document.querySelectorAll('.bubble-circle').forEach(function (b) {
+        var rect = b.getBoundingClientRect();
+        b.style.left = (rect.left - pageRect.left) + 'px';
+        b.style.top = (rect.top - pageRect.top) + 'px';
+        b.style.marginTop = '0';
+        b.style.marginLeft = '0';
+        // 绑定拖拽
+        b.addEventListener('mousedown', startBubbleDrag);
+        // 拦截点击跳转（编辑模式下不跳转）
+        b.addEventListener('click', uiBlockClick, true);
+    });
+    // 显示工具栏
+    showEditToolbar();
+    showEditHint('拖拽移动气泡 · 点击选中调节大小和圆角');
+}
+
+// 编辑模式下拦截气泡点击
+function uiBlockClick(e) {
+    if (uiEditMode) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+}
+
+// 退出编辑模式
+function exitEditMode(save) {
+    if (save) {
+        var cfg = collectBubbleConfig();
+        localStorage.setItem(UI_EDIT_KEY, JSON.stringify(cfg));
+        // 检查是否有自定义位置
+        var hasPos = false;
+        for (var k in cfg) { if (cfg[k].x !== undefined) { hasPos = true; break; } }
+        if (hasPos) document.body.classList.add('ui-custom');
+        else document.body.classList.remove('ui-custom');
+    } else {
+        // 取消：恢复原始布局
+        document.body.classList.remove('ui-custom');
+        if (uiOriginalConfig) applyBubbleConfig(uiOriginalConfig);
+        document.querySelectorAll('.bubble-circle').forEach(function (b) {
+            b.style.left = '';
+            b.style.top = '';
+            b.style.marginTop = '';
+        });
+    }
+    uiEditMode = false;
+    document.body.classList.remove('ui-edit-mode');
+    document.querySelectorAll('.bubble-circle').forEach(function (b) {
+        b.removeEventListener('mousedown', startBubbleDrag);
+        b.removeEventListener('click', uiBlockClick, true);
+        b.classList.remove('selected');
+    });
+    removeEditToolbar();
+    removeBubblePanel();
+    removeEditHint();
+    uiSelectedBubble = null;
+}
+
+// 收集气泡配置
+function collectBubbleConfig() {
+    var cfg = {};
+    document.querySelectorAll('.bubble-circle').forEach(function (b) {
+        var id = b.dataset.uiId;
+        if (!id) return;
+        var w = parseInt(b.style.width) || b.offsetWidth;
+        var h = parseInt(b.style.height) || b.offsetHeight;
+        var r = 50;
+        if (b.style.borderRadius) {
+            r = parseInt(b.style.borderRadius) || 50;
+        }
+        var entry = { w: w, h: h, r: r };
+        // 保存位置（仅在有 left/top 时）
+        if (b.style.left && b.style.top) {
+            entry.x = parseInt(b.style.left);
+            entry.y = parseInt(b.style.top);
+        }
+        cfg[id] = entry;
+    });
+    return cfg;
+}
+
+// 应用配置
+function applyBubbleConfig(cfg) {
+    document.querySelectorAll('.bubble-circle').forEach(function (b) {
+        var id = b.dataset.uiId;
+        if (cfg[id]) {
+            if (cfg[id].w) b.style.width = cfg[id].w + 'px';
+            if (cfg[id].h) b.style.height = cfg[id].h + 'px';
+            if (cfg[id].r !== undefined) b.style.borderRadius = cfg[id].r + '%';
+            if (cfg[id].x !== undefined && cfg[id].y !== undefined) {
+                b.style.left = cfg[id].x + 'px';
+                b.style.top = cfg[id].y + 'px';
+            }
+        }
+    });
+}
+
+// 拖拽
+function startBubbleDrag(e) {
+    if (!uiEditMode) return;
+    e.preventDefault();
+    var b = e.currentTarget;
+    selectBubble(b);
+    var rect = b.getBoundingClientRect();
+    uiDragState = {
+        el: b,
+        startX: e.clientX,
+        startY: e.clientY,
+        origLeft: rect.left,
+        origTop: rect.top
+    };
+    document.addEventListener('mousemove', onBubbleDrag);
+    document.addEventListener('mouseup', stopBubbleDrag);
+}
+function onBubbleDrag(e) {
+    if (!uiDragState) return;
+    var dx = e.clientX - uiDragState.startX;
+    var dy = e.clientY - uiDragState.startY;
+    var page = document.querySelector('.bubble-page');
+    var pageRect = page.getBoundingClientRect();
+    uiDragState.el.style.left = (uiDragState.origLeft - pageRect.left + dx) + 'px';
+    uiDragState.el.style.top = (uiDragState.origTop - pageRect.top + dy) + 'px';
+}
+function stopBubbleDrag() {
+    uiDragState = null;
+    document.removeEventListener('mousemove', onBubbleDrag);
+    document.removeEventListener('mouseup', stopBubbleDrag);
+}
+
+// 选中气泡并显示控制面板
+function selectBubble(b) {
+    document.querySelectorAll('.bubble-circle.selected').forEach(function (el) {
+        el.classList.remove('selected');
+    });
+    b.classList.add('selected');
+    uiSelectedBubble = b;
+    showBubblePanel(b);
+}
+
+// 气泡控制面板
+function showBubblePanel(b) {
+    removeBubblePanel();
+    var panel = document.createElement('div');
+    panel.className = 'ui-bubble-panel';
+    panel.id = 'uiBubblePanel';
+    var w = parseInt(b.style.width) || b.offsetWidth;
+    var h = parseInt(b.style.height) || b.offsetHeight;
+    var r = 50;
+    if (b.style.borderRadius) r = parseInt(b.style.borderRadius) || 50;
+    panel.innerHTML =
+        '<div style="font-weight:700;margin-bottom:10px;color:var(--text-main);">调节气泡</div>' +
+        '<label>宽度 <span class="panel-val" id="uiValW">' + w + '</span></label>' +
+        '<input type="range" id="uiRangeW" min="40" max="320" value="' + w + '">' +
+        '<label>高度 <span class="panel-val" id="uiValH">' + h + '</span></label>' +
+        '<input type="range" id="uiRangeH" min="40" max="320" value="' + h + '">' +
+        '<label>圆角 <span class="panel-val" id="uiValR">' + r + '%</span></label>' +
+        '<input type="range" id="uiRangeR" min="0" max="50" value="' + r + '">';
+    document.body.appendChild(panel);
+    // 定位到气泡旁边
+    var rect = b.getBoundingClientRect();
+    panel.style.left = Math.min(rect.right + 12, window.innerWidth - 220) + 'px';
+    panel.style.top = Math.max(rect.top, 80) + 'px';
+    // 绑定滑块
+    panel.querySelector('#uiRangeW').addEventListener('input', function (e) {
+        b.style.width = e.target.value + 'px';
+        panel.querySelector('#uiValW').textContent = e.target.value;
+    });
+    panel.querySelector('#uiRangeH').addEventListener('input', function (e) {
+        b.style.height = e.target.value + 'px';
+        panel.querySelector('#uiValH').textContent = e.target.value;
+    });
+    panel.querySelector('#uiRangeR').addEventListener('input', function (e) {
+        b.style.borderRadius = e.target.value + '%';
+        panel.querySelector('#uiValR').textContent = e.target.value + '%';
+    });
+}
+function removeBubblePanel() {
+    var p = document.getElementById('uiBubblePanel');
+    if (p) p.remove();
+}
+
+// 编辑工具栏
+function showEditToolbar() {
+    removeEditToolbar();
+    var bar = document.createElement('div');
+    bar.className = 'ui-edit-toolbar';
+    bar.id = 'uiEditToolbar';
+    bar.innerHTML =
+        '<span style="color:var(--text-sub);">自定义UI模式</span>' +
+        '<button class="ui-edit-reset" onclick="resetCustomUI()">恢复默认</button>' +
+        '<button class="ui-edit-cancel" onclick="exitEditMode(false)">取消</button>' +
+        '<button class="ui-edit-save" onclick="exitEditMode(true)">保存</button>';
+    document.body.appendChild(bar);
+}
+function removeEditToolbar() {
+    var t = document.getElementById('uiEditToolbar');
+    if (t) t.remove();
+}
+function showEditHint(text) {
+    removeEditHint();
+    var h = document.createElement('div');
+    h.className = 'ui-edit-hint';
+    h.id = 'uiEditHint';
+    h.textContent = text;
+    document.body.appendChild(h);
+    setTimeout(removeEditHint, 3000);
+}
+function removeEditHint() {
+    var h = document.getElementById('uiEditHint');
+    if (h) h.remove();
+}
+function resetCustomUI() {
+    localStorage.removeItem(UI_EDIT_KEY);
+    document.body.classList.remove('ui-custom');
+    document.querySelectorAll('.bubble-circle').forEach(function (b) {
+        b.style.width = '';
+        b.style.height = '';
+        b.style.borderRadius = '';
+        b.style.left = '';
+        b.style.top = '';
+        b.style.marginTop = '';
+    });
+    showEditHint('已恢复默认，点击保存生效');
+}
+// 暴露给下拉菜单调用
+window.enterEditMode = enterEditMode;
+window.exitEditMode = exitEditMode;
 </script>
 </body>
 </html>

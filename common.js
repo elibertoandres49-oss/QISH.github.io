@@ -3,7 +3,7 @@
  * 各页面在 supabase 初始化后引入本文件
  */
 (function () {
-  const DEFAULT_AVATAR = "avatar.jpg";
+  const DEFAULT_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' rx='48' fill='%23a8c5b8'/%3E%3Ccircle cx='48' cy='38' r='16' fill='%23fff'/%3E%3Cpath d='M20 82c0-15.5 12.5-28 28-28s28 12.5 28 28' fill='%23fff'/%3E%3C/svg%3E";
 
   // 尽早应用主题，减少闪烁
   try {
@@ -88,12 +88,148 @@
 
   function highlightCurrentNav() {
     const page = (location.pathname.split("/").pop() || "index.html").toLowerCase();
-    document.querySelectorAll(".nav-links a, .panel-links a").forEach((a) => {
+    document.querySelectorAll(".nav-links a, .panel-links a, .sidebar-nav a").forEach((a) => {
       const h = (a.getAttribute("href") || "").replace("./", "").toLowerCase();
       if (h === page || (page === "" && h === "index.html")) {
         a.classList.add("nav-active");
       }
     });
+  }
+
+  // ---------- 左上角圆形导航按钮 + 下拉菜单 ----------
+  function initNavFab() {
+    const fab = document.getElementById("navFab");
+    const ring = document.getElementById("navFabRing");
+    if (!fab) return;
+    if (fab.dataset.fabInited === "1") return;
+    fab.dataset.fabInited = "1";
+
+    // 创建下拉菜单
+    const dd = document.createElement("div");
+    dd.className = "nav-dropdown";
+    dd.id = "navDropdown";
+    document.body.appendChild(dd);
+
+    const NAV_ITEMS = [
+      { label: "首页", href: "index.html" },
+      { label: "关于我", href: "about.html" },
+      { label: "个人历程", href: "timeline.html" },
+      { label: "我的项目", href: "projects.html" },
+      { label: "公告", href: "announce.html" },
+      { label: "聊天室", href: "chat.html" },
+      { label: "成员相册", href: "album.html" },
+      { label: "用户列表", href: "userlist.html" },
+      { label: "个人资料", href: "profile.html" },
+    ];
+
+    function renderDropdown() {
+      const session = readStoredAuth();
+      const loggedIn = !!(session && session.user);
+      let html = "";
+      NAV_ITEMS.forEach(function (item) {
+        html += '<a href="' + item.href + '">' + item.label + '</a>';
+      });
+      html += '<div class="nav-dropdown-divider"></div>';
+      html += '<a href="#" id="ddCustomUI" style="color:var(--accent);font-weight:600;">自定义UI</a>';
+      html += '<div class="nav-dropdown-divider"></div>';
+      if (loggedIn) {
+        html += '<a href="#" class="nav-dropdown-logout" id="ddLogout">退出登录</a>';
+      } else {
+        html += '<a href="auth.html">登录 / 注册</a>';
+      }
+      dd.innerHTML = html;
+      var customBtn = document.getElementById("ddCustomUI");
+      if (customBtn) {
+        customBtn.addEventListener("click", function (e) {
+          e.preventDefault();
+          dd.classList.remove("show");
+          fab.style.opacity = "1";
+          if (typeof window.enterEditMode === "function") window.enterEditMode();
+        });
+      }
+      const logoutBtn = document.getElementById("ddLogout");
+      if (logoutBtn) {
+        logoutBtn.addEventListener("click", function (e) {
+          e.preventDefault();
+          doLogout();
+        });
+      }
+    }
+
+    function doLogout() {
+      const sb = window.supabaseClient || window.__qish_sb;
+      (async function () {
+        try { if (sb && sb.auth) await sb.auth.signOut({ scope: "local" }); } catch (_) {}
+        try { localStorage.removeItem("qish-auth-v1"); localStorage.removeItem("qish-auth-backup-v1"); } catch (_) {}
+        dd.classList.remove("show");
+        renderDropdown();
+        if (typeof updateAuthNav === "function") {
+          try { updateAuthNav({ supabase: sb }); } catch (_) {}
+        }
+      })();
+    }
+
+    function toggle() {
+      const willShow = !dd.classList.contains("show");
+      dd.classList.toggle("show");
+      if (ring) {
+        ring.classList.remove("pulse");
+        void ring.offsetWidth;
+        ring.classList.add("pulse");
+      }
+      if (willShow) {
+        fab.style.opacity = "0.6";
+        renderDropdown();
+      } else {
+        fab.style.opacity = "1";
+      }
+    }
+
+    fab.addEventListener("click", function (e) {
+      e.stopPropagation();
+      toggle();
+    });
+
+    // 点击外部关闭
+    document.addEventListener("click", function (e) {
+      if (!dd.classList.contains("show")) return;
+      if (e.target.closest("#navDropdown") || e.target.closest("#navFab")) return;
+      dd.classList.remove("show");
+      fab.style.opacity = "1";
+    });
+
+    // ESC 关闭
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && dd.classList.contains("show")) {
+        dd.classList.remove("show");
+        fab.style.opacity = "1";
+      }
+    });
+
+    // 暴露刷新方法，登录状态变化时调用
+    window.__qishRefreshDropdown = renderDropdown;
+  }
+
+  // ---------- 页面滑动导航 ----------
+  function navigateWithSlide(url, direction) {
+    var main = document.querySelector(".main-content");
+    if (!main) { window.location.href = url; return; }
+    // direction: "left" = 当前页向左滑出（去右侧下一页）, "right" = 当前页向右滑出（去左侧上一页）
+    sessionStorage.setItem("qish_slide_dir", direction === "left" ? "from-right" : "from-left");
+    main.classList.add(direction === "left" ? "slide-out-left" : "slide-out-right");
+    setTimeout(function () { window.location.href = url; }, 380);
+  }
+  window.navigateWithSlide = navigateWithSlide;
+
+  // 页面加载时应用滑入动画
+  function applySlideIn() {
+    var dir = sessionStorage.getItem("qish_slide_dir");
+    if (!dir) return;
+    sessionStorage.removeItem("qish_slide_dir");
+    var main = document.querySelector(".main-content");
+    if (main) {
+      main.classList.add(dir === "from-right" ? "slide-in-from-right" : "slide-in-from-left");
+    }
   }
 
   // ---------- 鼠标弹性光效 ----------
@@ -189,6 +325,13 @@
       },
       { passive: true }
     );
+
+    // 滚动时清除拖尾点，避免视口坐标与内容错位
+    window.addEventListener("scroll", function () {
+      trailPts.length = 0;
+      if (trailPath) trailPath.setAttribute("d", "");
+      if (trailPath2) trailPath2.setAttribute("d", "");
+    }, { passive: true });
 
     document.addEventListener(
       "mousedown",
@@ -321,7 +464,6 @@
       overlay.classList.remove("active");
     }
 
-    if (navAvatar) navAvatar.addEventListener("click", openPanel);
     if (closeBtn) closeBtn.addEventListener("click", closePanel);
     overlay.addEventListener("click", closePanel);
   }
@@ -480,6 +622,11 @@
     const panelUsername = document.getElementById("panelUsername");
     const authNav = document.getElementById("auth-nav");
     const panelLinksBox = document.getElementById("panelLinksBox");
+    const sidebarAvatar = document.getElementById("sidebarAvatar");
+    const sidebarUsername = document.getElementById("sidebarUsername");
+    const sidebarStatus = document.getElementById("sidebarStatus");
+    const sidebarAuthLink = document.getElementById("sidebarAuthLink");
+    const sidebarLogoutBtn = document.getElementById("sidebarLogoutBtn");
 
     let session = null;
     if (sb && typeof sb.auth === "object" && typeof sb.auth.getSession === "function") {
@@ -534,11 +681,17 @@
 
       if (navAvatar) navAvatar.src = avatarUrl;
       if (panelAvatar) panelAvatar.src = avatarUrl;
+      if (sidebarAvatar) sidebarAvatar.src = avatarUrl;
       if (navNickname) {
         navNickname.textContent = nickname;
         navNickname.style.display = "block";
       }
       if (panelUsername) panelUsername.innerText = nickname;
+      if (sidebarUsername) sidebarUsername.textContent = nickname;
+      if (sidebarStatus) {
+        sidebarStatus.textContent = "在线";
+        sidebarStatus.className = "sidebar-status online";
+      }
       ensurePanelEmail(user.email || "");
 
       if (authNav) {
@@ -557,21 +710,41 @@
           };
         }
       }
+      // 侧边栏退出按钮
+      if (sidebarLogoutBtn) {
+        sidebarLogoutBtn.style.display = "block";
+        sidebarLogoutBtn.onclick = async () => {
+          try { if (sb && sb.auth) await sb.auth.signOut({ scope: "local" }); } catch (_) {}
+          try { localStorage.removeItem("qish-auth-v1"); localStorage.removeItem("qish-auth-backup-v1"); } catch (_) {}
+          window.location.replace("auth.html");
+        };
+      }
+      if (sidebarAuthLink) sidebarAuthLink.style.display = "none";
       if (panelLinksBox) panelLinksBox.innerHTML = linksLoggedIn;
 
       highlightCurrentNav();
+      if (typeof window.__qishRefreshDropdown === "function") window.__qishRefreshDropdown();
       if (typeof opts.onLogin === "function") opts.onLogin(user, profile);
 
       return { user, profile, nickname, avatar: avatarUrl };
     } else {
       if (navAvatar) navAvatar.src = DEFAULT_AVATAR;
       if (panelAvatar) panelAvatar.src = DEFAULT_AVATAR;
+      if (sidebarAvatar) sidebarAvatar.src = DEFAULT_AVATAR;
       if (navNickname) navNickname.style.display = "none";
       if (panelUsername) panelUsername.innerText = "QISH";
+      if (sidebarUsername) sidebarUsername.textContent = "QISH";
+      if (sidebarStatus) {
+        sidebarStatus.textContent = "未登录";
+        sidebarStatus.className = "sidebar-status offline";
+      }
       ensurePanelEmail("");
       if (authNav) authNav.innerHTML = `<a href="auth.html">登录/注册</a>`;
+      if (sidebarLogoutBtn) sidebarLogoutBtn.style.display = "none";
+      if (sidebarAuthLink) sidebarAuthLink.style.display = "flex";
       if (panelLinksBox) panelLinksBox.innerHTML = linksGuest;
       highlightCurrentNav();
+      if (typeof window.__qishRefreshDropdown === "function") window.__qishRefreshDropdown();
       if (typeof opts.onLogout === "function") opts.onLogout();
       return { user: null };
     }
@@ -898,6 +1071,14 @@
           });
         });
       }
+    }
+    // 同步主页音乐气泡
+    const homeMusicBtn = document.getElementById("musicPlayBtn");
+    if (homeMusicBtn) {
+      const hmCover = homeMusicBtn.querySelector(".bubble-music-cover");
+      const hmTitle = homeMusicBtn.querySelector(".bubble-music-title");
+      if (hmCover) hmCover.textContent = playing ? "⏸" : "🎵";
+      if (hmTitle) hmTitle.textContent = track ? track.name : "暂无歌曲";
     }
   }
 
@@ -1776,14 +1957,14 @@ body.album-page .qm-empty{color:#64748b}
   // ========== 主题 ==========
   const THEME_KEY = "qish_theme";
   const CUSTOM_BG_KEY = "qish_custom_bg";
-  const THEMES = ["color", "light", "dark", "aqua", "custom"];
+  const THEMES = ["light", "dark", "aqua", "custom"];
 
   function getSavedTheme() {
     try {
       const t = localStorage.getItem(THEME_KEY);
       if (THEMES.includes(t)) return t;
     } catch (_) {}
-    return "color";
+    return "aqua";
   }
 
   function getCustomBg() {
@@ -1849,7 +2030,7 @@ body.album-page .qm-empty{color:#64748b}
   }
 
   function applyTheme(name) {
-    if (!THEMES.includes(name)) name = "color";
+    if (!THEMES.includes(name)) name = "aqua";
     document.documentElement.setAttribute("data-theme", name);
     try {
       localStorage.setItem(THEME_KEY, name);
@@ -1939,7 +2120,7 @@ body.album-page .qm-empty{color:#64748b}
         "--album-bg": "linear-gradient(160deg, #0ea5e9 0%, #22d3ee 40%, #67e8f9 100%)",
       },
     };
-    const vars = map[name] || map.color;
+    const vars = map[name] || map.aqua;
     Object.keys(vars).forEach((k) => {
       root.style.setProperty(k, vars[k]);
       if (body) body.style.setProperty(k, vars[k]);
@@ -1993,7 +2174,6 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
     wrap.innerHTML =
       '<button type="button" class="theme-switcher-toggle" id="themeToggle" title="切换主题">🎨</button>' +
       '<div class="theme-switcher-panel" id="themePanel">' +
-        '<button type="button" class="theme-opt" data-theme="color"><span class="dot color"></span>彩色</button>' +
         '<button type="button" class="theme-opt" data-theme="light"><span class="dot light"></span>白色</button>' +
         '<button type="button" class="theme-opt" data-theme="dark"><span class="dot dark"></span>黑色</button>' +
         '<button type="button" class="theme-opt" data-theme="aqua"><span class="dot aqua"></span>水纹</button>' +
@@ -2032,7 +2212,7 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
       customClear.addEventListener("click", (e) => {
         e.stopPropagation();
         setCustomBg("");
-        applyTheme("color");
+        applyTheme("aqua");
         wrap.classList.remove("open");
       });
     }
@@ -2951,6 +3131,8 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
   function boot() {
     initMouseGlow();
     initSidePanel();
+    initNavFab();
+    applySlideIn();
     const page = (location.pathname.split("/").pop() || "index.html").toLowerCase();
     const chat = page === "chat.html";
     if (page === "album.html") document.body.classList.add("album-page");
@@ -2959,6 +3141,7 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
     (function waitSbAndPresence(attempt) {
       const sb = window.supabaseClient || window.__qish_sb || null;
       if (sb) {
+        try { updateAuthNav({ supabase: sb }); } catch (e) { console.warn("[QISH] updateAuthNav", e); }
         initMusicPlayer({ isChatPage: chat, supabase: sb });
         try { initPresence(sb); } catch (e) { console.warn("[QISH] initPresence", e); }
         setTimeout(function () {
@@ -2969,6 +3152,7 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
       if (attempt < 40) {
         setTimeout(function () { waitSbAndPresence(attempt + 1); }, 150);
       } else {
+        try { updateAuthNav({ supabase: null }); } catch (e) {}
         initMusicPlayer({ isChatPage: chat, supabase: null });
       }
     })(0);
