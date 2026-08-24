@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -210,6 +210,34 @@
             color: #94a3b8;
             padding: 0 4px;
         }
+        .anime-play-btn {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 14px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            color: #fff !important;
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: 0 2px 8px rgba(59,130,246,0.35);
+            transition: transform 0.15s, box-shadow 0.15s;
+            margin-right: 4px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .anime-play-btn:hover {
+            transform: scale(1.08);
+            box-shadow: 0 4px 14px rgba(59,130,246,0.5);
+        }
+        .season-play-btn {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            z-index: 2;
+        }
         [data-theme="dark"] .week-day-panel {
             background: rgba(30,41,59,0.55);
             border-color: rgba(255,255,255,0.1);
@@ -366,6 +394,7 @@
             font: inherit;
             color: inherit;
             width: 100%;
+            position: relative;
         }
         .season-card:hover {
             transform: translateY(-3px);
@@ -604,6 +633,7 @@
         <a href="timeline.html">个人历程</a>
         <a href="projects.html">我的项目</a>
         <a href="announce.html">公告</a>
+            <a href="character.html">角色</a>
         <a href="chat.html">聊天室</a>
         <a href="album.html">成员相册</a>`n            <a href="userlist.html">用户列表</a>
         <a href="profile.html">个人资料</a>
@@ -733,6 +763,7 @@
                 <button type="button" class="anime-btn ghost" id="btnWatching">在看</button>
                 <button type="button" class="anime-btn ghost" id="btnFav">收藏</button>
                 <button type="button" class="anime-btn ghost" id="btnShareChat">分享到聊天室</button>
+                <button type="button" class="anime-btn primary" id="btnPlay">播放</button>
                 <a class="anime-btn primary" id="btnBgm" href="#" target="_blank" rel="noopener">打开 Bangumi</a>
             </div>
         </div>
@@ -1114,16 +1145,18 @@
             panel += '<div class="week-list">';
             items.forEach(function (it) {
                 const mark = getMark(it.id);
+                const title = titleOf(it);
                 panel += '<button type="button" class="anime-card" data-id="' + it.id + '">';
                 panel += '<img src="' + coverOf(it) + '" alt="" loading="lazy">';
                 panel += '<div class="anime-card-meta">';
-                panel += '<div class="anime-card-title">' + escapeHtml(titleOf(it)) + "</div>";
+                panel += '<div class="anime-card-title">' + escapeHtml(title) + "</div>";
                 panel += '<div class="anime-card-sub">';
                 if (airText(it)) panel += "<span>📅 " + escapeHtml(airText(it)) + "</span>";
                 panel += '<span class="score-pill">★ ' + scoreOf(it) + "</span>";
                 if (mark) panel += '<span class="mark-dot ' + mark + '" title="' + markLabel(mark) + '"></span>';
                 if (mark) panel += "<span>" + markLabel(mark) + "</span>";
                 panel += "</div></div>";
+                panel += '<span class="anime-play-btn" onclick="event.stopPropagation();playOnCycani(\'' + escapeHtml(title).replace(/'/g, "\\'") + '\')">播放</span>';
                 panel += '<span class="anime-card-arrow">›</span>';
                 panel += "</button>";
             });
@@ -1155,15 +1188,18 @@
         let html = '<div class="season-grid">';
         items.forEach(function (it) {
             const mark = getMark(it.id);
+            const title = titleOf(it);
             html += '<button type="button" class="season-card" data-id="' + it.id + '">';
             html += '<img src="' + coverOf(it) + '" alt="" loading="lazy">';
             html += '<div class="season-card-body">';
-            html += '<div class="season-card-title">' + escapeHtml(titleOf(it)) + "</div>";
+            html += '<div class="season-card-title">' + escapeHtml(title) + "</div>";
             html += '<div class="season-card-sub">';
             html += '<span class="score-pill">★ ' + scoreOf(it) + "</span>";
             if (mark) html += '<span class="mark-dot ' + mark + '" title="' + markLabel(mark) + '"></span>';
             else html += "<span></span>";
-            html += "</div></div></button>";
+            html += "</div></div>";
+            html += '<span class="anime-play-btn season-play-btn" onclick="event.stopPropagation();playOnCycani(\'' + escapeHtml(title).replace(/'/g, "\\'") + '\')">播放</span>';
+            html += "</button>";
         });
         html += "</div>";
         mainEl.innerHTML = html;
@@ -1173,6 +1209,55 @@
             });
         });
     }
+
+    // 播放：先复制番名到剪贴板，再打开 cycani.org
+    function playOnCycani(title) {
+        var text = String(title || "");
+        // 复制到剪贴板
+        try {
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).catch(function() {
+                    fallbackCopy(text);
+                });
+            } else {
+                fallbackCopy(text);
+            }
+        } catch (e) {
+            fallbackCopy(text);
+        }
+        // 打开 cycani.org
+        window.open("https://www.cycani.org/", "_blank");
+        // 提示已复制
+        showToast("已复制番名：" + text + "，粘贴即可搜索");
+    }
+    function fallbackCopy(text) {
+        try {
+            var ta = document.createElement("textarea");
+            ta.value = text;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand("copy");
+            document.body.removeChild(ta);
+        } catch (e) {}
+    }
+    var _toastTimer = null;
+    function showToast(msg) {
+        var t = document.getElementById("cycaniToast");
+        if (!t) {
+            t = document.createElement("div");
+            t.id = "cycaniToast";
+            t.style.cssText = "position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(15,23,42,0.9);color:#fff;padding:10px 20px;border-radius:999px;font-size:13px;z-index:99999;opacity:0;transition:opacity 0.3s;pointer-events:none;backdrop-filter:blur(8px);";
+            document.body.appendChild(t);
+        }
+        t.textContent = msg;
+        t.style.opacity = "1";
+        clearTimeout(_toastTimer);
+        _toastTimer = setTimeout(function() { t.style.opacity = "0"; }, 2000);
+    }
+    // 暴露到全局供内联 onclick 调用
+    window.playOnCycani = playOnCycani;
 
     function escapeHtml(s) {
         return String(s == null ? "" : s)
@@ -1541,6 +1626,8 @@
         document.getElementById("modalScoreRow").innerHTML = "";
         document.getElementById("modalCover").src = "";
         document.getElementById("btnBgm").href = "https://bgm.tv/subject/" + id;
+        var playBtn = document.getElementById("btnPlay");
+        if (playBtn) playBtn.onclick = null;
         var shareBtn = document.getElementById("btnShareChat");
         if (shareBtn) {
             shareBtn.disabled = false;
@@ -1554,6 +1641,11 @@
             currentSubjectCache = d;
             document.getElementById("modalCover").src = coverOf(d);
             document.getElementById("modalTitle").textContent = titleOf(d);
+            var playBtn2 = document.getElementById("btnPlay");
+            if (playBtn2) {
+                var animeTitle = titleOf(d);
+                playBtn2.onclick = function() { playOnCycani(animeTitle); };
+            }
             document.getElementById("modalJp").textContent = d.name || "";
             document.getElementById("modalScoreRow").innerHTML =
                 '<span class="score-pill">★ ' + scoreOf(d) + "</span>" +

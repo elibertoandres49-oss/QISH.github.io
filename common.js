@@ -116,6 +116,7 @@
       { label: "个人历程", href: "timeline.html" },
       { label: "我的项目", href: "projects.html" },
       { label: "公告", href: "announce.html" },
+      { label: "角色", href: "character.html" },
       { label: "聊天室", href: "chat.html" },
       { label: "成员相册", href: "album.html" },
       { label: "用户列表", href: "userlist.html" },
