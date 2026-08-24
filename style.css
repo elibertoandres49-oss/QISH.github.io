@@ -2303,3 +2303,570 @@ body.ui-edit-mode .bubble-circle:hover {
     z-index: 500;
     box-shadow: 0 4px 16px rgba(16,185,129,0.3);
 }
+
+/* ============================================================
+   移动端全面适配
+   ============================================================ */
+
+/* --- 触摸设备基础优化 --- */
+@media (hover: none) and (pointer: coarse) {
+    /* iOS 修复：fixed 背景导致卡顿 */
+    body {
+        background-attachment: scroll !important;
+    }
+    /* 禁用鼠标光效和拖尾 */
+    .mouse-glow,
+    .mouse-trail-svg,
+    .mouse-click-ring,
+    .mouse-click-splash {
+        display: none !important;
+    }
+    /* 禁用悬停放大（触摸后会卡住） */
+    .bubble-circle:hover {
+        transform: none !important;
+    }
+    .bubble-page:has(.bubble-circle:hover) .bubble-circle:not(:hover) {
+        transform: none !important;
+        opacity: 1 !important;
+    }
+    .polaroid:hover {
+        transform: none !important;
+    }
+    .bento-card:hover {
+        transform: none !important;
+    }
+    .anime-item:hover {
+        transform: none !important;
+    }
+    .sidebar-nav a:hover,
+    .sidebar-nav button:hover {
+        transform: none !important;
+    }
+    .page-nav-arrow:hover {
+        transform: translateY(-50%) !important;
+    }
+    /* 触摸时显示删除按钮（相册） */
+    .polaroid .polaroid-del {
+        opacity: 1;
+    }
+    /* 禁用文字选中（交互元素） */
+    .bubble-circle,
+    .nav-fab,
+    .page-nav-arrow,
+    .polaroid {
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+    /* 活跃态反馈替代悬停 */
+    .bubble-circle:active {
+        transform: scale(0.92) !important;
+    }
+    .nav-fab:active {
+        transform: scale(0.92) !important;
+    }
+    .page-nav-arrow:active {
+        transform: translateY(-50%) scale(0.92) !important;
+    }
+}
+
+/* --- 安全区域适配（刘海屏/灵动岛） --- */
+@supports (padding: max(0px)) {
+    .nav-fab {
+        top: max(18px, env(safe-area-inset-top));
+        left: max(18px, env(safe-area-inset-left));
+    }
+    .nav-fab-ring {
+        top: max(18px, env(safe-area-inset-top));
+        left: max(18px, env(safe-area-inset-left));
+    }
+    .nav-dropdown {
+        top: max(80px, calc(env(safe-area-inset-top) + 62px));
+        left: max(18px, env(safe-area-inset-left));
+    }
+    .sidebar {
+        padding-top: max(24px, env(safe-area-inset-top));
+        padding-left: max(16px, env(safe-area-inset-left));
+    }
+    .page-nav-arrow {
+        right: max(20px, env(safe-area-inset-right));
+    }
+    .page-nav-arrow.left {
+        left: max(20px, env(safe-area-inset-left));
+    }
+    .scatter-upload {
+        bottom: max(24px, env(safe-area-inset-bottom));
+        right: max(24px, env(safe-area-inset-right));
+    }
+    .theme-switcher {
+        bottom: max(20px, env(safe-area-inset-bottom));
+    }
+    .ui-edit-toolbar {
+        bottom: max(24px, env(safe-area-inset-bottom));
+    }
+}
+
+/* --- 平板及以下 (≤1024px) --- */
+@media (max-width: 1024px) {
+    .main-content {
+        padding: 28px 24px 40px;
+    }
+    .container {
+        padding: 28px 24px;
+    }
+    /* 气泡缩小 */
+    .bubble-xl { width: 180px; height: 180px; }
+    .bubble-lg { width: 135px; height: 135px; }
+    .bubble-md { width: 100px; height: 100px; }
+    .bubble-hero-img { width: 76px; height: 76px; }
+    .bubble-clock-time { font-size: 24px; }
+    .bubble-stats-num { font-size: 22px; }
+    .bubble-icon { font-size: 28px; }
+}
+
+/* --- 手机 (≤768px) --- */
+@media (max-width: 768px) {
+    body {
+        font-size: 15px;
+    }
+    .main-content {
+        padding: 72px 14px 36px;
+    }
+    .container {
+        padding: 20px 16px;
+        border-radius: 18px;
+    }
+    .container h1 {
+        font-size: 1.4em;
+    }
+
+    /* 侧边栏：占屏宽85%，最大280px */
+    .sidebar {
+        width: min(280px, 85vw);
+        height: 100dvh;
+    }
+    .side-panel {
+        height: 100dvh;
+    }
+
+    /* 登录注册卡片 */
+    .auth-card {
+        padding: 28px 22px;
+        border-radius: 22px;
+    }
+    .auth-logo img {
+        width: 60px;
+        height: 60px;
+    }
+
+    /* 导航按钮缩小 */
+    .nav-fab,
+    .nav-fab-ring {
+        width: 44px;
+        height: 44px;
+        top: max(14px, env(safe-area-inset-top));
+        left: max(14px, env(safe-area-inset-left));
+    }
+    .nav-dropdown {
+        top: max(66px, calc(env(safe-area-inset-top) + 52px));
+        left: max(14px, env(safe-area-inset-left));
+        min-width: 160px;
+    }
+
+    /* 气泡进一步缩小并调整间距 */
+    .bubble-page {
+        gap: 20px;
+        padding: 20px 8px 48px;
+    }
+    .bubble-cluster {
+        gap: 10px;
+        max-width: 100%;
+    }
+    .bubble-xl { width: 150px; height: 150px; }
+    .bubble-lg { width: 115px; height: 115px; }
+    .bubble-md { width: 88px; height: 88px; }
+    .bubble-sm { width: 68px; height: 68px; }
+    .bubble-xs { width: 54px; height: 54px; }
+    .bubble-hero-img { width: 62px; height: 62px; margin-bottom: 4px; }
+    .bubble-hero-name { font-size: 15px; }
+    .bubble-hero-sub { font-size: 10px; }
+    .bubble-icon { font-size: 24px; }
+    .bubble-sm .bubble-icon { font-size: 20px; }
+    .bubble-label { font-size: 11px; margin-top: 3px; }
+    .bubble-sm .bubble-label { font-size: 9px; }
+    .bubble-clock-time { font-size: 20px; }
+    .bubble-clock-date { font-size: 9px; margin-top: 3px; }
+    .bubble-stats-num { font-size: 18px; }
+    .bubble-stats-label { font-size: 9px; }
+    .bubble-music-title { font-size: 10px; max-width: 64px; }
+    .bubble-cal-grid { width: 64px; font-size: 6px; }
+    .bubble-cal-title { font-size: 9px; }
+
+    /* 追番气泡 */
+    .bubble-anime-bar {
+        padding: 12px 14px;
+        border-radius: 18px;
+    }
+    .anime-circle-item img {
+        width: 42px;
+        height: 58px;
+    }
+    .anime-circle-item span {
+        max-width: 42px;
+        font-size: 8px;
+    }
+
+    /* 相册：拍立得墙改为网格布局 */
+    .scatter-wall {
+        padding: 20px 10px;
+        min-height: auto !important;
+        height: auto !important;
+        text-align: center;
+    }
+    .polaroid {
+        position: relative !important;
+        width: calc(50% - 8px) !important;
+        margin: 4px !important;
+        transform: none !important;
+        top: auto !important;
+        left: auto !important;
+        display: inline-block;
+        vertical-align: top;
+    }
+    .polaroid img {
+        height: 130px;
+    }
+
+    /* 箭头导航缩小 */
+    .page-nav-arrow {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+    .page-nav-arrow .arrow-label {
+        display: none;
+    }
+
+    /* 模态框全屏化 */
+    .detail-modal {
+        width: 92%;
+        padding: 24px 20px;
+        border-radius: 20px;
+        max-height: 85vh;
+        overflow-y: auto;
+    }
+    .detail-modal-title {
+        font-size: 17px;
+    }
+    .detail-big-time {
+        font-size: 36px;
+    }
+    .qm-announce-box,
+    .qish-msg-box {
+        padding: 24px 20px;
+        max-width: 90%;
+    }
+
+    /* 公告弹窗 */
+    .qm-announce-title,
+    .qish-msg-title {
+        font-size: 17px;
+    }
+    .qish-msg-number {
+        font-size: 38px;
+    }
+    .qish-msg-icon {
+        font-size: 40px;
+    }
+
+    /* 编辑工具栏 */
+    .ui-edit-toolbar {
+        padding: 10px 14px;
+        gap: 10px;
+        font-size: 12px;
+        flex-wrap: wrap;
+        justify-content: center;
+        max-width: 90vw;
+    }
+    .ui-edit-toolbar button {
+        padding: 7px 14px;
+        font-size: 12px;
+    }
+    .ui-edit-hint {
+        top: 68px;
+        font-size: 12px;
+        padding: 6px 16px;
+        max-width: 90vw;
+        text-align: center;
+    }
+    .ui-bubble-panel {
+        min-width: 160px;
+        padding: 12px;
+    }
+
+    /* 主题切换器 */
+    .theme-switcher {
+        left: 14px;
+        bottom: 14px;
+    }
+    .theme-switcher-toggle {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+
+    /* 音乐播放器安全区域 */
+    .qm-player {
+        right: max(12px, env(safe-area-inset-right)) !important;
+        bottom: max(12px, env(safe-area-inset-bottom)) !important;
+    }
+
+    /* 聊天室高度适配 */
+    .chat-page {
+        height: calc(100dvh - 90px);
+        min-height: 380px;
+    }
+    .messages-area {
+        padding: 14px 12px;
+    }
+    .msg-item {
+        max-width: 92%;
+    }
+    .msg-avatar {
+        width: 32px;
+        height: 32px;
+    }
+    .chat-input-area {
+        padding: 10px 12px;
+    }
+    .chat-input {
+        padding: 10px 14px;
+        font-size: 15px;
+    }
+    .chat-attach-btn,
+    .chat-search-toggle {
+        width: 40px;
+        height: 40px;
+    }
+
+    /* 相册大图预览导航 */
+    .modal-nav {
+        width: 40px;
+        height: 40px;
+        font-size: 22px;
+    }
+    .modal-prev { left: 10px; }
+    .modal-next { right: 10px; }
+    .modal-overlay {
+        padding: 12px;
+    }
+    .close-modal {
+        top: 12px;
+        right: 16px;
+        font-size: 30px;
+    }
+
+    /* 时间线 */
+    .timeline {
+        padding-left: 28px;
+    }
+    .timeline-dot {
+        left: -24px;
+        width: 14px;
+        height: 14px;
+    }
+    .timeline-card {
+        padding: 14px 16px;
+    }
+    .timeline-title {
+        font-size: 15px;
+    }
+
+    /* 按钮和表单 */
+    .btn-primary,
+    .btn-secondary {
+        padding: 10px 20px;
+        font-size: 13px;
+    }
+    .form-input {
+        padding: 11px 14px;
+        font-size: 15px; /* 防止iOS缩放 */
+    }
+
+    /* 社交按钮 */
+    .social-btn {
+        padding: 7px 14px;
+        font-size: 12px;
+    }
+}
+
+/* --- 小屏手机 (≤480px) --- */
+@media (max-width: 480px) {
+    .main-content {
+        padding: 68px 10px 32px;
+    }
+    .container {
+        padding: 16px 14px;
+        border-radius: 16px;
+    }
+
+    /* 气泡最小尺寸 */
+    .bubble-page {
+        gap: 14px;
+        padding: 16px 4px 40px;
+    }
+    .bubble-cluster {
+        gap: 8px;
+    }
+    .bubble-xl { width: 128px; height: 128px; }
+    .bubble-lg { width: 100px; height: 100px; }
+    .bubble-md { width: 76px; height: 76px; }
+    .bubble-sm { width: 60px; height: 60px; }
+    .bubble-xs { width: 48px; height: 48px; }
+    .bubble-hero-img { width: 52px; height: 52px; border-width: 2px; }
+    .bubble-hero-name { font-size: 13px; }
+    .bubble-hero-sub { font-size: 9px; }
+    .bubble-icon { font-size: 20px; }
+    .bubble-sm .bubble-icon { font-size: 17px; }
+    .bubble-label { font-size: 10px; }
+    .bubble-sm .bubble-label { font-size: 8px; margin-top: 1px; }
+    .bubble-clock-time { font-size: 17px; letter-spacing: 0; }
+    .bubble-clock-date { font-size: 8px; }
+    .bubble-stats-num { font-size: 16px; }
+    .bubble-stats-label { font-size: 8px; margin-top: 2px; }
+    .bubble-music-cover { font-size: 22px; }
+    .bubble-music-title { font-size: 9px; max-width: 52px; }
+    .bubble-cal-grid { width: 56px; gap: 0; }
+    .bubble-cal-title { font-size: 8px; margin-bottom: 2px; }
+
+    /* 相册：单列 */
+    .polaroid {
+        width: calc(50% - 6px) !important;
+        margin: 3px !important;
+        padding: 8px 8px 28px;
+    }
+    .polaroid img {
+        height: 110px;
+    }
+    .polaroid .polaroid-caption {
+        font-size: 10px;
+        bottom: 6px;
+    }
+
+    /* 侧边栏更窄 */
+    .sidebar {
+        width: min(260px, 88vw);
+        padding: max(20px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-bottom));
+    }
+    .sidebar-header {
+        padding: 6px 8px 16px;
+    }
+    .sidebar-avatar {
+        width: 40px;
+        height: 40px;
+    }
+    .sidebar-username {
+        font-size: 14px;
+    }
+    .sidebar-nav a,
+    .sidebar-nav button {
+        padding: 9px 10px;
+        font-size: 13px;
+    }
+
+    /* 模态框 */
+    .detail-modal {
+        width: 94%;
+        padding: 20px 16px;
+        border-radius: 18px;
+    }
+    .detail-modal-close {
+        top: 10px;
+        right: 10px;
+        width: 28px;
+        height: 28px;
+        font-size: 16px;
+    }
+
+    /* 公告卡片 */
+    .announce-card {
+        padding: 18px 16px;
+        border-radius: 16px;
+    }
+    .announce-title {
+        font-size: 16px;
+    }
+    .announce-body {
+        font-size: 13px;
+    }
+
+    /* 上传按钮 */
+    .scatter-upload-btn {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+
+    /* 箭头 */
+    .page-nav-arrow {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
+    }
+}
+
+/* --- 超小屏 (≤375px) --- */
+@media (max-width: 375px) {
+    .bubble-xl { width: 112px; height: 112px; }
+    .bubble-lg { width: 88px; height: 88px; }
+    .bubble-md { width: 68px; height: 68px; }
+    .bubble-sm { width: 54px; height: 54px; }
+    .bubble-hero-img { width: 46px; height: 46px; }
+    .bubble-hero-name { font-size: 12px; }
+    .bubble-icon { font-size: 18px; }
+    .bubble-label { font-size: 9px; }
+    .bubble-clock-time { font-size: 15px; }
+    .bubble-stats-num { font-size: 14px; }
+    .polaroid {
+        width: calc(50% - 4px) !important;
+        margin: 2px !important;
+    }
+    .polaroid img {
+        height: 95px;
+    }
+}
+
+/* --- 横屏手机优化 --- */
+@media (max-height: 500px) and (orientation: landscape) {
+    .main-content {
+        padding: 20px 24px 28px;
+    }
+    .bubble-page {
+        gap: 16px;
+        padding: 12px 8px 32px;
+    }
+    .bubble-xl { width: 130px; height: 130px; }
+    .bubble-lg { width: 100px; height: 100px; }
+    .bubble-md { width: 78px; height: 78px; }
+    .sidebar {
+        overflow-y: auto;
+    }
+    .detail-modal {
+        max-height: 90vh;
+    }
+}
+
+/* --- 减少动画偏好 --- */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    body {
+        animation: none !important;
+    }
+}
