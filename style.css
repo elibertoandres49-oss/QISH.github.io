@@ -1129,6 +1129,7 @@ footer {
    鼠标光效
    ============================================================ */
 .mouse-glow {
+    display: none;
     position: fixed;
     width: 24px;
     height: 24px;
@@ -1144,6 +1145,10 @@ footer {
     will-change: transform, left, top;
     transition: width 0.2s ease, height 0.2s ease;
 }
+/* 仅在有精确指针（鼠标）的设备上显示鼠标光效 */
+@media (hover: hover) and (pointer: fine) {
+    .mouse-glow { display: block; }
+}
 .mouse-glow.mouse-glow-adsorb {
     width: 32px;
     height: 32px;
@@ -1154,11 +1159,15 @@ footer {
     height: 36px;
 }
 .mouse-trail-svg {
+    display: none;
     position: fixed;
     left: 0; top: 0;
     width: 100%; height: 100%;
     pointer-events: none;
     z-index: 9988;
+}
+@media (hover: hover) and (pointer: fine) {
+    .mouse-trail-svg { display: block; }
 }
 .mouse-click-ring {
     position: fixed;
@@ -2314,12 +2323,13 @@ body.ui-edit-mode .bubble-circle:hover {
     body {
         background-attachment: scroll !important;
     }
-    /* 禁用鼠标光效和拖尾 */
+    /* 鼠标光效已默认隐藏，此处双重保险 */
     .mouse-glow,
     .mouse-trail-svg,
     .mouse-click-ring,
     .mouse-click-splash {
         display: none !important;
+        pointer-events: none !important;
     }
     /* 禁用悬停放大（触摸后会卡住） */
     .bubble-circle:hover {
@@ -2349,7 +2359,7 @@ body.ui-edit-mode .bubble-circle:hover {
     .polaroid .polaroid-del {
         opacity: 1;
     }
-    /* 确保可点击元素正常响应触摸 */
+    /* 确保可点击元素正常响应触摸，消除300ms延迟 */
     .bubble-circle,
     .nav-fab,
     .page-nav-arrow,
@@ -2357,9 +2367,17 @@ body.ui-edit-mode .bubble-circle:hover {
     .sidebar-nav a,
     .sidebar-nav button,
     .anime-circle-item,
-    .anime-item {
-        -webkit-tap-highlight-color: rgba(91,168,160,0.15);
+    .anime-item,
+    .user-card,
+    .project-card,
+    .season-card,
+    .btn-primary,
+    .btn-secondary {
         touch-action: manipulation;
+    }
+    /* 确保主内容区不被意外拦截 */
+    .main-content {
+        pointer-events: auto;
     }
 }
 
