@@ -7,7 +7,7 @@
     <link rel="icon" href="avatar.jpg">
     <link rel="stylesheet" href="style.css">
     <script>
-    (function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="color"||t==="aqua"||t==="custom")?t:"color");}catch(e){document.documentElement.setAttribute("data-theme","color");}})();
+    (function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="aqua"||t==="custom")?t:"aqua");}catch(e){document.documentElement.setAttribute("data-theme","aqua");}})();
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
     <script>
@@ -158,21 +158,23 @@
         </div>
     </div>
 
-    <div class="right-image" id="rightImage">
-        <span class="char-inner"><img src="qishi-expr-normal.gif" alt="Q版小人" id="rightCharImg"></span>
-        <div class="char-bubble" id="charBubble" aria-hidden="true">
-            <span class="char-bubble-text">登录来玩吧~</span>
-        </div>
-    </div>
+
     <div class="mouse-glow" id="glow"></div>
 
 <script>
 const SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage, storageKey: "qish-auth-v1" }
-});
-window.supabaseClient = sb;
+let sb = null;
+(function initSb() {
+    if (window.supabase && typeof window.supabase.createClient === "function") {
+        sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage, storageKey: "qish-auth-v1" }
+        });
+        window.supabaseClient = sb;
+    } else {
+        setTimeout(initSb, 80);
+    }
+})();
 
 let mode = "login";
 const tabs = document.querySelectorAll(".auth-tab");
@@ -221,7 +223,13 @@ document.getElementById("authForm").addEventListener("submit", async (e) => {
             if (data.user && !data.session) {
                 showMsg("info", "注册成功！请查收邮箱验证链接后登录。");
             } else {
-                await sb.from("public_user_list").upsert({ user_id: data.user.id, nickname, email });
+                // 先查询是否存在记录
+                const { data: existUser } = await sb.from("public_user_list").select("user_id").eq("user_id", data.user.id).maybeSingle();
+                if (existUser) {
+                    await sb.from("public_user_list").update({ nickname, email }).eq("user_id", data.user.id);
+                } else {
+                    await sb.from("public_user_list").insert({ user_id: data.user.id, nickname, email });
+                }
                 showMsg("success", "注册成功！正在跳转...");
                 setTimeout(() => location.href = "index.html", 800);
             }

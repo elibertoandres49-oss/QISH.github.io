@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>数据看板 - QISH</title>
+<script>
+(function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="aqua"||t==="custom")?t:"aqua");}catch(e){document.documentElement.setAttribute("data-theme","aqua");}})();
+</script>
+<link rel="stylesheet" href="style.css">
+<style>
+/* ========== Dashboard 跟随全站主题 ========== */
+.dash-body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg-gradient);
+    background-size: var(--bg-size);
+    background-attachment: fixed;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    color: var(--text-main);
+    display: flex;
+    overflow-x: hidden;
+}
+
+/* 左侧导航 */
+.dash-sidebar {
+    width: 240px;
+    min-width: 240px;
+    background: var(--sidebar-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-right: 1px solid var(--sidebar-border);
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    box-sizing: border-box;
+}
+.dash-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 20px 16px;
+    border-bottom: 1px solid var(--sidebar-border);
+    margin-bottom: 12px;
+}
+.dash-logo-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--accent-grad);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--btn-text);
+    font-weight: 800; font-size: 16px;
+    box-shadow: 0 4px 12px var(--accent-soft);
+}
+.dash-logo-text { font-size: 14px; font-weight: 700; color: var(--text-main); line-height: 1.3; }
+.dash-logo-sub { font-size: 11px; color: var(--text-sub); font-weight: 500; }
+.dash-back-btn {
+    margin: 0 16px 16px;
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    color: var(--text-sub);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    transition: all 0.2s;
+}
+.dash-back-btn:hover { background: var(--card-bg-strong); transform: translateX(-2px); }
+
+.dash-nav { flex: 1; overflow-y: auto; padding: 0 12px; }
+.dash-nav::-webkit-scrollbar { width: 4px; }
+.dash-nav::-webkit-scrollbar-thumb { background: var(--accent-soft); border-radius: 2px; }
+.dash-nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    color: var(--text-body);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-bottom: 2px;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+.dash-nav-item:hover { background: var(--nav-item-hover); color: var(--text-main); }
+.dash-nav-item.active {
+    background: var(--nav-item-active);
+    color: var(--accent);
+    font-weight: 700;
+    box-shadow: 0 2px 8px var(--accent-soft);
+}
+.dash-nav-icon { font-size: 16px; width: 20px; text-align: center; }
+.dash-nav-footer {
+    padding: 12px 20px;
+    border-top: 1px solid var(--sidebar-border);
+    font-size: 11px;
+    color: var(--text-sub);
+    display: flex; align-items: center; gap: 6px;
+}
+.dash-nav-footer .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+/* 主内容区 */
+.dash-main {
+    flex: 1;
+    padding: 24px 28px;
+    box-sizing: border-box;
+    min-width: 0;
+}
+
+/* 顶部栏 */
+.dash-topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+.dash-search {
+    flex: 1;
+    max-width: 320px;
+    position: relative;
+}
+.dash-search input {
+    width: 100%;
+    padding: 10px 14px 10px 38px;
+    border-radius: 12px;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    font-size: 13px;
+    color: var(--text-main);
+    outline: none;
+    box-sizing: border-box;
+    transition: all 0.2s;
+}
+.dash-search input:focus { background: var(--card-bg-strong); border-color: var(--accent); }
+.dash-search input::placeholder { color: var(--text-sub); opacity: 0.6; }
+.dash-search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-sub); font-size: 14px; }
+.dash-topbar-btn {
+    padding: 10px 16px;
+    border-radius: 12px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    color: var(--text-body);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+.dash-topbar-btn:hover { background: var(--card-bg-strong); }
+.dash-topbar-btn.primary {
+    background: var(--accent-grad);
+    color: var(--btn-text);
+    border: none;
+    box-shadow: 0 4px 12px var(--accent-soft);
+}
+.dash-topbar-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 6px 16px var(--accent-soft); }
+.dash-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: var(--accent-grad);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--btn-text);
+    font-weight: 700; font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px var(--accent-soft);
+    overflow: hidden;
+}
+.dash-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+/* 统计卡片 */
+.dash-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 20px;
+}
+.dash-stat-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 18px 20px;
+    position: relative;
+    transition: all 0.3s;
+    box-shadow: var(--card-shadow);
+}
+.dash-stat-card:hover { transform: translateY(-3px); box-shadow: var(--card-shadow-hover); }
+.dash-stat-label { font-size: 12px; color: var(--text-sub); font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between; }
+.dash-stat-dot { width: 8px; height: 8px; border-radius: 50%; }
+.dash-stat-dot.green { background: #81c784; box-shadow: 0 0 8px rgba(129, 199, 132, 0.6); }
+.dash-stat-dot.pink { background: #f48fb1; box-shadow: 0 0 8px rgba(244, 143, 177, 0.6); }
+.dash-stat-value { font-size: 28px; font-weight: 800; color: var(--text-main); margin-bottom: 6px; letter-spacing: -0.5px; }
+.dash-stat-change { font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 4px; color: var(--text-sub); }
+
+/* 图表区 */
+.dash-charts {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+.dash-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: var(--card-shadow);
+}
+.dash-card-title { font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+.dash-legend { display: flex; gap: 14px; font-size: 11px; color: var(--text-sub); font-weight: 500; }
+.dash-legend-item { display: flex; align-items: center; gap: 5px; }
+.dash-legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+.dash-line-chart { width: 100%; height: 240px; }
+
+.dash-pie-wrap { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.dash-pie-chart { width: 160px; height: 160px; }
+.dash-pie-legend { width: 100%; }
+.dash-pie-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; font-size: 12px; color: var(--text-body); }
+.dash-pie-row-left { display: flex; align-items: center; gap: 8px; }
+.dash-pie-row-val { font-weight: 700; color: var(--text-main); }
+
+.dash-bottom {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+}
+
+.dash-table { width: 100%; border-collapse: collapse; }
+.dash-table th {
+    text-align: left;
+    padding: 10px 12px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-sub);
+    border-bottom: 1px solid var(--card-border);
+}
+.dash-table td {
+    padding: 12px;
+    font-size: 13px;
+    color: var(--text-body);
+    border-bottom: 1px solid var(--card-border);
+    font-weight: 500;
+}
+.dash-table tr:last-child td { border-bottom: none; }
+.dash-table tr:hover td { background: var(--nav-item-hover); }
+.dash-growth { font-weight: 700; font-size: 12px; }
+.dash-growth.up { color: #66bb6a; }
+.dash-growth.down { color: #ef5350; }
+
+.dash-todo-add {
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--text-sub);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 14px;
+    transition: all 0.2s;
+}
+.dash-todo-add:hover { background: var(--card-bg-strong); }
+.dash-todo-list { list-style: none; padding: 0; margin: 0; }
+.dash-todo-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--card-bg);
+    margin-bottom: 8px;
+    transition: all 0.2s;
+}
+.dash-todo-item:hover { background: var(--card-bg-strong); }
+.dash-todo-check {
+    width: 18px; height: 18px;
+    border-radius: 5px;
+    border: 2px solid var(--accent);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    background: transparent;
+}
+.dash-todo-check.checked {
+    background: var(--accent-grad);
+    border-color: transparent;
+}
+.dash-todo-check.checked::after { content: "\2713"; color: var(--btn-text); font-size: 11px; font-weight: 800; }
+.dash-todo-text { flex: 1; font-size: 13px; color: var(--text-body); font-weight: 500; }
+.dash-todo-item.done .dash-todo-text { text-decoration: line-through; color: var(--text-sub); opacity: 0.6; }
+.dash-todo-priority {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: 700;
+}
+.dash-todo-priority.high { background: rgba(244, 143, 177, 0.25); color: #d85a8a; }
+.dash-todo-priority.mid { background: rgba(255, 183, 77, 0.25); color: #e8953a; }
+.dash-todo-priority.low { background: rgba(129, 199, 132, 0.25); color: #5aab5e; }
+.dash-todo-del {
+    background: none; border: none; color: var(--text-sub); cursor: pointer; font-size: 14px; padding: 2px 4px;
+    transition: color 0.2s;
+}
+.dash-todo-del:hover { color: #ef5350; }
+
+@media (max-width: 1100px) {
+    .dash-stats { grid-template-columns: repeat(2, 1fr); }
+    .dash-charts, .dash-bottom { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+    .dash-sidebar { display: none; }
+    .dash-main { padding: 16px; }
+    .dash-stats { grid-template-columns: 1fr; }
+    .dash-topbar { flex-wrap: wrap; }
+    .dash-search { max-width: 100%; order: -1; }
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
+<script>
+(function initSupabase() {
+    window.SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
+    window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
+    function tryCreate() {
+        if (window.supabase && typeof window.supabase.createClient === "function") {
+            window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+                auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage, storageKey: "qish-auth-v1" }
+            });
+        } else { setTimeout(tryCreate, 80); }
+    }
+    tryCreate();
+})();
+</script>
+</head>
+<body class="dash-body">
+
+<!-- 左侧导航 -->
+<aside class="dash-sidebar">
+    <div class="dash-logo">
+        <div class="dash-logo-icon">Q</div>
+        <div>
+            <div class="dash-logo-text">QISH UI</div>
+            <div class="dash-logo-sub">Dashboard</div>
+        </div>
+    </div>
+    <button class="dash-back-btn" onclick="navigateWithSlide('index.html','left')">
+        <span>←</span> 返回首页
+    </button>
+    <nav class="dash-nav">
+        <a class="dash-nav-item active" href="dashboard.html">
+            <span class="dash-nav-icon">📊</span> Admin Dashboard
+        </a>
+        <a class="dash-nav-item" href="index.html">
+            <span class="dash-nav-icon">🏠</span> 首页
+        </a>
+        <a class="dash-nav-item" href="chat.html">
+            <span class="dash-nav-icon">❝</span> 聊天室
+        </a>
+        <a class="dash-nav-item" href="album.html">
+            <span class="dash-nav-icon">🖼️</span> 成员相册
+        </a>
+        <a class="dash-nav-item" href="anime.html">
+            <span class="dash-nav-icon">🎬</span> 新番追踪
+        </a>
+        <a class="dash-nav-item" href="rhythm4k.html">
+            <span class="dash-nav-icon">♪</span> 4K 音游
+        </a>
+        <a class="dash-nav-item" href="projects.html">
+            <span class="dash-nav-icon">📁</span> 我的项目
+        </a>
+        <a class="dash-nav-item" href="timeline.html">
+            <span class="dash-nav-icon">📅</span> 个人历程
+        </a>
+        <a class="dash-nav-item" href="userlist.html">
+            <span class="dash-nav-icon">👥</span> 用户列表
+        </a>
+        <a class="dash-nav-item" href="profile.html">
+            <span class="dash-nav-icon">👤</span> 个人资料
+        </a>
+        <a class="dash-nav-item" href="about.html">
+            <span class="dash-nav-icon">ℹ️</span> 关于我
+        </a>
+    </nav>
+    <div class="dash-nav-footer">
+        <span class="dot"></span> 12 个页面
+    </div>
+</aside>
+
+<!-- 主内容区 -->
+<main class="dash-main">
+    <!-- 顶部栏 -->
+    <header class="dash-topbar">
+        <div class="dash-search">
+            <span class="dash-search-icon">⌕</span>
+            <input type="text" placeholder="搜索数据、用户、项目...">
+        </div>
+        <button class="dash-topbar-btn">⚙️ 设置</button>
+        <button class="dash-topbar-btn">ℹ️ 关于</button>
+        <button class="dash-topbar-btn primary">Init</button>
+        <div class="dash-avatar" onclick="location.href='profile.html'">
+            <img src="avatar.jpg" alt="头像" onerror="this.style.display='none';this.parentElement.textContent='Q'">
+        </div>
+    </header>
+
+    <!-- 统计卡片 -->
+    <div class="dash-stats">
+        <div class="dash-stat-card">
+            <div class="dash-stat-label">总访问量 <span class="dash-stat-dot green"></span></div>
+            <div class="dash-stat-value" id="statTotal">--</div>
+            <div class="dash-stat-change up">累计 PV</div>
+        </div>
+        <div class="dash-stat-card">
+            <div class="dash-stat-label">今日访问 <span class="dash-stat-dot green"></span></div>
+            <div class="dash-stat-value" id="statToday">--</div>
+            <div class="dash-stat-change up">今日 PV</div>
+        </div>
+        <div class="dash-stat-card">
+            <div class="dash-stat-label">独立访客 <span class="dash-stat-dot pink"></span></div>
+            <div class="dash-stat-value" id="statUnique">--</div>
+            <div class="dash-stat-change up">今日 UV</div>
+        </div>
+        <div class="dash-stat-card">
+            <div class="dash-stat-label">注册用户 <span class="dash-stat-dot green"></span></div>
+            <div class="dash-stat-value" id="statUsers">--</div>
+            <div class="dash-stat-change up">用户总数</div>
+        </div>
+    </div>
+
+    <!-- 图表区 -->
+    <div class="dash-charts">
+        <div class="dash-card">
+            <div class="dash-card-title">
+                访问趋势（近10天）
+                <div class="dash-legend">
+                    <span class="dash-legend-item"><span class="dash-legend-dot" style="background:#b388ff"></span>日访问量</span>
+                </div>
+            </div>
+            <canvas class="dash-line-chart" id="lineChart"></canvas>
+        </div>
+        <div class="dash-card">
+            <div class="dash-card-title">设备分布</div>
+            <div class="dash-pie-wrap">
+                <canvas class="dash-pie-chart" id="pieChart"></canvas>
+                <div class="dash-pie-legend" id="pieLegend">
+                    <div class="dash-pie-row"><span style="color:#b0a3c8;">加载中...</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 底部区 -->
+    <div class="dash-bottom">
+        <div class="dash-card">
+            <div class="dash-card-title">热门页面</div>
+            <table class="dash-table">
+                <thead>
+                    <tr>
+                        <th>页面</th>
+                        <th>访问量</th>
+                        <th>占比</th>
+                    </tr>
+                </thead>
+                <tbody id="pagesTableBody">
+                    <tr><td colspan="3" style="text-align:center;color:#b0a3c8;">加载中...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="dash-card">
+            <div class="dash-card-title">代办清单</div>
+            <button class="dash-todo-add" onclick="addTodo()">+ 添加任务</button>
+            <ul class="dash-todo-list" id="todoList">
+                <li class="dash-todo-item done">
+                    <div class="dash-todo-check checked" onclick="toggleTodo(this)"></div>
+                    <span class="dash-todo-text">完成产品设计稿</span>
+                    <span class="dash-todo-priority high">高优先级</span>
+                    <button class="dash-todo-del" onclick="delTodo(this)">🗑</button>
+                </li>
+                <li class="dash-todo-item">
+                    <div class="dash-todo-check" onclick="toggleTodo(this)"></div>
+                    <span class="dash-todo-text">代码审查</span>
+                    <span class="dash-todo-priority mid">中优先级</span>
+                    <button class="dash-todo-del" onclick="delTodo(this)">🗑</button>
+                </li>
+                <li class="dash-todo-item">
+                    <div class="dash-todo-check" onclick="toggleTodo(this)"></div>
+                    <span class="dash-todo-text">更新文档</span>
+                    <span class="dash-todo-priority low">低优先级</span>
+                    <button class="dash-todo-del" onclick="delTodo(this)">🗑</button>
+                </li>
+            </ul>
+        </div>
+    </div>
+</main>
+
+<script src="common.js" defer></script>
+<script>
+// ========== 全局数据缓存 ==========
+let _dashDaily = [];
+let _dashDevices = {};
+
+// ========== 等待 Supabase 就绪 ==========
+function waitForSb(cb, tries) {
+    tries = tries || 0;
+    const sb = window.supabaseClient;
+    if (sb && typeof sb.from === 'function') { cb(sb); return; }
+    if (tries > 60) { cb(null); return; }
+    setTimeout(() => waitForSb(cb, tries + 1), 100);
+}
+
+// ========== 折线图绘制（接受日访问数据） ==========
+function drawLineChart(daily) {
+    const canvas = document.getElementById('lineChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+    const W = rect.width, H = rect.height;
+    const padL = 36, padR = 16, padT = 16, padB = 28;
+    const chartW = W - padL - padR;
+    const chartH = H - padT - padB;
+
+    const data = daily && daily.length ? daily : [{label:'--',value:0}];
+    const maxVal = Math.max.apply(null, data.map(function(d){return d.value;}).concat([1])) * 1.15;
+
+    function getX(i) { return padL + (data.length <= 1 ? chartW/2 : (i / (data.length - 1)) * chartW); }
+    function getY(v) { return padT + chartH - (v / maxVal) * chartH; }
+
+    ctx.strokeStyle = 'rgba(179, 136, 255, 0.1)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+        const y = padT + (i / 4) * chartH;
+        ctx.beginPath();
+        ctx.moveTo(padL, y);
+        ctx.lineTo(W - padR, y);
+        ctx.stroke();
+    }
+
+    ctx.fillStyle = '#b0a3c8';
+    ctx.font = '11px sans-serif';
+    ctx.textAlign = 'center';
+    data.forEach(function(d, i) { ctx.fillText(d.label, getX(i), H - 8); });
+
+    ctx.beginPath();
+    ctx.moveTo(getX(0), getY(data[0].value));
+    for (let i = 1; i < data.length; i++) {
+        const xc = (getX(i - 1) + getX(i)) / 2;
+        const yc = (getY(data[i - 1].value) + getY(data[i].value)) / 2;
+        ctx.quadraticCurveTo(getX(i - 1), getY(data[i - 1].value), xc, yc);
+    }
+    ctx.lineTo(getX(data.length - 1), getY(data[data.length - 1].value));
+    ctx.lineTo(getX(data.length - 1), padT + chartH);
+    ctx.lineTo(getX(0), padT + chartH);
+    ctx.closePath();
+    const grad = ctx.createLinearGradient(0, padT, 0, padT + chartH);
+    grad.addColorStop(0, 'rgba(179, 136, 255, 0.35)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(getX(0), getY(data[0].value));
+    for (let i = 1; i < data.length; i++) {
+        const xc = (getX(i - 1) + getX(i)) / 2;
+        const yc = (getY(data[i - 1].value) + getY(data[i].value)) / 2;
+        ctx.quadraticCurveTo(getX(i - 1), getY(data[i - 1].value), xc, yc);
+    }
+    ctx.lineTo(getX(data.length - 1), getY(data[data.length - 1].value));
+    ctx.strokeStyle = '#b388ff';
+    ctx.lineWidth = 2.5;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+
+    data.forEach(function(d, i) {
+        ctx.beginPath();
+        ctx.arc(getX(i), getY(d.value), 3, 0, Math.PI * 2);
+        ctx.fillStyle = '#b388ff';
+        ctx.fill();
+    });
+}
+
+// ========== 饼图绘制（接受设备分布数据） ==========
+function drawPieChart(devices) {
+    const canvas = document.getElementById('pieChart');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+    const W = rect.width, H = rect.height;
+    const cx = W / 2, cy = H / 2, r = Math.min(W, H) / 2 - 6;
+
+    const entries = Object.entries(devices || {});
+    const total = entries.reduce(function(s, x) { return s + x[1]; }, 0);
+    const colors = ['#b388ff', '#f48fb1', '#ffb74d', '#81c784', '#64b5f6', '#ff8a65'];
+
+    if (total === 0) {
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fillStyle = '#e0d8f0';
+        ctx.fill();
+    } else {
+        let startAngle = -Math.PI / 2;
+        entries.forEach(function(item, idx) {
+            const name = item[0], val = item[1];
+            const angle = (val / total) * Math.PI * 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy);
+            ctx.arc(cx, cy, r, startAngle, startAngle + angle);
+            ctx.closePath();
+            ctx.fillStyle = colors[idx % colors.length];
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            startAngle += angle;
+        });
+    }
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, r * 0.45, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fill();
+
+    const legendEl = document.getElementById('pieLegend');
+    if (legendEl) {
+        if (total === 0) {
+            legendEl.innerHTML = '<div class="dash-pie-row"><span style="color:#b0a3c8;">暂无数据</span></div>';
+        } else {
+            legendEl.innerHTML = entries.map(function(item, idx) {
+                const name = item[0], val = item[1];
+                const pct = ((val / total) * 100).toFixed(1);
+                const label = name === 'desktop' ? '桌面端' : name === 'mobile' ? '移动端' : name === 'tablet' ? '平板' : name;
+                return '<div class="dash-pie-row"><div class="dash-pie-row-left"><span class="dash-legend-dot" style="background:' + colors[idx % colors.length] + '"></span>' + label + '</div><span class="dash-pie-row-val">' + pct + '%</span></div>';
+            }).join('');
+        }
+    }
+}
+
+// ========== 加载实际数据 ==========
+async function loadDashboardData() {
+    waitForSb(async function(sb) {
+        if (!sb) {
+            ['statTotal','statToday','statUnique','statUsers'].forEach(function(id) {
+                var el = document.getElementById(id);
+                if (el) el.textContent = '0';
+            });
+            drawLineChart([]);
+            drawPieChart({});
+            return;
+        }
+        try {
+            var tenDaysAgo = new Date();
+            tenDaysAgo.setDate(tenDaysAgo.getDate() - 9);
+            tenDaysAgo.setHours(0, 0, 0, 0);
+            var fetchStats = (window.QISH && window.QISH.fetchVisitStats)
+                ? window.QISH.fetchVisitStats(sb)
+                : Promise.resolve({ total: 0, today: 0, uniqueToday: 0, devices: {}, pages: {} });
+            var results = await Promise.all([
+                fetchStats,
+                sb.from('public_user_list').select('*', { count: 'exact', head: true }),
+                sb.from('public_site_visits').select('created_at').gte('created_at', tenDaysAgo.toISOString())
+            ]);
+            var stats = results[0], userRes = results[1], visitRes = results[2];
+            document.getElementById('statTotal').textContent = (stats.total || 0).toLocaleString();
+            document.getElementById('statToday').textContent = (stats.today || 0).toLocaleString();
+            document.getElementById('statUnique').textContent = (stats.uniqueToday || 0).toLocaleString();
+            document.getElementById('statUsers').textContent = (userRes.count || 0).toLocaleString();
+            var visitRows = visitRes.data || [];
+            var dailyMap = {}, labels = [];
+            for (var i = 9; i >= 0; i--) {
+                var d = new Date();
+                d.setDate(d.getDate() - i);
+                var key = d.toISOString().slice(0, 10);
+                var label = (d.getMonth() + 1) + '/' + d.getDate();
+                dailyMap[key] = 0;
+                labels.push({ key: key, label: label });
+            }
+            visitRows.forEach(function(r) {
+                var key = new Date(r.created_at).toISOString().slice(0, 10);
+                if (dailyMap[key] !== undefined) dailyMap[key]++;
+            });
+            _dashDaily = labels.map(function(l) { return { label: l.label, value: dailyMap[l.key] }; });
+            drawLineChart(_dashDaily);
+            _dashDevices = stats.devices || {};
+            drawPieChart(_dashDevices);
+            var pages = stats.pages || {};
+            var totalVisits = Object.values(pages).reduce(function(s, v) { return s + v; }, 0) || 1;
+            var sortedPages = Object.entries(pages).sort(function(a, b) { return b[1] - a[1]; }).slice(0, 8);
+            var tbody = document.getElementById('pagesTableBody');
+            if (tbody) {
+                if (sortedPages.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:#b0a3c8;">暂无数据</td></tr>';
+                } else {
+                    tbody.innerHTML = sortedPages.map(function(item) {
+                        var page = item[0], count = item[1];
+                        var pct = ((count / totalVisits) * 100).toFixed(1);
+                        var pageName = page.replace('.html', '') || 'index';
+                        return '<tr><td>' + pageName + '</td><td>' + count.toLocaleString() + '</td><td><span class="dash-growth up">' + pct + '%</span></td></tr>';
+                    }).join('');
+                }
+            }
+        } catch (e) {
+            console.warn('[Dashboard] data load failed', e);
+        }
+    });
+}
+
+function toggleTodo(el) {
+    el.classList.toggle('checked');
+    el.closest('.dash-todo-item').classList.toggle('done');
+}
+function delTodo(el) {
+    el.closest('.dash-todo-item').remove();
+}
+function addTodo() {
+    const text = prompt('请输入任务内容：');
+    if (!text || !text.trim()) return;
+    const ul = document.getElementById('todoList');
+    const li = document.createElement('li');
+    li.className = 'dash-todo-item';
+    li.innerHTML = '<div class="dash-todo-check" onclick="toggleTodo(this)"></div><span class="dash-todo-text">' + text.trim() + '</span><span class="dash-todo-priority mid">中优先级</span><button class="dash-todo-del" onclick="delTodo(this)">🗑</button>';
+    ul.appendChild(li);
+}
+
+// ========== 初始化 ==========
+window.addEventListener('load', function() {
+    loadDashboardData();
+});
+window.addEventListener('resize', function() {
+    if (_dashDaily.length) drawLineChart(_dashDaily);
+    if (Object.keys(_dashDevices).length) drawPieChart(_dashDevices);
+});
+</script>
+</body>
+</html>

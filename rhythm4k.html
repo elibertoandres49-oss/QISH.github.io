@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -11,11 +11,18 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <script>
+(function initSupabase() {
 window.SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
 window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
-window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
-  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage, storageKey: "qish-auth-v1" }
-});
+function tryCreate() {
+  if (window.supabase && typeof window.supabase.createClient === "function") {
+    window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage, storageKey: "qish-auth-v1" }
+    });
+  } else { setTimeout(tryCreate, 80); }
+}
+tryCreate();
+})();
 </script>
 <script src="common.js" defer></script>
 <style>
@@ -389,7 +396,10 @@ window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window
         <a href="announce.html">公告</a>
             <a href="character.html">角色</a>
         <a href="chat.html">聊天室</a>
-        <a href="album.html">成员相册</a>`n            <a href="userlist.html">用户列表</a>
+        <a href="album.html">成员相册</a>
+            <a href="friends.html">友链</a>
+            <a href="diary.html">动态</a>
+        <a href="userlist.html">用户列表</a>
         <a href="profile.html">个人资料</a>
         <div class="sidebar-nav-label">账号</div>
         <a href="auth.html" id="sidebarAuthLink">登录/注册</a>
@@ -406,7 +416,8 @@ window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window
     <div class="panel-links" id="panelLinksBox">
       <a href="index.html">首页</a>
       <a href="about.html">关于我</a>
-      <a href="projects.html">我的项目</a>`n            <a href="userlist.html">用户列表</a>
+      <a href="projects.html">我的项目</a>
+      <a href="userlist.html">用户列表</a>
       <a href="profile.html">个人资料</a>
       <a href="album.html">相册</a>
       <a href="chat.html">聊天室</a>
@@ -419,13 +430,14 @@ window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window
 
 <nav>
   <div class="nav-avatar-area">
-    <img src="avatar.jpg" alt="头像" class="nav-avatar" id="navAvatar">
+    <img src="avatar.jpg" alt="头像" class="nav-avatar" id="topNavAvatar">
     <span class="nav-nickname" id="navNickname" style="display:none;"></span>
   </div>
   <div class="nav-links">
     <a href="index.html">首页</a>
     <a href="about.html">关于我</a>
-    <a href="projects.html">项目</a>`n            <a href="userlist.html">用户列表</a>
+    <a href="projects.html">项目</a>
+    <a href="userlist.html">用户列表</a>
     <a href="profile.html">个人资料</a>
     <a href="album.html">相册</a>
     <a href="chat.html">聊天室</a>
@@ -594,7 +606,7 @@ window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window
       </div>
       <div class="editor-stage-wrap">
         <div class="ed-toolbar">
-          <button type="button" class="r4k-btn" id="edPlayPause">▶ 播放（空格）</button>
+          <button type="button" class="r4k-btn" id="edPlayPause">► 播放（空格）</button>
           <span class="ed-status" id="edStatus">已停止</span>
           <span>· Note <span id="edNoteCount">0</span></span>
           <span id="edSnapHint">· 吸附 1/4 拍</span>
@@ -1934,7 +1946,7 @@ window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window
     if (audioEl.ended) {
       edPlaying = false;
       document.getElementById("edStatus").textContent = "已结束 · 可空格从头";
-      document.getElementById("edPlayPause").textContent = "▶ 播放（空格）";
+      document.getElementById("edPlayPause").textContent = "► 播放（空格）";
       // 结束后回到开头，方便再听；日常暂停不改 currentTime
       try { audioEl.currentTime = 0; } catch (_) {}
       return;
@@ -1961,12 +1973,12 @@ window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window
       const m = Math.floor(t / 60);
       const s = String(t % 60).padStart(2, "0");
       document.getElementById("edStatus").textContent = "已暂停 " + m + ":" + s;
-      document.getElementById("edPlayPause").textContent = "▶ 继续（空格）";
+      document.getElementById("edPlayPause").textContent = "► 继续（空格）";
       saveDraft(true);
     } else {
       audioEl.play().then(() => {
         edPlaying = true;
-        document.getElementById("edPlayPause").textContent = "⏸ 暂停（空格）";
+        document.getElementById("edPlayPause").textContent = "❚❚ 暂停（空格）";
         edPlayWatch();
       }).catch((e) => setEdMsg("播放失败：" + (e.message || ""), false));
     }

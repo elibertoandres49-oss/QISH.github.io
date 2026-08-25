@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -111,6 +111,17 @@
     .msg-anime-title { font-size: 14px; font-weight: 800; color: var(--text-main); line-height: 1.35; }
     .msg-anime-sub { font-size: 12px; color: var(--text-sub); }
     .msg-anime-go { font-size: 12px; font-weight: 700; color: var(--accent); }
+    .msg-music-card {
+        display: flex; gap: 12px; align-items: stretch; margin-top: 6px; padding: 10px;
+        border-radius: 14px; background: var(--card-bg); border: 1px solid var(--card-border);
+        cursor: pointer; max-width: 320px; transition: all 0.2s;
+    }
+    .msg-music-card:hover { transform: translateY(-2px); box-shadow: var(--card-shadow-hover); }
+    .msg-music-card img { width: 64px; height: 64px; object-fit: cover; border-radius: 10px; flex-shrink: 0; }
+    .msg-music-meta { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; justify-content: center; }
+    .msg-music-title { font-size: 14px; font-weight: 800; color: var(--text-main); line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .msg-music-artist { font-size: 12px; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .msg-music-go { font-size: 12px; font-weight: 700; color: var(--accent); margin-top: 2px; }
     .msg-file-card {
         display: flex; align-items: center; gap: 12px;
         background: var(--card-bg); border-radius: 12px; padding: 10px 14px;
@@ -264,7 +275,10 @@
             <a href="announce.html">公告</a>
             <a href="character.html">角色</a>
             <a href="chat.html" class="nav-active">聊天室</a>
-            <a href="album.html">成员相册</a>`n            <a href="userlist.html">用户列表</a>
+            <a href="album.html">成员相册</a>
+            <a href="friends.html">友链</a>
+            <a href="diary.html">动态</a>
+            <a href="userlist.html">用户列表</a>
             <a href="profile.html">个人资料</a>
             <div class="sidebar-nav-label">账号</div>
             <a href="auth.html" id="sidebarAuthLink">登录/注册</a>
@@ -278,10 +292,10 @@
             <div class="chat-header">
                 <div class="chat-header-left">
                     <a href="index.html" class="back-btn" style="margin-bottom:8px;">← 返回</a>
-                    <h1>💬 成员聊天室</h1>
+                    <h1>❝ 成员聊天室</h1>
                     <p class="chat-sub">登录后可发送文字、图片和文件 · 支持实时同步</p>
                 </div>
-                <button class="chat-search-toggle" id="chatSearchToggle" title="搜索聊天记录">🔍</button>
+                <button class="chat-search-toggle" id="chatSearchToggle" title="搜索聊天记录">⌕</button>
             </div>
             <div class="chat-box">
                 <div class="messages-area" id="messagesArea">
@@ -296,12 +310,12 @@
             </div>
             <div class="chat-tip" id="statusTip">请先登录后再发言</div>
         </div>
-        <footer>© 2026 QISH · Made with ❤️</footer>
+        <footer>© 2026 QISH · Made with ♥</footer>
     </main>
 
     <div class="search-drawer" id="searchDrawer">
         <div class="search-drawer-header">
-            <h3>🔍 搜索与文件</h3>
+            <h3>⌕ 搜索与文件</h3>
             <button class="search-drawer-close" id="searchDrawerClose" aria-label="关闭">×</button>
         </div>
         <div class="search-tabs">
@@ -325,18 +339,8 @@
         <img id="imgModalImg" src="" alt="预览">
     </div>
 
-    <div class="right-image" id="rightImage">
-        <span class="char-inner"><img src="qishi-expr-normal.gif" alt="Q版小人" id="rightCharImg"></span>
-        <div class="char-bubble" id="charBubble" aria-hidden="true">
-            <span class="char-bubble-text">来聊聊天吧~</span>
-        </div>
-    </div>
-    <div class="left-image" id="leftImage">
-        <span class="char-inner"><img src="left-char.png" alt="左侧角色" id="leftCharImg"></span>
-        <div class="char-bubble" id="leftCharBubble" aria-hidden="true">
-            <span class="char-bubble-text">去聊聊天吧~</span>
-        </div>
-    </div>
+
+
 
     <!-- 页面间箭头：聊天室 → 主页（左）、聊天室 → 相册（右） -->
     <div class="page-nav-arrow left" onclick="navigateWithSlide('index.html','right')" title="返回主页" style="cursor:pointer;">
@@ -356,7 +360,8 @@
             <p class="panel-desc">ovo</p>
             <p class="panel-email" id="panelEmail" style="display:none;"></p>
             <div class="panel-links" id="panelLinksBox">
-                <a href="index.html">首页</a><a href="about.html">关于我</a><a href="projects.html">我的项目</a>`n            <a href="userlist.html">用户列表</a><a href="profile.html">个人资料</a><a href="./album.html">相册</a>
+                <a href="index.html">首页</a><a href="about.html">关于我</a><a href="projects.html">我的项目</a>
+            <a href="userlist.html">用户列表</a><a href="profile.html">个人资料</a><a href="./album.html">相册</a>
                 <a href="chat.html">聊天室</a><a href="auth.html">登录/注册</a>
             </div>
         </div>
@@ -428,7 +433,7 @@ async function updateAuthNav() {
 function formatTime(str) { const d=new Date(str); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
 function formatSize(bytes) { if(!bytes||bytes<=0)return""; if(bytes<1024)return bytes+" B"; if(bytes<1048576)return (bytes/1024).toFixed(1)+" KB"; return (bytes/1048576).toFixed(1)+" MB"; }
 function escapeHtml(text) { if(!text)return""; const d=document.createElement('div'); d.textContent=text; return d.innerHTML; }
-function getFileIcon(name) { const e=(name||"").split(".").pop().toLowerCase(); const m={pdf:"📄",doc:"📝",docx:"📝",xls:"📊",xlsx:"📊",ppt:"📑",pptx:"📑",zip:"🗜️",rar:"🗜️","7z":"🗜️",mp3:"🎵",wav:"🎵",mp4:"🎬",mov:"🎬",txt:"📃",md:"📃"}; return m[e]||"📎"; }
+function getFileIcon(name) { const e=(name||"").split(".").pop().toLowerCase(); const m={pdf:"📄",doc:"✎",docx:"✎",xls:"📊",xlsx:"📊",ppt:"📑",pptx:"📑",zip:"🗜️",rar:"🗜️","7z":"🗜️",mp3:"♪",wav:"♪",mp4:"🎬",mov:"🎬",txt:"📃",md:"📃"}; return m[e]||"📎"; }
 function isImageType(name,mime) { if(mime&&mime.startsWith("image/"))return true; return ["jpg","jpeg","png","gif","webp","bmp","svg"].includes((name||"").split(".").pop().toLowerCase()); }
 
 function appendMessage(item, isMine) {
@@ -448,6 +453,12 @@ function appendMessage(item, isMine) {
     const animeTitle = animeTitleMatch ? animeTitleMatch[1] : "新番推荐";
     const animeScoreMatch = (item.content||"").match(/评分\s*([\d.]+)/);
     const animeScore = animeScoreMatch ? animeScoreMatch[1] : "";
+    // 音乐卡片检测
+    const musicMatch = (item.content||"").match(/#qish_music:([A-Za-z0-9+/=]+)/);
+    let musicData = null;
+    if (musicMatch) {
+        try { musicData = JSON.parse(decodeURIComponent(escape(atob(musicMatch[1])))); } catch(e) { musicData = null; }
+    }
     if (animeId) {
         const cover = item.file_url || "";
         bodyHtml = `<div class="msg-content">📺 安利新番</div>
@@ -456,6 +467,16 @@ function appendMessage(item, isMine) {
                 <div class="msg-anime-meta"><div class="msg-anime-title">${escapeHtml(animeTitle)}</div>
                 <div class="msg-anime-sub">${animeScore?"★ "+escapeHtml(animeScore)+" · ":""}Bangumi</div>
                 <div class="msg-anime-go">查看详情 ›</div></div></a>`;
+    } else if (musicData) {
+        bodyHtml = `<div class="msg-content">♪ 分享音乐</div>
+            <div class="msg-music-card" data-url="${escapeHtml(musicData.url||"")}" data-name="${escapeHtml(musicData.name||"")}" data-artist="${escapeHtml(musicData.artist||"")}" data-cover="${escapeHtml(musicData.cover||"")}" title="点击播放">
+                ${musicData.cover?`<img src="${escapeHtml(musicData.cover)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:""}
+                <div class="msg-music-meta">
+                    <div class="msg-music-title">${escapeHtml(musicData.name||"未知歌曲")}</div>
+                    <div class="msg-music-artist">${escapeHtml(musicData.artist||"未知歌手")}</div>
+                    <div class="msg-music-go">► 点击播放</div>
+                </div>
+            </div>`;
     } else if (msgType === "image" && item.file_url) {
         bodyHtml = `${item.content?`<div class="msg-content">${escapeHtml(item.content)}</div>`:""}
             <img class="msg-img" src="${escapeHtml(item.file_url)}" alt="图片" loading="lazy" data-preview-url="${escapeHtml(item.file_url)}">`;
@@ -464,7 +485,7 @@ function appendMessage(item, isMine) {
         const sizeStr = formatSize(item.file_size);
         const isAudio = /\.(mp3|wav|ogg|m4a|flac|aac|webm)$/i.test(item.file_name||"") || (item.file_url&&/\.(mp3|wav|ogg|m4a|flac|aac)(\?|$)/i.test(item.file_url));
         const audioBtns = isAudio ? `<div class="msg-audio-actions">
-            <button type="button" class="msg-audio-btn add" data-url="${escapeHtml(item.file_url)}" data-name="${escapeHtml(item.file_name||'音频')}">🎵 加入播放</button>
+            <button type="button" class="msg-audio-btn add" data-url="${escapeHtml(item.file_url)}" data-name="${escapeHtml(item.file_name||'音频')}">♪ 加入播放</button>
             <button type="button" class="msg-audio-btn together" data-url="${escapeHtml(item.file_url)}" data-name="${escapeHtml(item.file_name||'音频')}">🔊 一起听</button></div>` : "";
         bodyHtml = `${item.content?`<div class="msg-content">${escapeHtml(item.content)}</div>`:""}
             <div class="msg-file-card"><div class="msg-file-icon">${icon}</div>
@@ -488,8 +509,9 @@ function appendMessage(item, isMine) {
     div.innerHTML = `<img class="msg-avatar" src="${escapeHtml(avatarSrc)}" alt="头像" onerror="this.src='${defaultAvatar}'">
         <div class="msg-bubble"><div class="msg-meta"><span class="msg-nick">${escapeHtml(item.nickname||'匿名用户')}</span><span>${formatTime(item.created_at)}</span></div>${bodyHtml}${actionsHtml}</div>`;
     div.querySelectorAll(".msg-img[data-preview-url]").forEach(img => { img.onclick = ev => { ev.stopPropagation(); openImgModal(img.getAttribute("data-preview-url")||img.src); }; });
-    div.querySelectorAll(".msg-audio-btn.add").forEach(btn => { btn.onclick = ev => { ev.stopPropagation(); if(window.QISHMusic){QISHMusic.addToPlaylist(btn.dataset.url,btn.dataset.name,false);btn.textContent="✅ 已加入";setTimeout(()=>btn.textContent="🎵 加入播放",1500);}else alert("播放器未就绪，请刷新页面"); }; });
+    div.querySelectorAll(".msg-audio-btn.add").forEach(btn => { btn.onclick = ev => { ev.stopPropagation(); if(window.QISHMusic){QISHMusic.addToPlaylist(btn.dataset.url,btn.dataset.name,false);btn.textContent="✅ 已加入";setTimeout(()=>btn.textContent="♪ 加入播放",1500);}else alert("播放器未就绪，请刷新页面"); }; });
     div.querySelectorAll(".msg-audio-btn.together").forEach(btn => { btn.onclick = ev => { ev.stopPropagation(); if(window.QISHMusic){QISHMusic.playTogether(btn.dataset.url,btn.dataset.name);btn.textContent="🔊 播放中";setTimeout(()=>btn.textContent="🔊 一起听",1500);}else alert("播放器未就绪，请刷新页面"); }; });
+    div.querySelectorAll(".msg-music-card").forEach(card => { card.onclick = ev => { ev.stopPropagation(); const url=card.dataset.url; const name=card.dataset.name; if(window.QISHMusic && url){QISHMusic.addToPlaylist(url,name,true);}else alert("播放器未就绪或无播放地址"); }; });
     div.querySelectorAll(".msg-act-btn").forEach(btn => { btn.onclick = async ev => { ev.stopPropagation(); if(btn.dataset.action==="recall") await recallMessage(btn.dataset.id); else if(btn.dataset.action==="delete") await deleteMessage(btn.dataset.id); }; });
     area.appendChild(div);
     area.scrollTop = area.scrollHeight;
@@ -614,6 +636,18 @@ document.getElementById('fileInput').onchange = e => { const f=e.target.files[0]
     await updateAuthNav();
     await loadMessages();
     subscribeRealtime();
+    // 检查是否有待分享的音乐
+    try {
+        const pending = localStorage.getItem("qish-pending-share");
+        if (pending) {
+            localStorage.removeItem("qish-pending-share");
+            const msgInput = document.getElementById('msgInput');
+            if (msgInput && currentUser) {
+                msgInput.value = pending;
+                setTimeout(() => { if (typeof sendMessage === "function") sendMessage(); }, 500);
+            }
+        }
+    } catch(e) {}
 })();
 
 if (supabase) supabase.auth.onAuthStateChange(event => { if(event!=="INITIAL_SESSION") updateAuthNav(); });

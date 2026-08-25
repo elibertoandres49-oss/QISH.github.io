@@ -11,6 +11,8 @@
     (function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="aqua"||t==="custom")?t:"aqua");}catch(e){document.documentElement.setAttribute("data-theme","aqua");}})();
     </script>
     <link rel="stylesheet" href="style.css">
+    <style>
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
     <script>
     (function initSupabase() {
@@ -53,7 +55,10 @@
             <a href="announce.html">公告</a>
             <a href="character.html">角色</a>
             <a href="chat.html">聊天室</a>
-            <a href="album.html">成员相册</a>`n            <a href="userlist.html">用户列表</a>
+            <a href="album.html">成员相册</a>
+            <a href="friends.html">友链</a>
+            <a href="diary.html">动态</a>
+            <a href="userlist.html">用户列表</a>
             <a href="profile.html">个人资料</a>
             <div class="sidebar-nav-label">账号</div>
             <a href="auth.html" id="sidebarAuthLink">登录/注册</a>
@@ -69,7 +74,7 @@
             <!-- 第一组：头像 + 时钟 + 日历 -->
             <div class="bubble-cluster">
                 <a href="profile.html" class="bubble-circle bubble-xl bubble-in" style="width:232px;height:232px;">
-                    <img src="qishi-expr-normal.gif" alt="QISH" class="bubble-hero-img" id="heroChar" style="width:100px;height:100px;">
+                    <img src="chise-avatar.gif" alt="QISH" class="bubble-hero-img" id="heroChar" style="width:100px;height:100px;">
                     <div class="bubble-hero-name" id="heroGreeting">Good Afternoon</div>
                     <div class="bubble-hero-sub">I'm QISH ✦</div>
                 </a>
@@ -113,11 +118,8 @@
                     <div style="font-size:36px;font-weight:900;color:var(--accent);" id="animeCount">--</div>
                     <div style="font-size:12px;color:var(--text-sub);margin-top:4px;">部新番更新</div>
                 </div>
-                <a href="userlist.html" class="bubble-circle bubble-sm bubble-in" style="width:104px;height:104px;margin-top:42px;">
-                    <div class="bubble-stats-num" id="onlineCount" style="font-size:30px;">--</div>
-                    <div class="bubble-stats-label" style="font-size:11px;">当前在线</div>
-                </a>
-                <div class="bubble-circle bubble-sm bubble-in" style="width:82px;height:82px;margin-top:-26px;cursor:pointer;" onclick="openVisitModal()">
+
+                <div class="bubble-circle bubble-sm bubble-in" style="width:82px;height:82px;margin-top:-26px;cursor:pointer;" onclick="navigateWithSlide('dashboard.html','left')">
                     <div class="bubble-stats-num" id="visitCount" style="font-size:24px;">--</div>
                     <div class="bubble-stats-label" style="font-size:10px;">累计访问</div>
                 </div>
@@ -132,6 +134,9 @@
                 </a>
             </div>
 
+            <!-- 自定义气泡组 -->
+            <div class="bubble-cluster" id="customBubbleCluster" style="min-height:0;"></div>
+
             <!-- 公告（默认隐藏） -->
             <div class="bubble-anime-bar bubble-in" id="homeAnnounceCard" style="display:none;max-width:560px;">
                 <div style="display:flex;gap:12px;align-items:flex-start;">
@@ -145,19 +150,18 @@
         </div>
 
         <footer>
-            <p>© 2026 QISH 小站 · Made with ❤️</p>
+            <p>© 2026 QISH 小站 · Made with ♥</p>
         </footer>
     </main>
 
     <!-- 右侧角色立绘 -->
-    <div class="right-image" id="rightImage">
-        <span class="char-inner"><img src="qishi-expr-normal.gif" alt="Q版小人" id="rightCharImg"></span>
-        <div class="char-bubble" id="charBubble" aria-hidden="true">
-            <span class="char-bubble-text">欢迎来到QISH小站~</span>
-        </div>
-    </div>
+
 
     <!-- 页面间箭头：主页 → 聊天室 -->
+    <div class="page-nav-arrow left" id="homeToDashboard" onclick="navigateWithSlide('dashboard.html','right')" title="数据看板" style="cursor:pointer;">
+        ←
+        <span class="arrow-label">数据看板</span>
+    </div>
     <div class="page-nav-arrow" id="homeToChat" onclick="navigateWithSlide('chat.html','left')" title="前往聊天室" style="cursor:pointer;">
         <span class="arrow-label">聊天室</span>
         →
@@ -170,14 +174,14 @@
             <div class="detail-modal-title">音乐播放器</div>
             <div class="detail-modal-body" id="musicModalBody">
                 <div style="text-align:center;padding:20px 0;">
-                    <div style="font-size:64px;margin-bottom:16px;" id="mmIcon">🎵</div>
+                    <div style="font-size:64px;margin-bottom:16px;" id="mmIcon">♪</div>
                     <div style="font-size:18px;font-weight:700;color:var(--text-main);" id="mmTitle">暂无歌曲</div>
                     <div style="font-size:13px;color:var(--text-sub);margin-top:4px;" id="mmArtist">去聊天室点歌吧~</div>
                 </div>
                 <div style="display:flex;gap:12px;justify-content:center;margin-top:20px;">
-                    <button onclick="musicModalPrev()" style="padding:10px 20px;border-radius:12px;border:none;background:var(--accent-soft);color:var(--accent);cursor:pointer;font-size:16px;">⏮</button>
-                    <button onclick="musicModalToggle()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:18px;" id="mmPlayBtn">▶</button>
-                    <button onclick="musicModalNext()" style="padding:10px 20px;border-radius:12px;border:none;background:var(--accent-soft);color:var(--accent);cursor:pointer;font-size:16px;">⏭</button>
+                    <button onclick="musicModalPrev()" style="padding:10px 20px;border-radius:12px;border:none;background:var(--accent-soft);color:var(--accent);cursor:pointer;font-size:16px;">|◄</button>
+                    <button onclick="musicModalToggle()" style="padding:10px 24px;border-radius:12px;border:none;background:var(--accent);color:#fff;cursor:pointer;font-size:18px;" id="mmPlayBtn">►</button>
+                    <button onclick="musicModalNext()" style="padding:10px 20px;border-radius:12px;border:none;background:var(--accent-soft);color:var(--accent);cursor:pointer;font-size:16px;">►|</button>
                 </div>
                 <div style="margin-top:16px;font-size:12px;color:var(--text-sub);text-align:center;">点击右下角迷你播放器可展开完整播放列表</div>
             </div>
@@ -206,7 +210,7 @@
             <div class="detail-modal-body">
                 <div class="detail-stat-row"><span class="detail-stat-label">累计访问</span><span class="detail-stat-value" id="vmTotal">--</span></div>
                 <div class="detail-stat-row"><span class="detail-stat-label">今日访问</span><span class="detail-stat-value" id="vmToday">--</span></div>
-                <div class="detail-stat-row"><span class="detail-stat-label">当前在线</span><span class="detail-stat-value" id="vmOnline">--</span></div>
+
                 <div class="detail-stat-row"><span class="detail-stat-label">首次访问</span><span class="detail-stat-value" id="vmFirst">--</span></div>
                 <div style="margin-top:16px;font-size:12px;color:var(--text-sub);text-align:center;">数据基于本地存储统计，仅供参考</div>
             </div>
@@ -224,7 +228,8 @@
             <div class="panel-links" id="panelLinksBox">
                 <a href="index.html">首页</a>
                 <a href="about.html">关于我</a>
-                <a href="projects.html">我的项目</a>`n            <a href="userlist.html">用户列表</a>
+                <a href="projects.html">我的项目</a>
+            <a href="userlist.html">用户列表</a>
                 <a href="profile.html">个人资料</a>
                 <a href="./album.html">相册</a>
                 <a href="chat.html">聊天室</a>
@@ -312,14 +317,12 @@ function openTimeModal() {
 
 // 访问统计详情（全局 Supabase 数据）
 function openVisitModal() {
-    const onlineEl = document.getElementById('onlineCount');
     const online = onlineEl ? onlineEl.textContent : '--';
     // 优先用已加载的全局数据
     var stats = window.__qishVisitStats;
     if (stats && !stats.error) {
         document.getElementById('vmTotal').textContent = stats.total;
         document.getElementById('vmToday').textContent = stats.today;
-        document.getElementById('vmOnline').textContent = online;
         var fv = stats.firstVisit;
         if (fv) {
             try { fv = new Date(fv).toLocaleDateString('zh-CN'); } catch(e) {}
@@ -368,8 +371,20 @@ async function loadGlobalVisitStats() {
 
 // 音乐详情
 function openMusicModal() {
-    updateMusicModal();
-    openModal('musicModal');
+    // 如果有播放列表，直接打开全屏播放器；否则打开搜索
+    if (window.QISHMusic && window.QISHMusic.getState && window.QISHMusic.getState().playlist && window.QISHMusic.getState().playlist.length > 0) {
+        if (typeof openFullscreen === "function") {
+            openFullscreen();
+        } else if (window.QISHMusic && window.QISHMusic.openFullscreen) {
+            window.QISHMusic.openFullscreen();
+        } else {
+            updateMusicModal();
+            openModal('musicModal');
+        }
+    } else {
+        updateMusicModal();
+        openModal('musicModal');
+    }
 }
 function updateMusicModal() {
     const titleEl = document.querySelector('.bubble-music-title');
@@ -381,8 +396,8 @@ function updateMusicModal() {
     if (mmIcon && iconEl) mmIcon.textContent = iconEl.textContent;
     if (mmPlayBtn) {
         const miniPlay = document.getElementById('qmMiniPlay');
-        const playing = miniPlay && miniPlay.textContent === '⏸';
-        mmPlayBtn.textContent = playing ? '⏸' : '▶';
+        const playing = miniPlay && miniPlay.textContent === '❚❚';
+        mmPlayBtn.textContent = playing ? '❚❚' : '►';
     }
 }
 function musicModalToggle() {
@@ -439,33 +454,6 @@ function musicModalNext() {
     }
 })();
 
-// ========== 在线人数（Supabase Presence）==========
-(function updateOnlineCount() {
-    const el = document.getElementById('onlineCount');
-    function waitSb(cb) {
-        if (window.supabaseClient) cb(window.supabaseClient);
-        else setTimeout(() => waitSb(cb), 100);
-    }
-    waitSb(async (sb) => {
-        try {
-            const channel = sb.channel('home-online');
-            channel.on('presence', { event: 'sync' }, () => {
-                const state = channel.presenceState();
-                const count = Object.keys(state).length;
-                el.textContent = count > 0 ? count : '1';
-            }).subscribe(async (status) => {
-                if (status === 'SUBSCRIBED') {
-                    const { data: { user } } = await sb.auth.getUser();
-                    const uid = user ? user.id : 'guest-' + Math.random().toString(36).slice(2, 8);
-                    await channel.track({ user_id: uid, online_at: new Date().toISOString() });
-                }
-            });
-        } catch (e) {
-            el.textContent = '1';
-        }
-    });
-})();
-
 // ========== 今日追番数量（Bangumi API）==========
 (function loadTodayAnime() {
     const countEl = document.getElementById('animeCount');
@@ -515,10 +503,22 @@ function loadCustomUI() {
     try {
         var cfg = JSON.parse(localStorage.getItem(UI_EDIT_KEY) || '{}');
         var hasPosition = false;
+        // 先恢复自定义气泡（在 assignBubbleIds 之前）
+        if (cfg._customBubbles && Array.isArray(cfg._customBubbles)) {
+            cfg._customBubbles.forEach(function (cb) {
+                if (!cb || typeof cb !== 'object') return;
+                createCustomBubble(cb, false);
+            });
+        }
+        assignBubbleIds();
         var bubbles = document.querySelectorAll('.bubble-circle');
         bubbles.forEach(function (b) {
             var id = b.dataset.uiId;
             if (cfg[id]) {
+                if (cfg[id].hidden) {
+                    b.style.display = 'none';
+                    return;
+                }
                 if (cfg[id].w) b.style.width = cfg[id].w + 'px';
                 if (cfg[id].h) b.style.height = cfg[id].h + 'px';
                 if (cfg[id].r !== undefined) b.style.borderRadius = cfg[id].r + '%';
@@ -535,6 +535,29 @@ function loadCustomUI() {
         }
     } catch (e) { console.warn('加载自定义UI失败', e); }
 }
+
+// 创建自定义气泡 - 和原生气泡完全相同的类名和结构
+function createCustomBubble(data, animate) {
+    var cluster = document.getElementById('customBubbleCluster') || document.querySelector('.bubble-cluster');
+    if (!cluster) return null;
+    var size = data.w || data.h || 100;
+    var fontSize = data.fontSize || Math.max(10, Math.round(size * 0.13));
+    var hrefAttr = data.href ? 'href="' + data.href + '"' : '';
+    var targetAttr = data.target ? 'target="' + data.target + '"' : '';
+    // 和原生气泡完全相同的类名，额外用 data-custom 识别
+    var styleAttr = 'width:' + size + 'px;height:' + size + 'px;animation-delay:0s;';
+    if (data.x !== undefined && data.y !== undefined) {
+        styleAttr += 'left:' + data.x + 'px;top:' + data.y + 'px;';
+    }
+    var html = '<a class="bubble-circle bubble-sm bubble-in" ' + hrefAttr + ' ' + targetAttr +
+        ' style="' + styleAttr + '" data-custom="1" data-label="' + (data.label || '新气泡') + '" data-href="' + (data.href || '') + '">' +
+        '<div class="bubble-label" style="font-size:' + fontSize + 'px;font-weight:600;">' + (data.label || '新气泡') + '</div>' +
+        '</a>';
+    cluster.insertAdjacentHTML('beforeend', html);
+    var newBubble = cluster.lastElementChild;
+    return newBubble;
+}
+
 loadCustomUI();
 
 // 进入编辑模式
@@ -584,6 +607,12 @@ function exitEditMode(save) {
     } else {
         // 取消：恢复原始布局
         document.body.classList.remove('ui-custom');
+        // 移除本次编辑添加的自定义气泡
+        document.querySelectorAll('[data-custom="1"]').forEach(function (b) { b.remove(); });
+        // 恢复所有被隐藏的气泡
+        document.querySelectorAll('.bubble-circle').forEach(function (b) {
+            b.style.display = '';
+        });
         if (uiOriginalConfig) applyBubbleConfig(uiOriginalConfig);
         document.querySelectorAll('.bubble-circle').forEach(function (b) {
             b.style.left = '';
@@ -607,9 +636,26 @@ function exitEditMode(save) {
 // 收集气泡配置
 function collectBubbleConfig() {
     var cfg = {};
+    var customBubbles = [];
     document.querySelectorAll('.bubble-circle').forEach(function (b) {
         var id = b.dataset.uiId;
         if (!id) return;
+        // 检查是否被隐藏
+        if (b.style.display === 'none') {
+            cfg[id] = { hidden: true };
+            return;
+        }
+        // 收集自定义气泡
+        if (b.dataset.custom === '1') {
+            customBubbles.push({
+                label: b.dataset.label || '',
+                href: b.dataset.href || '',
+                w: parseInt(b.style.width) || b.offsetWidth,
+                h: parseInt(b.style.height) || b.offsetHeight,
+                x: b.style.left ? parseInt(b.style.left) : undefined,
+                y: b.style.top ? parseInt(b.style.top) : undefined
+            });
+        }
         var w = parseInt(b.style.width) || b.offsetWidth;
         var h = parseInt(b.style.height) || b.offsetHeight;
         var r = 50;
@@ -624,6 +670,9 @@ function collectBubbleConfig() {
         }
         cfg[id] = entry;
     });
+    if (customBubbles.length > 0) {
+        cfg._customBubbles = customBubbles;
+    }
     return cfg;
 }
 
@@ -695,6 +744,7 @@ function showBubblePanel(b) {
     var h = parseInt(b.style.height) || b.offsetHeight;
     var r = 50;
     if (b.style.borderRadius) r = parseInt(b.style.borderRadius) || 50;
+    var isCustom = b.dataset.custom === '1';
     panel.innerHTML =
         '<div style="font-weight:700;margin-bottom:10px;color:var(--text-main);">调节气泡</div>' +
         '<label>宽度 <span class="panel-val" id="uiValW">' + w + '</span></label>' +
@@ -702,7 +752,8 @@ function showBubblePanel(b) {
         '<label>高度 <span class="panel-val" id="uiValH">' + h + '</span></label>' +
         '<input type="range" id="uiRangeH" min="40" max="320" value="' + h + '">' +
         '<label>圆角 <span class="panel-val" id="uiValR">' + r + '%</span></label>' +
-        '<input type="range" id="uiRangeR" min="0" max="50" value="' + r + '">';
+        '<input type="range" id="uiRangeR" min="0" max="50" value="' + r + '">' +
+        '<button class="ui-bubble-delete" id="uiDeleteBtn" style="margin-top:12px;width:100%;padding:8px;border:none;border-radius:8px;background:#ef4444;color:#fff;font-size:13px;cursor:pointer;font-weight:600;">' + (isCustom ? '删除此气泡' : '隐藏此气泡') + '</button>';
     document.body.appendChild(panel);
     // 定位到气泡旁边
     var rect = b.getBoundingClientRect();
@@ -721,6 +772,21 @@ function showBubblePanel(b) {
         b.style.borderRadius = e.target.value + '%';
         panel.querySelector('#uiValR').textContent = e.target.value + '%';
     });
+    // 删除/隐藏按钮
+    var delBtn = panel.querySelector('#uiDeleteBtn');
+    if (delBtn) {
+        delBtn.addEventListener('click', function () {
+            var wasCustom = b.dataset.custom === '1';
+            if (wasCustom) {
+                b.remove();
+            } else {
+                b.style.display = 'none';
+            }
+            removeBubblePanel();
+            uiSelectedBubble = null;
+            showEditHint('气泡已' + (wasCustom ? '删除' : '隐藏') + '，保存后生效');
+        });
+    }
 }
 function removeBubblePanel() {
     var p = document.getElementById('uiBubblePanel');
@@ -735,6 +801,7 @@ function showEditToolbar() {
     bar.id = 'uiEditToolbar';
     bar.innerHTML =
         '<span style="color:var(--text-sub);">自定义UI模式</span>' +
+        '<button class="ui-edit-add" onclick="showAddBubbleModal()" style="background:#22c55e;color:#fff;">+ 添加气泡</button>' +
         '<button class="ui-edit-reset" onclick="resetCustomUI()">恢复默认</button>' +
         '<button class="ui-edit-cancel" onclick="exitEditMode(false)">取消</button>' +
         '<button class="ui-edit-save" onclick="exitEditMode(true)">保存</button>';
@@ -757,10 +824,106 @@ function removeEditHint() {
     var h = document.getElementById('uiEditHint');
     if (h) h.remove();
 }
+
+// 添加气泡弹窗
+function showAddBubbleModal() {
+    hideAddBubbleModal();
+    var mask = document.createElement('div');
+    mask.className = 'ui-add-mask';
+    mask.id = 'uiAddMask';
+    mask.style.cssText = 'position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;';
+    mask.onclick = function (e) { if (e.target === mask) hideAddBubbleModal(); };
+    var box = document.createElement('div');
+    box.style.cssText = 'background:var(--card-bg,#fff);border-radius:16px;padding:24px;width:90%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,0.3);';
+    box.innerHTML =
+        '<div style="font-weight:700;font-size:16px;margin-bottom:16px;color:var(--text-main);">添加新气泡</div>' +
+        '<label style="display:block;font-size:13px;color:var(--text-sub);margin-bottom:6px;">选择页面（快速填充）</label>' +
+        '<select id="uiAddPage" style="width:100%;padding:10px 12px;border:1px solid var(--card-border,rgba(0,0,0,0.1));border-radius:8px;margin-bottom:14px;font-size:14px;box-sizing:border-box;background:var(--input-bg,#f8fafc);color:var(--text-main);">' +
+        '<option value="">-- 自定义 --</option>' +
+        '<option value="index.html|首页">首页</option>' +
+        '<option value="about.html|关于我">关于我</option>' +
+        '<option value="timeline.html|个人历程">个人历程</option>' +
+        '<option value="projects.html|我的项目">我的项目</option>' +
+        '<option value="announce.html|公告">公告</option>' +
+        '<option value="character.html|角色">角色</option>' +
+        '<option value="chat.html|聊天室">聊天室</option>' +
+        '<option value="album.html|成员相册">成员相册</option>' +
+        '<option value="friends.html|友链">友链</option>' +
+        '<option value="diary.html|动态">动态</option>' +
+        '<option value="userlist.html|用户列表">用户列表</option>' +
+        '<option value="profile.html|个人资料">个人资料</option>' +
+        '<option value="dashboard.html|数据看板">数据看板</option>' +
+        '<option value="anime.html|追番表">追番表</option>' +
+        '<option value="rhythm4k.html|音游">音游</option>' +
+        '<option value="maimai.html|Maimai">Maimai</option>' +
+        '<option value="game-watermelon.html|合成大千世">合成大千世</option>' +
+        '<option value="auth.html|登录">登录/注册</option>' +
+        '</select>' +
+        '<label style="display:block;font-size:13px;color:var(--text-sub);margin-bottom:6px;">显示文字</label>' +
+        '<input type="text" id="uiAddLabel" placeholder="例如：博客" style="width:100%;padding:10px 12px;border:1px solid var(--card-border,rgba(0,0,0,0.1));border-radius:8px;margin-bottom:14px;font-size:14px;box-sizing:border-box;background:var(--input-bg,#f8fafc);color:var(--text-main);">' +
+        '<label style="display:block;font-size:13px;color:var(--text-sub);margin-bottom:6px;">跳转链接（可选）</label>' +
+        '<input type="text" id="uiAddHref" placeholder="例如：blog.html 或 https://..." style="width:100%;padding:10px 12px;border:1px solid var(--card-border,rgba(0,0,0,0.1));border-radius:8px;margin-bottom:14px;font-size:14px;box-sizing:border-box;background:var(--input-bg,#f8fafc);color:var(--text-main);">' +
+        '<label style="display:block;font-size:13px;color:var(--text-sub);margin-bottom:6px;">大小：<span id="uiAddSizeVal">100</span>px</label>' +
+        '<input type="range" id="uiAddSize" min="60" max="200" value="100" style="width:100%;margin-bottom:20px;">' +
+        '<div style="display:flex;gap:10px;">' +
+        '<button onclick="hideAddBubbleModal()" style="flex:1;padding:10px;border:none;border-radius:8px;background:var(--accent-soft,rgba(0,0,0,0.06));color:var(--text-sub);font-size:14px;cursor:pointer;font-weight:600;">取消</button>' +
+        '<button onclick="confirmAddBubble()" style="flex:1;padding:10px;border:none;border-radius:8px;background:var(--accent,#60a5fa);color:#fff;font-size:14px;cursor:pointer;font-weight:600;">添加</button>' +
+        '</div>';
+    mask.appendChild(box);
+    document.body.appendChild(mask);
+    // 页面选择下拉框联动
+    var pageSelect = mask.querySelector('#uiAddPage');
+    var labelInput = mask.querySelector('#uiAddLabel');
+    var hrefInput = mask.querySelector('#uiAddHref');
+    pageSelect.addEventListener('change', function () {
+        if (pageSelect.value) {
+            var parts = pageSelect.value.split('|');
+            hrefInput.value = parts[0];
+            labelInput.value = parts[1];
+        }
+    });
+    var sizeSlider = mask.querySelector('#uiAddSize');
+    var sizeVal = mask.querySelector('#uiAddSizeVal');
+    sizeSlider.addEventListener('input', function () { sizeVal.textContent = sizeSlider.value; });
+    setTimeout(function () { mask.querySelector('#uiAddLabel').focus(); }, 100);
+}
+function hideAddBubbleModal() {
+    var m = document.getElementById('uiAddMask');
+    if (m) m.remove();
+}
+function confirmAddBubble() {
+    var label = document.getElementById('uiAddLabel').value.trim();
+    var href = document.getElementById('uiAddHref').value.trim();
+    var size = parseInt(document.getElementById('uiAddSize').value);
+    if (!label) { alert('请输入显示文字'); return; }
+    var newBubble = createCustomBubble({
+        label: label,
+        href: href || '',
+        w: size,
+        h: size
+    }, true);
+    if (newBubble) {
+        assignBubbleIds();
+        var page = document.querySelector('.bubble-page');
+        var pageRect = page.getBoundingClientRect();
+        var rect = newBubble.getBoundingClientRect();
+        newBubble.style.left = (rect.left - pageRect.left) + 'px';
+        newBubble.style.top = (rect.top - pageRect.top) + 'px';
+        newBubble.style.marginTop = '0';
+        newBubble.addEventListener('mousedown', startBubbleDrag);
+        newBubble.addEventListener('click', uiBlockClick, true);
+        showEditHint('气泡已添加，可以拖拽移动位置');
+    }
+    hideAddBubbleModal();
+}
 function resetCustomUI() {
+    if (!confirm('确定恢复默认布局？所有自定义修改（包括隐藏和添加的气泡）将被清除。')) return;
     localStorage.removeItem(UI_EDIT_KEY);
-    document.body.classList.remove('ui-custom');
+    // 移除自定义气泡
+    document.querySelectorAll('[data-custom="1"]').forEach(function (b) { b.remove(); });
+    // 恢复所有被隐藏的气泡
     document.querySelectorAll('.bubble-circle').forEach(function (b) {
+        b.style.display = '';
         b.style.width = '';
         b.style.height = '';
         b.style.borderRadius = '';
@@ -768,11 +931,24 @@ function resetCustomUI() {
         b.style.top = '';
         b.style.marginTop = '';
     });
-    showEditHint('已恢复默认，点击保存生效');
+    document.body.classList.remove('ui-custom');
+    // 重新进入编辑模式以刷新状态
+    exitEditMode(false);
+    setTimeout(enterEditMode, 100);
+    showEditHint('已恢复默认布局');
 }
 // 暴露给下拉菜单调用
 window.enterEditMode = enterEditMode;
 window.exitEditMode = exitEditMode;
 </script>
+
+<!-- 右下角Q版小人 -->
+<div class="char-wrap char-drifting" id="rightImage" style="position:fixed;right:90px;bottom:90px;z-index:8000;cursor:pointer;">
+  <img src="chise-char.gif" id="rightCharImg" style="width:110px;height:110px;display:block;">
+  <div class="char-bubble" id="charBubble">
+    <div class="char-bubble-text"></div>
+  </div>
+</div>
+
 </body>
 </html>

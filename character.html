@@ -137,8 +137,8 @@
         position: absolute;
         left: 21.5%;
         top: 50.5%;
-        width: 32.0%;
-        height: 10.0%;
+        width: 52.0%;
+        height: 60.0%;
         transform: translateZ(30px);
         display: flex;
         align-items: center;
@@ -146,7 +146,7 @@
     }
     /* 真实眼球图片（在眼眶内随鼠标移动） */
     .char25-eye-img {
-        width: 40%;
+        width: 50%;
         aspect-ratio: 701 / 715;
         object-fit: contain;
         transition: transform 0.1s ease-out;
@@ -154,22 +154,7 @@
         filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35));
     }
     /* 眼睛光晕 */
-    .char25-eye-glow {
-        position: absolute;
-        width: 60%;
-        aspect-ratio: 1;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(147,197,253,0.3), transparent 70%);
-        opacity: 0;
-        transition: opacity 0.2s;
-        pointer-events: none;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-    }
-    .char25-eye-socket.active .char25-eye-glow {
-        opacity: 1;
-    }
+
 
     /* 角色名字/标题 */
     .char25-title {
@@ -265,6 +250,8 @@
             <a href="character.html" class="nav-active">角色</a>
             <a href="chat.html">聊天室</a>
             <a href="album.html">成员相册</a>
+            <a href="friends.html">友链</a>
+            <a href="diary.html">动态</a>
             <a href="userlist.html">用户列表</a>
             <a href="profile.html">个人资料</a>
             <div class="sidebar-nav-label">账号</div>

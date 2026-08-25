@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>友链 - QISH</title>
+    <link rel="icon" href="avatar.jpg">
+    <link rel="stylesheet" href="style.css">
+    <script>
+    (function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="aqua"||t==="custom")?t:"aqua");}catch(e){document.documentElement.setAttribute("data-theme","aqua");}})();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
+    <script>
+    (function initSupabase() {
+        window.SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
+        window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
+        function tryCreate() {
+            if (window.supabase && typeof window.supabase.createClient === "function") {
+                window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+                    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage, storageKey: "qish-auth-v1" }
+                });
+            } else { setTimeout(tryCreate, 80); }
+        }
+        tryCreate();
+    })();
+    </script>
+    <script src="common.js" defer></script>
+    <style>
+        .friends-hero {
+            text-align: center;
+            padding: 40px 20px 30px;
+        }
+        .friends-hero h1 {
+            font-size: 32px;
+            margin: 0 0 8px;
+            background: linear-gradient(135deg, var(--accent, #60a5fa), #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .friends-hero p {
+            color: var(--text-sub, #64748b);
+            margin: 0;
+            font-size: 14px;
+        }
+        .friends-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 16px;
+            padding: 0 20px 40px;
+        }
+        .friend-card {
+            background: var(--card-bg, rgba(255,255,255,0.7));
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border, rgba(255,255,255,0.3));
+            border-radius: 16px;
+            padding: 20px;
+            text-decoration: none;
+            color: inherit;
+            transition: all .3s cubic-bezier(.22,1,.36,1);
+            display: flex;
+            gap: 14px;
+            align-items: flex-start;
+            position: relative;
+            overflow: hidden;
+        }
+        .friend-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent, #60a5fa), #a78bfa);
+            opacity: 0;
+            transition: opacity .3s;
+        }
+        .friend-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+            border-color: var(--accent, #60a5fa);
+        }
+        .friend-card:hover::before { opacity: 1; }
+        .friend-avatar {
+            width: 52px; height: 52px;
+            border-radius: 14px;
+            flex-shrink: 0;
+            background: linear-gradient(135deg, var(--accent, #60a5fa), #a78bfa);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: #fff;
+            font-weight: 700;
+            overflow: hidden;
+        }
+        .friend-avatar img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+        }
+        .friend-info { flex: 1; min-width: 0; }
+        .friend-name {
+            font-weight: 700;
+            font-size: 15px;
+            margin: 0 0 4px;
+            color: var(--text-main, #1e293b);
+        }
+        .friend-desc {
+            font-size: 12px;
+            color: var(--text-sub, #64748b);
+            margin: 0 0 8px;
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .friend-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .friend-tag {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: rgba(96,165,250,0.12);
+            color: var(--accent, #60a5fa);
+            font-weight: 600;
+        }
+        .friend-url {
+            font-size: 11px;
+            color: var(--text-sub, #94a3b8);
+            margin-top: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .friends-section-title {
+            padding: 0 20px;
+            margin: 24px 0 12px;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-sub, #64748b);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .friends-section-title::before {
+            content: '';
+            width: 3px; height: 14px;
+            background: var(--accent, #60a5fa);
+            border-radius: 2px;
+        }
+        .apply-friend-btn {
+            display: block;
+            margin: 0 auto 40px;
+            padding: 12px 28px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, var(--accent, #60a5fa), #a78bfa);
+            color: #fff;
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform .2s, box-shadow .2s;
+        }
+        .apply-friend-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(96,165,250,0.35);
+        }
+        .friend-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-sub, #94a3b8);
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <button class="nav-fab" id="navFab" aria-label="导航菜单"><img src="avatar.jpg" alt="菜单" id="navAvatar"></button>
+    <div class="nav-fab-ring" id="navFabRing"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="avatar.jpg" alt="头像" class="sidebar-avatar" id="sidebarAvatar">
+            <div class="sidebar-user-info">
+                <div class="sidebar-username" id="sidebarUsername">QISH</div>
+                <div class="sidebar-status" id="sidebarStatus">未登录</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="sidebar-nav-label">导航</div>
+            <a href="index.html">首页</a>
+            <a href="about.html">关于我</a>
+            <a href="timeline.html">个人历程</a>
+            <a href="projects.html">我的项目</a>
+            <a href="announce.html">公告</a>
+            <a href="character.html">角色</a>
+            <a href="chat.html">聊天室</a>
+            <a href="album.html">成员相册</a>
+            <a href="friends.html" class="nav-active">友链</a>
+            <a href="userlist.html">用户列表</a>
+            <a href="profile.html">个人资料</a>
+            <div class="sidebar-nav-label">账号</div>
+            <a href="auth.html" id="sidebarAuthLink">登录/注册</a>
+            <button class="sidebar-logout-btn" id="sidebarLogoutBtn" style="display:none;">退出登录</button>
+        </nav>
+    </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <main class="main-content">
+        <div class="container">
+            <a href="index.html" class="back-btn" style="margin-bottom:16px;">← 返回首页</a>
+
+            <div class="friends-hero">
+                <h1>❀ 友情链接</h1>
+                <p>认识有趣的灵魂，交换彼此的小宇宙</p>
+            </div>
+
+            <div class="friends-section-title">好朋友们</div>
+            <div class="friends-grid" id="friendsGrid">
+                <div class="friend-empty">加载中...</div>
+            </div>
+
+            <button class="apply-friend-btn" id="applyFriendBtn">✦ 申请友链</button>
+        </div>
+    </main>
+
+    <script>
+    // 友链数据（静态配置，后续可接 Supabase）
+    const FRIENDS_DATA = [
+        { name: "QISH 主站", url: "https://qish.example.com", desc: "这里是 QISH 的个人小站，记录项目、分享生活、和朋友们聊天。", avatar: "avatar.jpg", tags: ["个人站", "全栈"] },
+        { name: "示例友链 A", url: "https://example-a.com", desc: "一个热爱技术和生活的开发者博客，分享前端、设计和日常。", avatar: "", tags: ["博客", "前端"] },
+        { name: "示例友链 B", url: "https://example-b.com", desc: "二次元爱好者的聚集地，动漫、游戏、音游攻略一网打尽。", avatar: "", tags: ["二次元", "游戏"] },
+        { name: "示例友链 C", url: "https://example-c.com", desc: "独立开发者的产品实验室，各种有趣的小工具和实验性项目。", avatar: "", tags: ["独立开发", "工具"] },
+    ];
+
+    function renderFriends() {
+        const grid = document.getElementById("friendsGrid");
+        if (!FRIENDS_DATA.length) {
+            grid.innerHTML = '<div class="friend-empty">还没有友链，快来申请第一个吧 ~</div>';
+            return;
+        }
+        grid.innerHTML = FRIENDS_DATA.map(f => {
+            const avatarHtml = f.avatar
+                ? `<img src="${f.avatar}" alt="${f.name}">`
+                : f.name.charAt(0).toUpperCase();
+            const tagsHtml = (f.tags || []).map(t => `<span class="friend-tag">${t}</span>`).join("");
+            const hostName = (() => { try { return new URL(f.url).hostname; } catch(e) { return f.url; } })();
+            return `<a href="${f.url}" target="_blank" rel="noopener" class="friend-card">
+                <div class="friend-avatar">${avatarHtml}</div>
+                <div class="friend-info">
+                    <div class="friend-name">${f.name}</div>
+                    <div class="friend-desc">${f.desc}</div>
+                    <div class="friend-tags">${tagsHtml}</div>
+                    <div class="friend-url">${hostName}</div>
+                </div>
+            </a>`;
+        }).join("");
+    }
+
+    document.getElementById("applyFriendBtn").addEventListener("click", () => {
+        alert("申请友链请联系站长 ~\n\n邮箱: qish@example.com\n\n请提供：站点名称、网址、简介、头像、标签");
+    });
+
+    // 页面加载完成后渲染
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", renderFriends);
+    } else {
+        renderFriends();
+    }
+    </script>
+</body>
+</html>

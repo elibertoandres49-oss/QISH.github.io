@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -45,16 +45,8 @@
         position: relative;
     }
     .user-card:hover { transform: translateY(-4px); box-shadow: var(--card-shadow-hover); }
-    .user-card .online-dot {
-        position: absolute;
-        top: 14px;
-        right: 14px;
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: #94a3b8;
-    }
-    .user-card.online .online-dot { background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,0.5); }
+
+
     .user-avatar {
         width: 64px;
         height: 64px;
@@ -108,7 +100,10 @@
             <a href="announce.html">公告</a>
             <a href="character.html">角色</a>
             <a href="chat.html">聊天室</a>
-            <a href="album.html">成员相册</a>`n            <a href="userlist.html" class="nav-active">用户列表</a>
+            <a href="album.html">成员相册</a>
+            <a href="friends.html">友链</a>
+            <a href="diary.html">动态</a>
+            <a href="userlist.html" class="nav-active">用户列表</a>
             <a href="profile.html">个人资料</a>
             <div class="sidebar-nav-label">账号</div>
             <a href="auth.html" id="sidebarAuthLink">登录/注册</a>
@@ -125,7 +120,6 @@
 
             <div class="stats-bar">
                 <div class="stat-pill"><span class="num" id="totalCount">0</span>总用户</div>
-                <div class="stat-pill"><span class="num" id="onlineCount">0</span>在线</div>
             </div>
 
             <div class="search-box">
@@ -134,15 +128,10 @@
 
             <div class="user-grid" id="userGrid"></div>
         </div>
-        <footer><p>© 2026 QISH 小站 · Made with ❤️</p></footer>
+        <footer><p>© 2026 QISH 小站 · Made with ♥</p></footer>
     </main>
 
-    <div class="right-image" id="rightImage">
-        <span class="char-inner"><img src="qishi-expr-normal.gif" alt="Q版小人" id="rightCharImg"></span>
-        <div class="char-bubble" id="charBubble" aria-hidden="true">
-            <span class="char-bubble-text">大家好呀~</span>
-        </div>
-    </div>
+
 
     <div class="side-panel" id="sidePanel">
         <div class="side-panel-content">
@@ -152,7 +141,8 @@
             <p class="panel-desc">ovo</p>
             <p class="panel-email" id="panelEmail" style="display:none;"></p>
             <div class="panel-links" id="panelLinksBox">
-                <a href="index.html">首页</a><a href="about.html">关于我</a><a href="projects.html">我的项目</a>`n            <a href="userlist.html">用户列表</a><a href="profile.html">个人资料</a><a href="./album.html">相册</a>
+                <a href="index.html">首页</a><a href="about.html">关于我</a><a href="projects.html">我的项目</a>
+            <a href="userlist.html">用户列表</a><a href="profile.html">个人资料</a><a href="./album.html">相册</a>
                 <a href="chat.html">聊天室</a><a href="auth.html">登录/注册</a>
             </div>
         </div>
@@ -163,13 +153,19 @@
 <script>
 const SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage, storageKey: "qish-auth-v1" }
-});
-window.supabaseClient = sb;
+let sb = null;
+(function initSb() {
+    if (window.supabase && typeof window.supabase.createClient === "function") {
+        sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage, storageKey: "qish-auth-v1" }
+        });
+        window.supabaseClient = sb;
+    } else {
+        setTimeout(initSb, 80);
+    }
+})();
 
 let allUsers = [];
-let onlineIds = new Set();
 
 function escapeHtml(s) {
     return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
@@ -180,13 +176,11 @@ function renderUsers(filter) {
     const f = (filter || "").toLowerCase().trim();
     const list = f ? allUsers.filter(u => (u.nickname || "").toLowerCase().includes(f)) : allUsers;
     grid.innerHTML = list.map(u => {
-        const isOnline = onlineIds.has(u.user_id);
         const avatar = u.avatar_url || "avatar.jpg";
-        return '<div class="user-card' + (isOnline ? ' online' : '') + '">' +
-            '<div class="online-dot"></div>' +
+        return '<div class="user-card">' +
             '<img src="' + escapeHtml(avatar) + '" class="user-avatar" alt="">' +
             '<div class="user-name">' + escapeHtml(u.nickname || "匿名用户") + '</div>' +
-            '<div class="user-bio">' + escapeHtml(u.bio || (isOnline ? "在线中" : "离线")) + '</div>' +
+            '<div class="user-bio">' + escapeHtml(u.bio || "") + '</div>' +
             '</div>';
     }).join("") || '<div style="grid-column:1/-1;text-align:center;color:var(--text-sub);padding:40px;">暂无用户</div>';
 }
@@ -199,27 +193,11 @@ async function loadUsers() {
     renderUsers();
 }
 
-function subscribePresence() {
-    const channel = sb.channel("online-users");
-    channel.on("presence", { event: "sync" }, () => {
-        const state = channel.presenceState();
-        onlineIds = new Set(Object.keys(state));
-        document.getElementById("onlineCount").textContent = onlineIds.size;
-        renderUsers(document.getElementById("searchInput").value);
-    }).subscribe(async (status) => {
-        if (status === "SUBSCRIBED") {
-            const { data: { user } } = await sb.auth.getUser();
-            if (user) {
-                await channel.track({ user_id: user.id, online_at: new Date().toISOString() });
-            }
-        }
-    });
-}
+
 
 document.getElementById("searchInput").addEventListener("input", e => renderUsers(e.target.value));
 
 loadUsers();
-subscribePresence();
 </script>
 </body>
 </html>

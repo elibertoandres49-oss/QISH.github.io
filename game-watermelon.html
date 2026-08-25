@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>合成大千世 - QISH</title>
+    <link rel="icon" href="avatar.jpg">
+    <link rel="stylesheet" href="style.css">
+    <script>
+    (function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="aqua"||t==="custom")?t:"aqua");}catch(e){document.documentElement.setAttribute("data-theme","aqua");}})();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
+    <script>
+    (function initSupabase() {
+        window.SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
+        window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
+        function tryCreate() {
+            if (window.supabase && typeof window.supabase.createClient === "function") {
+                window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+                    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage, storageKey: "qish-auth-v1" }
+                });
+            } else { setTimeout(tryCreate, 80); }
+        }
+        tryCreate();
+    })();
+    </script>
+    <script src="common.js" defer></script>
+    <style>
+    .game-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        margin-top: 20px;
+    }
+    .game-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        max-width: 420px;
+    }
+    .game-score {
+        background: var(--card-bg);
+        backdrop-filter: blur(16px);
+        border: 1px solid var(--card-border);
+        border-radius: 14px;
+        padding: 10px 20px;
+        text-align: center;
+    }
+    .game-score-label {
+        font-size: 11px;
+        color: var(--text-sub);
+        margin-bottom: 2px;
+    }
+    .game-score-value {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--accent);
+    }
+    .game-best {
+        background: var(--card-bg);
+        backdrop-filter: blur(16px);
+        border: 1px solid var(--card-border);
+        border-radius: 14px;
+        padding: 10px 20px;
+        text-align: center;
+    }
+    .game-best-label {
+        font-size: 11px;
+        color: var(--text-sub);
+        margin-bottom: 2px;
+    }
+    .game-best-value {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-main);
+    }
+    .game-canvas-wrap {
+        position: relative;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        border: 2px solid var(--card-border);
+    }
+    #gameCanvas {
+        display: block;
+        background: linear-gradient(180deg, var(--card-bg) 0%, var(--bg-gradient) 100%);
+        cursor: pointer;
+        touch-action: none;
+    }
+    .game-next {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--card-bg);
+        backdrop-filter: blur(16px);
+        border: 1px solid var(--card-border);
+        border-radius: 14px;
+        padding: 8px 16px;
+    }
+    .game-next-label {
+        font-size: 12px;
+        color: var(--text-sub);
+    }
+    .game-next-fruit {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid rgba(255,255,255,0.3);
+    }
+    .game-controls {
+        display: flex;
+        gap: 12px;
+    }
+    .game-btn {
+        padding: 10px 24px;
+        border-radius: 12px;
+        border: 1px solid var(--card-border);
+        background: var(--card-bg);
+        backdrop-filter: blur(16px);
+        color: var(--text-main);
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .game-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--card-shadow);
+    }
+    .game-btn.primary {
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: #fff;
+        border: none;
+    }
+    .game-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0,0,0,0.6);
+        backdrop-filter: blur(8px);
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        z-index: 10;
+    }
+    .game-overlay.show {
+        display: flex;
+    }
+    .game-overlay-title {
+        font-size: 32px;
+        font-weight: 800;
+        color: #fff;
+    }
+    .game-overlay-score {
+        font-size: 20px;
+        color: rgba(255,255,255,0.9);
+    }
+    .game-tip {
+        font-size: 12px;
+        color: var(--text-sub);
+        text-align: center;
+        max-width: 400px;
+        line-height: 1.6;
+    }
+    </style>
+</head>
+<body>
+    <button class="nav-fab" id="navFab" aria-label="导航菜单"><img src="avatar.jpg" alt="菜单" id="navAvatar"></button>
+    <div class="nav-fab-ring" id="navFabRing"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="avatar.jpg" alt="头像" class="sidebar-avatar" id="sidebarAvatar">
+            <div class="sidebar-user-info">
+                <div class="sidebar-username" id="sidebarUsername">QISH</div>
+                <div class="sidebar-status" id="sidebarStatus">未登录</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="sidebar-nav-label">导航</div>
+            <a href="index.html">首页</a>
+            <a href="about.html">关于我</a>
+            <a href="timeline.html">个人历程</a>
+            <a href="projects.html">我的项目</a>
+            <a href="chat.html">聊天室</a>
+            <a href="album.html">相册</a>
+            <a href="userlist.html">用户列表</a>
+            <a href="profile.html">个人资料</a>
+            <a href="auth.html">登录/注册</a>
+        </nav>
+    </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <main class="main-content">
+        <div class="container">
+            <a href="projects.html" class="back-btn" style="margin-bottom:16px;">← 返回项目</a>
+            <h1>● 合成大千世</h1>
+            <p>相同水果碰撞合成更大的水果，目标是合成大千世！</p>
+
+            <div class="game-container">
+                <div class="game-header">
+                    <div class="game-score">
+                        <div class="game-score-label">当前分数</div>
+                        <div class="game-score-value" id="scoreValue">0</div>
+                    </div>
+                    <div class="game-next">
+                        <span class="game-next-label">下一个</span>
+                        <div class="game-next-fruit" id="nextFruit"></div>
+                    </div>
+                    <div class="game-best">
+                        <div class="game-best-label">最高分</div>
+                        <div class="game-best-value" id="bestValue">0</div>
+                    </div>
+                </div>
+
+                <div class="game-canvas-wrap">
+                    <canvas id="gameCanvas" width="400" height="560"></canvas>
+                    <div class="game-overlay" id="gameOverlay">
+                        <div class="game-overlay-title" id="overlayTitle">游戏结束</div>
+                        <div class="game-overlay-score" id="overlayScore">得分：0</div>
+                        <button class="game-btn primary" onclick="restartGame()">再来一局</button>
+                    </div>
+                </div>
+
+                <div class="game-controls">
+                    <button class="game-btn" onclick="restartGame()">重新开始</button>
+                </div>
+
+                <p class="game-tip">
+                    玩法：移动鼠标/手指控制水果位置，点击/触摸释放水果。<br>
+                    两个相同的水果碰撞会合成更大的水果，水果堆到顶部线游戏结束。
+                </p>
+            </div>
+        </div>
+        <footer><p>© 2026 QISH 小站 · Made with ♥</p></footer>
+    </main>
+
+    <div class="side-panel" id="sidePanel">
+        <div class="side-panel-content">
+            <button class="close-btn" id="closePanel">×</button>
+            <img src="avatar.jpg" alt="头像" class="panel-avatar" id="panelAvatar">
+            <h2 id="panelUsername">QISH</h2>
+            <p class="panel-desc">ovo</p>
+            <div class="panel-links" id="panelLinksBox">
+                <a href="index.html">首页</a><a href="about.html">关于我</a><a href="projects.html">我的项目</a>
+                <a href="userlist.html">用户列表</a><a href="profile.html">个人资料</a><a href="./album.html">相册</a>
+                <a href="chat.html">聊天室</a><a href="auth.html">登录/注册</a>
+            </div>
+        </div>
+    </div>
+    <div class="overlay" id="overlay"></div>
+    <div class="mouse-glow" id="glow"></div>
+
+<script>
+// ========== 合成大千世游戏 ==========
+(function() {
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;
+    const H = canvas.height;
+
+    // 水果等级配置（从小到大）
+    const FRUITS = [
+        { radius: 14, color: '#8b5cf6', score: 1 },
+        { radius: 17, color: '#ef4444', score: 3 },
+        { radius: 22, color: '#f97316', score: 6 },
+        { radius: 26, color: '#eab308', score: 10 },
+        { radius: 30, color: '#84cc16', score: 15 },
+        { radius: 35, color: '#dc2626', score: 21 },
+        { radius: 40, color: '#fb7185', score: 28 },
+        { radius: 46, color: '#f59e0b', score: 36 },
+        { radius: 52, color: '#92400e', score: 45 },
+        { radius: 58, color: '#a3e635', score: 55 },
+        { radius: 66, color: '#22c55e', score: 66 }
+    ];
+
+    const GRAVITY = 0.35;
+    const BOUNCE = 0.3;
+    const FRICTION = 0.99;
+    const WALL_BOUNCE = 0.4;
+    const DANGER_LINE = 100;
+    const DROP_ZONE = 60;
+
+    let fruits = [];
+    let score = 0;
+    let best = parseInt(localStorage.getItem('watermelon_best') || '0');
+    let currentLevel = 0;
+    let nextLevel = 0;
+    let dropX = W / 2;
+    let canDrop = true;
+    let gameOver = false;
+    let dangerTimer = 0;
+    let rafId = null;
+
+    document.getElementById('bestValue').textContent = best;
+
+    function randomLevel() {
+        const r = Math.random();
+        if (r < 0.35) return 0;
+        if (r < 0.6) return 1;
+        if (r < 0.78) return 2;
+        if (r < 0.9) return 3;
+        if (r < 0.97) return 4;
+        return 5;
+    }
+
+    class Fruit {
+        constructor(x, y, level) {
+            this.x = x;
+            this.y = y;
+            this.vx = 0;
+            this.vy = 0;
+            this.level = level;
+            this.radius = FRUITS[level].radius;
+            this.mass = this.radius * this.radius;
+            this.merged = false;
+            this.dropTime = Date.now();
+        }
+
+        update() {
+            this.vy += GRAVITY;
+            this.vx *= FRICTION;
+            this.x += this.vx;
+            this.y += this.vy;
+
+            // 左右墙壁
+            if (this.x - this.radius < 0) {
+                this.x = this.radius;
+                this.vx = Math.abs(this.vx) * WALL_BOUNCE;
+            } else if (this.x + this.radius > W) {
+                this.x = W - this.radius;
+                this.vx = -Math.abs(this.vx) * WALL_BOUNCE;
+            }
+
+            // 底部
+            if (this.y + this.radius > H) {
+                this.y = H - this.radius;
+                this.vy = -Math.abs(this.vy) * BOUNCE;
+                if (Math.abs(this.vy) < 1) this.vy = 0;
+                this.vx *= 0.95;
+            }
+        }
+
+        draw() {
+            const f = FRUITS[this.level];
+            // 阴影
+            ctx.beginPath();
+            ctx.arc(this.x + 2, this.y + 3, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0,0,0,0.15)';
+            ctx.fill();
+            // 单一颜色填充
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = f.color;
+            ctx.fill();
+            // 边框
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+    }
+
+    function checkCollision(a, b) {
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        return dist < a.radius + b.radius;
+    }
+
+    function resolveCollision(a, b) {
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist === 0) return;
+
+        const nx = dx / dist;
+        const ny = dy / dist;
+        const overlap = a.radius + b.radius - dist;
+        const totalMass = a.mass + b.mass;
+
+        a.x -= nx * overlap * (b.mass / totalMass);
+        a.y -= ny * overlap * (b.mass / totalMass);
+        b.x += nx * overlap * (a.mass / totalMass);
+        b.y += ny * overlap * (a.mass / totalMass);
+
+        const dvx = b.vx - a.vx;
+        const dvy = b.vy - a.vy;
+        const velAlongNormal = dvx * nx + dvy * ny;
+        if (velAlongNormal > 0) return;
+
+        const restitution = 0.2;
+        const impulse = -(1 + restitution) * velAlongNormal / (1 / a.mass + 1 / b.mass);
+        a.vx -= impulse * nx / a.mass;
+        a.vy -= impulse * ny / a.mass;
+        b.vx += impulse * nx / b.mass;
+        b.vy += impulse * ny / b.mass;
+    }
+
+    function tryMerge(a, b) {
+        if (a.level !== b.level || a.merged || b.merged) return false;
+        if (a.level >= FRUITS.length - 1) return false;
+
+        a.merged = true;
+        b.merged = true;
+
+        const nx = (a.x + b.x) / 2;
+        const ny = (a.y + b.y) / 2;
+        const newLevel = a.level + 1;
+        const newFruit = new Fruit(nx, ny, newLevel);
+        newFruit.vy = -2;
+        fruits.push(newFruit);
+
+        score += FRUITS[newLevel].score;
+        updateScore();
+        return true;
+    }
+
+    function updateScore() {
+        document.getElementById('scoreValue').textContent = score;
+        if (score > best) {
+            best = score;
+            localStorage.setItem('watermelon_best', best);
+            document.getElementById('bestValue').textContent = best;
+        }
+    }
+
+    function updateNext() {
+        const el = document.getElementById('nextFruit');
+        const f = FRUITS[nextLevel];
+        el.style.background = f.color;
+        el.style.width = (f.radius * 2) + 'px';
+        el.style.height = (f.radius * 2) + 'px';
+        el.style.borderRadius = '50%';
+    }
+
+    function dropFruit() {
+        if (!canDrop || gameOver) return;
+        const f = new Fruit(dropX, DROP_ZONE, currentLevel);
+        fruits.push(f);
+        canDrop = false;
+        setTimeout(() => { canDrop = true; }, 300);
+
+        currentLevel = nextLevel;
+        nextLevel = randomLevel();
+        updateNext();
+    }
+
+    function checkGameOver() {
+        for (const f of fruits) {
+            if (Date.now() - f.dropTime > 1500 && f.y - f.radius < DANGER_LINE && f.vy < 1) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function endGame() {
+        gameOver = true;
+        document.getElementById('overlayTitle').textContent = '游戏结束';
+        document.getElementById('overlayScore').textContent = '得分：' + score;
+        document.getElementById('gameOverlay').classList.add('show');
+    }
+
+    function gameLoop() {
+        if (gameOver) return;
+
+        // 更新
+        for (const f of fruits) f.update();
+
+        // 碰撞检测和合成
+        for (let i = 0; i < fruits.length; i++) {
+            for (let j = i + 1; j < fruits.length; j++) {
+                if (fruits[i].merged || fruits[j].merged) continue;
+                if (checkCollision(fruits[i], fruits[j])) {
+                    if (!tryMerge(fruits[i], fruits[j])) {
+                        resolveCollision(fruits[i], fruits[j]);
+                    }
+                }
+            }
+        }
+
+        // 移除已合成的
+        fruits = fruits.filter(f => !f.merged);
+
+        // 游戏结束检测
+        if (checkGameOver()) {
+            dangerTimer++;
+            if (dangerTimer > 60) {
+                endGame();
+                return;
+            }
+        } else {
+            dangerTimer = 0;
+        }
+
+        // 渲染
+        ctx.clearRect(0, 0, W, H);
+
+        // 危险线
+        ctx.strokeStyle = 'rgba(239,68,68,0.5)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 6]);
+        ctx.beginPath();
+        ctx.moveTo(0, DANGER_LINE);
+        ctx.lineTo(W, DANGER_LINE);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // 水果
+        for (const f of fruits) f.draw();
+
+        // 预览水果
+        if (canDrop && !gameOver) {
+            const f = FRUITS[currentLevel];
+            ctx.globalAlpha = 0.7;
+            ctx.beginPath();
+            ctx.arc(dropX, DROP_ZONE, f.radius, 0, Math.PI * 2);
+            ctx.fillStyle = f.color;
+            ctx.fill();
+            ctx.globalAlpha = 1;
+
+            // 引导线
+            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(dropX, DROP_ZONE + f.radius);
+            ctx.lineTo(dropX, H);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        rafId = requestAnimationFrame(gameLoop);
+    }
+
+    function getPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = W / rect.width;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        return (clientX - rect.left) * scaleX;
+    }
+
+    canvas.addEventListener('mousemove', (e) => {
+        if (gameOver) return;
+        dropX = Math.max(FRUITS[currentLevel].radius, Math.min(W - FRUITS[currentLevel].radius, getPos(e)));
+    });
+
+    canvas.addEventListener('click', (e) => {
+        if (gameOver) return;
+        dropX = Math.max(FRUITS[currentLevel].radius, Math.min(W - FRUITS[currentLevel].radius, getPos(e)));
+        dropFruit();
+    });
+
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (gameOver) return;
+        dropX = Math.max(FRUITS[currentLevel].radius, Math.min(W - FRUITS[currentLevel].radius, getPos(e)));
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        if (gameOver) return;
+        dropFruit();
+    });
+
+    window.restartGame = function() {
+        fruits = [];
+        score = 0;
+        gameOver = false;
+        dangerTimer = 0;
+        canDrop = true;
+        currentLevel = randomLevel();
+        nextLevel = randomLevel();
+        dropX = W / 2;
+        updateScore();
+        updateNext();
+        document.getElementById('gameOverlay').classList.remove('show');
+        if (rafId) cancelAnimationFrame(rafId);
+        gameLoop();
+    };
+
+    // 初始化
+    currentLevel = randomLevel();
+    nextLevel = randomLevel();
+    updateNext();
+    gameLoop();
+})();
+</script>
+</body>
+</html>

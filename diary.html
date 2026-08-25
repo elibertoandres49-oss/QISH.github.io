@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动态 - QISH</title>
+    <link rel="icon" href="avatar.jpg">
+    <link rel="stylesheet" href="style.css">
+    <script>
+    (function(){try{var t=localStorage.getItem("qish_theme");document.documentElement.setAttribute("data-theme",(t==="light"||t==="dark"||t==="aqua"||t==="custom")?t:"aqua");}catch(e){document.documentElement.setAttribute("data-theme","aqua");}})();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
+    <script>
+    (function initSupabase() {
+        window.SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
+        window.SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
+        function tryCreate() {
+            if (window.supabase && typeof window.supabase.createClient === "function") {
+                window.supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY, {
+                    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage, storageKey: "qish-auth-v1" }
+                });
+            } else { setTimeout(tryCreate, 80); }
+        }
+        tryCreate();
+    })();
+    </script>
+    <script src="common.js" defer></script>
+    <style>
+        .diary-hero {
+            text-align: center;
+            padding: 40px 20px 24px;
+        }
+        .diary-hero h1 {
+            font-size: 32px;
+            margin: 0 0 8px;
+            background: linear-gradient(135deg, var(--accent, #60a5fa), #f472b6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .diary-hero p {
+            color: var(--text-sub, #64748b);
+            margin: 0;
+            font-size: 14px;
+        }
+        .diary-composer {
+            margin: 0 20px 24px;
+            background: var(--card-bg, rgba(255,255,255,0.7));
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border, rgba(255,255,255,0.3));
+            border-radius: 16px;
+            padding: 16px;
+        }
+        .diary-composer textarea {
+            width: 100%;
+            min-height: 80px;
+            border: none;
+            background: transparent;
+            resize: vertical;
+            font-size: 14px;
+            color: var(--text-main, #1e293b);
+            font-family: inherit;
+            outline: none;
+            line-height: 1.6;
+        }
+        .diary-composer textarea::placeholder { color: var(--text-sub, #94a3b8); }
+        .diary-composer-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--card-border, rgba(0,0,0,0.06));
+        }
+        .diary-mood-select {
+            display: flex;
+            gap: 6px;
+        }
+        .diary-mood-btn {
+            width: 32px; height: 32px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all .2s;
+            opacity: 0.5;
+        }
+        .diary-mood-btn:hover { opacity: 1; background: rgba(0,0,0,0.05); }
+        .diary-mood-btn.active { opacity: 1; background: rgba(96,165,250,0.15); transform: scale(1.1); }
+        .diary-submit-btn {
+            padding: 8px 20px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, var(--accent, #60a5fa), #f472b6);
+            color: #fff;
+            border: none;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform .2s, opacity .2s;
+        }
+        .diary-submit-btn:hover { transform: translateY(-1px); }
+        .diary-submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .diary-list {
+            padding: 0 20px 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .diary-card {
+            background: var(--card-bg, rgba(255,255,255,0.7));
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border, rgba(255,255,255,0.3));
+            border-radius: 16px;
+            padding: 18px;
+            transition: all .3s;
+            animation: diaryFadeIn .4s ease;
+        }
+        @keyframes diaryFadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .diary-card:hover {
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+            border-color: var(--accent, #60a5fa);
+        }
+        .diary-card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .diary-avatar {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent, #60a5fa), #f472b6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 14px;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .diary-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .diary-meta { flex: 1; min-width: 0; }
+        .diary-author {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-main, #1e293b);
+        }
+        .diary-time {
+            font-size: 11px;
+            color: var(--text-sub, #94a3b8);
+            margin-top: 1px;
+        }
+        .diary-mood-badge {
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .diary-content {
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text-main, #334155);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .diary-card-footer {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid var(--card-border, rgba(0,0,0,0.05));
+        }
+        .diary-action {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 12px;
+            color: var(--text-sub, #94a3b8);
+            cursor: pointer;
+            transition: color .2s;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+        .diary-action:hover { color: var(--accent, #60a5fa); }
+        .diary-action.liked { color: #f472b6; }
+        .diary-delete {
+            margin-left: auto;
+            color: #ef4444;
+            opacity: 0;
+            transition: opacity .2s;
+        }
+        .diary-card:hover .diary-delete { opacity: 1; }
+        .diary-empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-sub, #94a3b8);
+            font-size: 14px;
+        }
+        .diary-empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+        .diary-login-hint {
+            text-align: center;
+            padding: 16px;
+            color: var(--text-sub, #94a3b8);
+            font-size: 13px;
+        }
+        .diary-login-hint a {
+            color: var(--accent, #60a5fa);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        /* 评论区域 */
+        .diary-comments {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--card-border, rgba(0,0,0,0.05));
+            display: none;
+        }
+        .diary-comments.open { display: block; }
+        .diary-comment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .diary-comment-item {
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+        }
+        .diary-comment-avatar {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent, #60a5fa), #a78bfa);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 11px;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .diary-comment-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .diary-comment-body { flex: 1; min-width: 0; }
+        .diary-comment-head {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 2px;
+        }
+        .diary-comment-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-main, #1e293b);
+        }
+        .diary-comment-time {
+            font-size: 10px;
+            color: var(--text-sub, #94a3b8);
+        }
+        .diary-comment-text {
+            font-size: 13px;
+            color: var(--text-main, #334155);
+            line-height: 1.5;
+            word-break: break-word;
+        }
+        .diary-comment-input-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .diary-comment-input {
+            flex: 1;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--card-border, rgba(0,0,0,0.1));
+            background: var(--card-bg, rgba(255,255,255,0.5));
+            font-size: 12px;
+            color: var(--text-main, #1e293b);
+            outline: none;
+            font-family: inherit;
+        }
+        .diary-comment-input:focus { border-color: var(--accent, #60a5fa); }
+        .diary-comment-send {
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, var(--accent, #60a5fa), #f472b6);
+            color: #fff;
+            border: none;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity .2s;
+        }
+        .diary-comment-send:disabled { opacity: 0.5; cursor: not-allowed; }
+        .diary-comment-empty {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-sub, #94a3b8);
+            padding: 8px 0;
+        }
+        .diary-comment-login {
+            text-align: center;
+            font-size: 12px;
+            color: var(--text-sub, #94a3b8);
+            padding: 8px 0;
+        }
+        .diary-comment-login a {
+            color: var(--accent, #60a5fa);
+            text-decoration: none;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <button class="nav-fab" id="navFab" aria-label="导航菜单"><img src="avatar.jpg" alt="菜单" id="navAvatar"></button>
+    <div class="nav-fab-ring" id="navFabRing"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <img src="avatar.jpg" alt="头像" class="sidebar-avatar" id="sidebarAvatar">
+            <div class="sidebar-user-info">
+                <div class="sidebar-username" id="sidebarUsername">QISH</div>
+                <div class="sidebar-status" id="sidebarStatus">未登录</div>
+            </div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="sidebar-nav-label">导航</div>
+            <a href="index.html">首页</a>
+            <a href="about.html">关于我</a>
+            <a href="timeline.html">个人历程</a>
+            <a href="projects.html">我的项目</a>
+            <a href="announce.html">公告</a>
+            <a href="character.html">角色</a>
+            <a href="chat.html">聊天室</a>
+            <a href="album.html">成员相册</a>
+            <a href="friends.html">友链</a>
+            <a href="diary.html" class="nav-active">动态</a>
+            <a href="userlist.html">用户列表</a>
+            <a href="profile.html">个人资料</a>
+            <div class="sidebar-nav-label">账号</div>
+            <a href="auth.html" id="sidebarAuthLink">登录/注册</a>
+            <button class="sidebar-logout-btn" id="sidebarLogoutBtn" style="display:none;">退出登录</button>
+        </nav>
+    </aside>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <main class="main-content">
+        <div class="container">
+            <a href="index.html" class="back-btn" style="margin-bottom:16px;">← 返回首页</a>
+
+            <div class="diary-hero">
+                <h1>❝ 动态</h1>
+                <p>记录此刻的心情，分享生活的点滴</p>
+            </div>
+
+            <div class="diary-composer" id="diaryComposer" style="display:none;">
+                <textarea id="diaryInput" placeholder="此刻在想什么..." maxlength="500"></textarea>
+                <div class="diary-composer-footer">
+                    <div class="diary-mood-select" id="moodSelect">
+                        <button type="button" class="diary-mood-btn" data-mood="😊" title="开心">😊</button>
+                        <button type="button" class="diary-mood-btn" data-mood="😢" title="难过">😢</button>
+                        <button type="button" class="diary-mood-btn" data-mood="😴" title="困倦">😴</button>
+                        <button type="button" class="diary-mood-btn" data-mood="😡" title="生气">😡</button>
+                        <button type="button" class="diary-mood-btn" data-mood="🤔" title="思考">🤔</button>
+                        <button type="button" class="diary-mood-btn" data-mood="🥰" title="喜爱">🥰</button>
+                    </div>
+                    <button class="diary-submit-btn" id="diarySubmit">发布</button>
+                </div>
+            </div>
+            <div class="diary-login-hint" id="diaryLoginHint">
+                <a href="auth.html">登录</a> 后可以发布动态 ~
+            </div>
+
+            <div class="diary-list" id="diaryList">
+                <div class="diary-empty">加载中...</div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+    const MOODS = ["😊","😢","😴","😡","🤔","🥰"];
+    let selectedMood = null;
+    let currentUser = null;
+    let userProfile = null;
+    let diaryItems = [];
+    let commentsCache = {};
+
+    function waitForSupabase(cb) {
+        if (window.supabaseClient) cb();
+        else setTimeout(() => waitForSupabase(cb), 100);
+    }
+
+    async function loadUserProfile() {
+        if (!currentUser) { userProfile = null; return; }
+        try {
+            const { data, error } = await window.supabaseClient
+                .from("public_user_list")
+                .select("nickname, avatar_url, email")
+                .eq("user_id", currentUser.id)
+                .single();
+            if (error) throw error;
+            userProfile = data || null;
+        } catch (e) {
+            console.error("加载用户资料失败:", e);
+            userProfile = null;
+            // RLS 策略可能阻止了查询，提示用户
+            if (e.message && e.message.includes("policy")) {
+                console.warn("提示：public_user_list 表可能缺少允许查询的 RLS 策略");
+            }
+        }
+    }
+
+    function getUserInfo() {
+        if (!currentUser) return { name: "匿名", avatar: null };
+        if (userProfile) {
+            return {
+                name: userProfile.nickname || userProfile.email?.split("@")[0] || "用户",
+                avatar: userProfile.avatar_url || null
+            };
+        }
+        return {
+            name: currentUser.email?.split("@")[0] || "用户",
+            avatar: null
+        };
+    }
+
+    async function checkAuth() {
+        waitForSupabase(async () => {
+            const { data: { session } } = await window.supabaseClient.auth.getSession();
+            currentUser = session?.user || null;
+            await loadUserProfile();
+            const composer = document.getElementById("diaryComposer");
+            const loginHint = document.getElementById("diaryLoginHint");
+            if (currentUser) {
+                composer.style.display = "block";
+                loginHint.style.display = "none";
+            } else {
+                composer.style.display = "none";
+                loginHint.style.display = "block";
+            }
+        });
+    }
+
+    document.getElementById("moodSelect").addEventListener("click", (e) => {
+        const btn = e.target.closest(".diary-mood-btn");
+        if (!btn) return;
+        const mood = btn.dataset.mood;
+        if (selectedMood === mood) {
+            selectedMood = null;
+            btn.classList.remove("active");
+        } else {
+            selectedMood = mood;
+            document.querySelectorAll(".diary-mood-btn").forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+        }
+    });
+
+    document.getElementById("diarySubmit").addEventListener("click", async () => {
+        const input = document.getElementById("diaryInput");
+        const content = input.value.trim();
+        if (!content) { alert("内容不能为空"); return; }
+        if (!currentUser) { alert("请先登录"); return; }
+
+        const btn = document.getElementById("diarySubmit");
+        btn.disabled = true;
+        btn.textContent = "发布中...";
+
+        const userInfo = getUserInfo();
+        try {
+            const { error } = await window.supabaseClient
+                .from("public_diary")
+                .insert({
+                    user_id: currentUser.id,
+                    content: content,
+                    mood: selectedMood || null,
+                    author_name: userInfo.name,
+                    author_avatar: userInfo.avatar
+                });
+            if (error) throw error;
+            input.value = "";
+            selectedMood = null;
+            document.querySelectorAll(".diary-mood-btn").forEach(b => b.classList.remove("active"));
+            await loadDiary();
+        } catch (e) {
+            alert("发布失败: " + (e.message || e));
+        } finally {
+            btn.disabled = false;
+            btn.textContent = "发布";
+        }
+    });
+
+    async function enrichAuthors(items) {
+        if (!items || !items.length) return;
+        const userIds = [...new Set(items.map(i => i.user_id).filter(Boolean))];
+        if (!userIds.length) return;
+        try {
+            const { data, error } = await window.supabaseClient
+                .from("public_user_list")
+                .select("user_id, nickname, avatar_url")
+                .in("user_id", userIds);
+            if (error) throw error;
+            const map = {};
+            (data || []).forEach(u => { map[u.user_id] = u; });
+            items.forEach(item => {
+                const p = map[item.user_id];
+                if (p) {
+                    if (p.nickname) {
+                        item.author_name = p.nickname;
+                    }
+                    if (p.avatar_url) {
+                        item.author_avatar = p.avatar_url;
+                    }
+                }
+            });
+        } catch (e) {
+            console.error("补全作者信息失败:", e);
+        }
+    }
+
+    async function loadDiary() {
+        const list = document.getElementById("diaryList");
+        try {
+            const { data, error } = await window.supabaseClient
+                .from("public_diary")
+                .select("*")
+                .order("created_at", { ascending: false })
+                .limit(50);
+            if (error) throw error;
+            diaryItems = data || [];
+            await enrichAuthors(diaryItems);
+            renderDiary();
+        } catch (e) {
+            list.innerHTML = `<div class="diary-empty"><div class="diary-empty-icon">✎</div>加载失败: ${e.message || e}<br><br>请确保已在 Supabase 创建 public_diary 表</div>`;
+        }
+    }
+
+    function renderDiary() {
+        const list = document.getElementById("diaryList");
+        if (!diaryItems.length) {
+            list.innerHTML = '<div class="diary-empty"><div class="diary-empty-icon">✦</div>还没有动态，来发布第一条吧 ~</div>';
+            return;
+        }
+        list.innerHTML = diaryItems.map(item => {
+            const isOwner = currentUser && currentUser.id === item.user_id;
+            const timeAgo = formatTime(item.created_at);
+            const avatarHtml = item.author_avatar
+                ? `<img src="${item.author_avatar}" alt="">`
+                : (item.author_name || "?").charAt(0).toUpperCase();
+            const commentCount = (commentsCache[item.id] || []).length;
+            return `<div class="diary-card" data-id="${item.id}">
+                <div class="diary-card-header">
+                    <div class="diary-avatar">${avatarHtml}</div>
+                    <div class="diary-meta">
+                        <div class="diary-author">${escapeHtml(item.author_name || "匿名")}</div>
+                        <div class="diary-time">${timeAgo}</div>
+                    </div>
+                    ${item.mood ? `<div class="diary-mood-badge">${item.mood}</div>` : ""}
+                </div>
+                <div class="diary-content">${escapeHtml(item.content)}</div>
+                <div class="diary-card-footer">
+                    <button class="diary-action diary-like ${item.liked ? 'liked' : ''}" data-id="${item.id}">
+                        <span>♥</span><span>${item.likes || 0}</span>
+                    </button>
+                    <button class="diary-action diary-comment-toggle" data-id="${item.id}">
+                        <span>❝</span><span>${commentCount}</span>
+                    </button>
+                    ${isOwner ? `<button class="diary-action diary-delete" data-id="${item.id}">🗑️ 删除</button>` : ""}
+                </div>
+                <div class="diary-comments" id="comments-${item.id}">
+                    <div class="diary-comment-list" id="comment-list-${item.id}"></div>
+                    ${currentUser ? `
+                    <div class="diary-comment-input-row">
+                        <input type="text" class="diary-comment-input" id="comment-input-${item.id}" placeholder="说点什么..." maxlength="200">
+                        <button class="diary-comment-send" data-id="${item.id}">发送</button>
+                    </div>` : `<div class="diary-comment-login"><a href="auth.html">登录</a> 后参与评论</div>`}
+                </div>
+            </div>`;
+        }).join("");
+
+        list.querySelectorAll(".diary-like").forEach(btn => {
+            btn.addEventListener("click", () => likeDiary(btn.dataset.id));
+        });
+        list.querySelectorAll(".diary-delete").forEach(btn => {
+            btn.addEventListener("click", () => deleteDiary(btn.dataset.id));
+        });
+        list.querySelectorAll(".diary-comment-toggle").forEach(btn => {
+            btn.addEventListener("click", () => toggleComments(btn.dataset.id));
+        });
+        list.querySelectorAll(".diary-comment-send").forEach(btn => {
+            btn.addEventListener("click", () => sendComment(btn.dataset.id));
+        });
+        list.querySelectorAll(".diary-comment-input").forEach(input => {
+            input.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    const id = input.id.replace("comment-input-", "");
+                    sendComment(id);
+                }
+            });
+        });
+
+        // 渲染已缓存的评论
+        Object.keys(commentsCache).forEach(id => {
+            renderComments(id);
+        });
+    }
+
+    async function toggleComments(id) {
+        const panel = document.getElementById(`comments-${id}`);
+        if (!panel) return;
+        if (panel.classList.contains("open")) {
+            panel.classList.remove("open");
+        } else {
+            panel.classList.add("open");
+            if (!commentsCache[id]) {
+                await loadComments(id);
+            } else {
+                renderComments(id);
+            }
+        }
+    }
+
+    async function loadComments(id) {
+        try {
+            const { data, error } = await window.supabaseClient
+                .from("public_diary_comments")
+                .select("*")
+                .eq("diary_id", id)
+                .order("created_at", { ascending: true });
+            if (error) throw error;
+            commentsCache[id] = data || [];
+            await enrichAuthors(commentsCache[id]);
+            renderComments(id);
+            // 更新评论数
+            const item = diaryItems.find(d => d.id === id);
+            if (item) {
+                const toggleBtn = document.querySelector(`.diary-comment-toggle[data-id="${id}"] span:last-child`);
+                if (toggleBtn) toggleBtn.textContent = commentsCache[id].length;
+            }
+        } catch (e) {
+            console.error("加载评论失败:", e);
+        }
+    }
+
+    function renderComments(id) {
+        const listEl = document.getElementById(`comment-list-${id}`);
+        if (!listEl) return;
+        const comments = commentsCache[id] || [];
+        if (!comments.length) {
+            listEl.innerHTML = '<div class="diary-comment-empty">暂无评论，来抢沙发 ~</div>';
+            return;
+        }
+        listEl.innerHTML = comments.map(c => {
+            const avatarHtml = c.author_avatar
+                ? `<img src="${c.author_avatar}" alt="">`
+                : (c.author_name || "?").charAt(0).toUpperCase();
+            return `<div class="diary-comment-item">
+                <div class="diary-comment-avatar">${avatarHtml}</div>
+                <div class="diary-comment-body">
+                    <div class="diary-comment-head">
+                        <span class="diary-comment-name">${escapeHtml(c.author_name || "匿名")}</span>
+                        <span class="diary-comment-time">${formatTime(c.created_at)}</span>
+                    </div>
+                    <div class="diary-comment-text">${escapeHtml(c.content)}</div>
+                </div>
+            </div>`;
+        }).join("");
+    }
+
+    async function sendComment(id) {
+        if (!currentUser) { alert("请先登录"); return; }
+        const input = document.getElementById(`comment-input-${id}`);
+        const content = input?.value.trim();
+        if (!content) return;
+
+        const btn = document.querySelector(`.diary-comment-send[data-id="${id}"]`);
+        if (btn) { btn.disabled = true; btn.textContent = "发送中..."; }
+
+        const userInfo = getUserInfo();
+        try {
+            const { error } = await window.supabaseClient
+                .from("public_diary_comments")
+                .insert({
+                    diary_id: id,
+                    user_id: currentUser.id,
+                    content: content,
+                    author_name: userInfo.name,
+                    author_avatar: userInfo.avatar
+                });
+            if (error) throw error;
+            input.value = "";
+            await loadComments(id);
+        } catch (e) {
+            alert("评论失败: " + (e.message || e));
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = "发送"; }
+        }
+    }
+
+    async function likeDiary(id) {
+        if (!currentUser) { alert("请先登录"); return; }
+        const item = diaryItems.find(d => d.id === id);
+        if (!item) return;
+        try {
+            const { error } = await window.supabaseClient
+                .from("public_diary")
+                .update({ likes: (item.likes || 0) + 1 })
+                .eq("id", id);
+            if (error) throw error;
+            item.likes = (item.likes || 0) + 1;
+            renderDiary();
+        } catch (e) {
+            alert("点赞失败: " + (e.message || e));
+        }
+    }
+
+    async function deleteDiary(id) {
+        if (!confirm("确定删除这条动态吗？")) return;
+        try {
+            const { error } = await window.supabaseClient
+                .from("public_diary")
+                .delete()
+                .eq("id", id)
+                .eq("user_id", currentUser.id);
+            if (error) throw error;
+            diaryItems = diaryItems.filter(d => d.id !== id);
+            delete commentsCache[id];
+            renderDiary();
+        } catch (e) {
+            alert("删除失败: " + (e.message || e));
+        }
+    }
+
+    function escapeHtml(s) {
+        const d = document.createElement("div");
+        d.textContent = s || "";
+        return d.innerHTML;
+    }
+    function formatTime(iso) {
+        if (!iso) return "";
+        const d = new Date(iso);
+        const now = new Date();
+        const diff = (now - d) / 1000;
+        if (diff < 60) return "刚刚";
+        if (diff < 3600) return Math.floor(diff/60) + "分钟前";
+        if (diff < 86400) return Math.floor(diff/3600) + "小时前";
+        if (diff < 604800) return Math.floor(diff/86400) + "天前";
+        return d.toLocaleDateString("zh-CN");
+    }
+
+    waitForSupabase(() => {
+        checkAuth();
+        loadDiary();
+        window.supabaseClient.auth.onAuthStateChange(() => {
+            checkAuth();
+            loadDiary();
+        });
+    });
+    </script>
+</body>
+</html>

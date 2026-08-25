@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -103,7 +103,10 @@
             <a href="announce.html">公告</a>
             <a href="character.html">角色</a>
             <a href="chat.html">聊天室</a>
-            <a href="album.html">成员相册</a>`n            <a href="userlist.html">用户列表</a>
+            <a href="album.html">成员相册</a>
+            <a href="friends.html">友链</a>
+            <a href="diary.html">动态</a>
+            <a href="userlist.html">用户列表</a>
             <a href="profile.html" class="nav-active">个人资料</a>
             <div class="sidebar-nav-label">账号</div>
             <a href="auth.html" id="sidebarAuthLink">登录/注册</a>
@@ -149,15 +152,10 @@
                 <div class="save-status" id="saveStatus"></div>
             </div>
         </div>
-        <footer><p>© 2026 QISH 小站 · Made with ❤️</p></footer>
+        <footer><p>© 2026 QISH 小站 · Made with ♥</p></footer>
     </main>
 
-    <div class="right-image" id="rightImage">
-        <span class="char-inner"><img src="qishi-expr-normal.gif" alt="Q版小人" id="rightCharImg"></span>
-        <div class="char-bubble" id="charBubble" aria-hidden="true">
-            <span class="char-bubble-text">来设置你的资料吧~</span>
-        </div>
-    </div>
+
 
     <div class="side-panel" id="sidePanel">
         <div class="side-panel-content">
@@ -167,7 +165,8 @@
             <p class="panel-desc">ovo</p>
             <p class="panel-email" id="panelEmail" style="display:none;"></p>
             <div class="panel-links" id="panelLinksBox">
-                <a href="index.html">首页</a><a href="about.html">关于我</a><a href="projects.html">我的项目</a>`n            <a href="userlist.html">用户列表</a><a href="profile.html">个人资料</a><a href="./album.html">相册</a>
+                <a href="index.html">首页</a><a href="about.html">关于我</a><a href="projects.html">我的项目</a>
+            <a href="userlist.html">用户列表</a><a href="profile.html">个人资料</a><a href="./album.html">相册</a>
                 <a href="chat.html">聊天室</a><a href="auth.html">登录/注册</a>
             </div>
         </div>
@@ -179,10 +178,17 @@
 const SUPABASE_URL = "https://gmrzngjwwqftkwatrqcd.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdtcnpuZ2p3d3FmdGt3YXRycWNkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcxNzM1NjMsImV4cCI6MjEwMjc0OTU2M30.iy-RrMQ-hg6-r0Y0RKkmxq3pBPbPmjkq2piifrcRh1M";
 const BUCKET_NAME = "avatar_bucket";
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage, storageKey: "qish-auth-v1" }
-});
-window.supabaseClient = sb;
+let sb = null;
+(function initSb() {
+    if (window.supabase && typeof window.supabase.createClient === "function") {
+        sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, storage: window.localStorage, storageKey: "qish-auth-v1" }
+        });
+        window.supabaseClient = sb;
+    } else {
+        setTimeout(initSb, 80);
+    }
+})();
 
 let currentUser = null;
 
@@ -201,12 +207,15 @@ async function init() {
 
 async function loadProfile() {
     const { data, error } = await sb.from("public_user_list").select("*").eq("user_id", currentUser.id).single();
+    if (error) return;
     if (data) {
         document.getElementById("nicknameInput").value = data.nickname || "";
         document.getElementById("bioInput").value = data.bio || "";
         document.getElementById("profileName").textContent = data.nickname || "用户";
         if (data.avatar_url) {
             document.getElementById("profileAvatar").src = data.avatar_url;
+            const panelAvatar = document.getElementById("panelAvatar");
+            if (panelAvatar) panelAvatar.src = data.avatar_url;
         }
     }
 }
@@ -225,14 +234,21 @@ document.getElementById("saveBtn").addEventListener("click", async () => {
         return;
     }
 
-    const { error } = await sb.from("public_user_list").upsert({
-        user_id: currentUser.id,
-        nickname, bio,
-        updated_at: new Date().toISOString()
-    });
-    if (error) {
+        // 先查询是否存在记录
+    const { data: existing } = await sb.from("public_user_list").select("user_id").eq("user_id", currentUser.id).maybeSingle();
+    let saveError = null;
+    if (existing) {
+        // 存在则更新
+        const { error } = await sb.from("public_user_list").update({ nickname, bio }).eq("user_id", currentUser.id);
+        saveError = error;
+    } else {
+        // 不存在则插入
+        const { error } = await sb.from("public_user_list").insert({ user_id: currentUser.id, nickname, bio });
+        saveError = error;
+    }
+    if (saveError) {
         status.className = "save-status error";
-        status.textContent = "保存失败：" + error.message;
+        status.textContent = "保存失败：" + saveError.message;
     } else {
         status.className = "save-status success";
         status.textContent = "保存成功！";
@@ -245,23 +261,71 @@ document.getElementById("avatarInput").addEventListener("change", async (e) => {
     const file = e.target.files[0];
     if (!file || !currentUser) return;
     const status = document.getElementById("saveStatus");
+    
+    // 文件验证
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+        status.className = "save-status error";
+        status.textContent = "图片大小不能超过 5MB";
+        e.target.value = "";
+        return;
+    }
+    if (!file.type.startsWith("image/")) {
+        status.className = "save-status error";
+        status.textContent = "请选择图片文件";
+        e.target.value = "";
+        return;
+    }
+    
+    status.className = "save-status";
+    status.textContent = "正在上传头像...";
+    
     try {
-        const filePath = currentUser.id + "/" + Date.now() + "_" + file.name;
-        const { error: upErr } = await sb.storage.from(BUCKET_NAME).upload(filePath, file, { cacheControl: "3600", upsert: true });
-        if (upErr) throw upErr;
+        // 使用 Supabase Storage 上传
+        const fileExt = file.name.split(".").pop() || "jpg";
+        const filePath = currentUser.id + "/" + Date.now() + "." + fileExt;
+        const { error: upErr } = await sb.storage.from(BUCKET_NAME).upload(filePath, file, { 
+            cacheControl: "3600", 
+            upsert: true,
+            contentType: file.type
+        });
+        
+        if (upErr) {
+            console.error("Storage 上传失败:", upErr);
+            throw new Error("存储上传失败：" + upErr.message + "。请检查 avatar_bucket 存储桶是否存在且权限正确。");
+        }
+        
+        // 获取公开 URL
         const { data: urlData } = sb.storage.from(BUCKET_NAME).getPublicUrl(filePath);
         const avatarUrl = urlData.publicUrl;
+        
+        // 更新头像预览
         document.getElementById("profileAvatar").src = avatarUrl;
-        await sb.from("public_user_list").upsert({ user_id: currentUser.id, avatar_url: avatarUrl, updated_at: new Date().toISOString() });
+        const panelAvatar = document.getElementById("panelAvatar");
+        if (panelAvatar) panelAvatar.src = avatarUrl;
+        
+        // 保存到数据库
+        const { data: existAvatar } = await sb.from("public_user_list").select("user_id").eq("user_id", currentUser.id).maybeSingle();
+        if (existAvatar) {
+            const { error: dbErr } = await sb.from("public_user_list").update({ avatar_url: avatarUrl }).eq("user_id", currentUser.id);
+            if (dbErr) throw new Error("数据库保存失败：" + dbErr.message);
+        } else {
+            const { error: dbErr } = await sb.from("public_user_list").insert({ user_id: currentUser.id, avatar_url: avatarUrl, nickname: "用户", bio: "" });
+            if (dbErr) throw new Error("数据库保存失败：" + dbErr.message);
+        }
+        
         status.className = "save-status success";
         status.textContent = "头像更新成功！";
         setTimeout(() => { status.className = "save-status"; }, 3000);
     } catch (err) {
+        console.error("头像上传失败:", err);
         status.className = "save-status error";
         status.textContent = "头像上传失败：" + err.message;
     }
+    
+    // 清空 input，允许重复选择同一文件
+    e.target.value = "";
 });
-
 init();
 </script>
 </body>
