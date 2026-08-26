@@ -12,6 +12,8 @@
     </script>
     <link rel="stylesheet" href="style.css">
     <style>
+    /* 主页1:1还原：隐藏旧的侧栏面板和鼠标光晕（保留nav-fab和sidebar） */
+    .side-panel, .overlay, .mouse-glow { display: none !important; }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.0/dist/umd/supabase.js"></script>
     <script>
@@ -33,14 +35,14 @@
 <body>
     <!-- 左上角圆形导航按钮 -->
     <button class="nav-fab" id="navFab" aria-label="导航菜单">
-        <img src="avatar.jpg" alt="菜单" id="navAvatar">
+        <img src="chise-avatar.gif" alt="菜单" id="navAvatar">
     </button>
     <div class="nav-fab-ring" id="navFabRing"></div>
 
     <!-- 侧边栏导航 -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <img src="avatar.jpg" alt="头像" class="sidebar-avatar" id="sidebarAvatar">
+            <img src="chise-avatar.gif" alt="头像" class="sidebar-avatar" id="sidebarAvatar">
             <div class="sidebar-user-info">
                 <div class="sidebar-username" id="sidebarUsername">QISH</div>
                 <div class="sidebar-status" id="sidebarStatus">未登录</div>
@@ -53,7 +55,6 @@
             <a href="timeline.html">个人历程</a>
             <a href="projects.html">我的项目</a>
             <a href="announce.html">公告</a>
-            <a href="character.html">角色</a>
             <a href="chat.html">聊天室</a>
             <a href="album.html">成员相册</a>
             <a href="friends.html">友链</a>
@@ -67,105 +68,166 @@
     </aside>
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-    <!-- 主内容 -->
-    <main class="main-content">
-        <div class="bubble-page">
+    <!-- 主内容：三列布局 1:1 还原参考图 -->
+    <main class="home-v2-main">
+        <div class="home-v2-container">
 
-            <!-- 第一组：头像 + 时钟 + 日历 -->
-            <div class="bubble-cluster">
-                <a href="profile.html" class="bubble-circle bubble-xl bubble-in" style="width:232px;height:232px;">
-                    <img src="chise-avatar.gif" alt="QISH" class="bubble-hero-img" id="heroChar" style="width:100px;height:100px;">
-                    <div class="bubble-hero-name" id="heroGreeting">Good Afternoon</div>
-                    <div class="bubble-hero-sub">I'm QISH ✦</div>
-                </a>
-                <div class="bubble-circle bubble-lg bubble-in" style="width:162px;height:162px;margin-top:52px;cursor:pointer;" onclick="openTimeModal()">
-                    <div class="bubble-clock-time" id="clockDisplay" style="font-size:32px;">--:--</div>
-                    <div class="bubble-clock-date" id="clockDate">加载中...</div>
-                </div>
-                <a href="timeline.html" class="bubble-circle bubble-lg bubble-in" style="width:146px;height:146px;margin-top:-30px;">
-                    <div class="bubble-cal-title" id="calTitle">2026年8月</div>
-                    <div class="bubble-cal-grid" id="calendarGrid" style="width:92px;"></div>
-                </a>
-            </div>
-
-            <!-- 第二组：音乐 + 快捷导航 -->
-            <div class="bubble-cluster">
-                <div class="bubble-circle bubble-md bubble-in" id="musicPlayBtn" style="cursor:pointer;width:142px;height:142px;margin-top:20px;" onclick="openMusicModal()">
-                    <div class="bubble-music-cover" style="font-size:24px;font-weight:700;">♪</div>
-                    <div class="bubble-music-title" style="font-size:12px;max-width:96px;">暂无歌曲</div>
-                </div>
-                <a href="chat.html" class="bubble-circle bubble-sm bubble-in" style="width:108px;height:108px;margin-top:-20px;">
-                    <div class="bubble-label" style="font-size:14px;font-weight:600;">聊天室</div>
-                </a>
-                <a href="album.html" class="bubble-circle bubble-sm bubble-in" style="width:84px;height:84px;margin-top:44px;">
-                    <div class="bubble-label" style="font-size:12px;font-weight:600;">相册</div>
-                </a>
-                <a href="projects.html" class="bubble-circle bubble-sm bubble-in" style="width:120px;height:120px;margin-top:12px;">
-                    <div class="bubble-label" style="font-size:15px;font-weight:600;">项目</div>
-                </a>
-                <a href="userlist.html" class="bubble-circle bubble-sm bubble-in" style="width:80px;height:80px;margin-top:-34px;">
-                    <div class="bubble-label" style="font-size:11px;font-weight:600;">成员</div>
-                </a>
-                <a href="about.html" class="bubble-circle bubble-sm bubble-in" style="width:94px;height:94px;margin-top:-14px;">
-                    <div class="bubble-label" style="font-size:13px;font-weight:600;">关于</div>
-                </a>
-            </div>
-
-            <!-- 第三组：追番大圆形气泡 + 统计 + 社交 -->
-            <div class="bubble-cluster" style="max-width:900px;">
-                <div class="bubble-circle bubble-anime-circle bubble-in" style="width:238px;height:238px;margin-top:-10px;" onclick="location.href='anime.html'">
-                    <div class="anime-circle-title" style="margin-bottom:8px;font-size:16px;">今日追番</div>
-                    <div style="font-size:36px;font-weight:900;color:var(--accent);" id="animeCount">--</div>
-                    <div style="font-size:12px;color:var(--text-sub);margin-top:4px;">部新番更新</div>
-                </div>
-
-                <div class="bubble-circle bubble-sm bubble-in" style="width:82px;height:82px;margin-top:-26px;cursor:pointer;" onclick="navigateWithSlide('dashboard.html','left')">
-                    <div class="bubble-stats-num" id="visitCount" style="font-size:24px;">--</div>
-                    <div class="bubble-stats-label" style="font-size:10px;">累计访问</div>
-                </div>
-                <a href="https://github.com/elibertoandres49-oss/QISH.github.io" target="_blank" class="bubble-circle bubble-xs bubble-in" style="width:68px;height:68px;margin-top:36px;">
-                    <div class="bubble-label" style="font-size:10px;font-weight:600;">GitHub</div>
-                </a>
-                <a href="https://space.bilibili.com/594604605?spm_id_from=333.1365.0.0" target="_blank" class="bubble-circle bubble-xs bubble-in" style="width:78px;height:78px;margin-top:-18px;">
-                    <div class="bubble-label" style="font-size:11px;font-weight:600;">B站</div>
-                </a>
-                <a href="mailto:qish@example.com" class="bubble-circle bubble-xs bubble-in" style="width:62px;height:62px;margin-top:28px;">
-                    <div class="bubble-label" style="font-size:10px;font-weight:600;">邮箱</div>
-                </a>
-            </div>
-
-            <!-- 自定义气泡组 -->
-            <div class="bubble-cluster" id="customBubbleCluster" style="min-height:0;"></div>
-
-            <!-- 公告（默认隐藏） -->
-            <div class="bubble-anime-bar bubble-in" id="homeAnnounceCard" style="display:none;max-width:560px;">
-                <div style="display:flex;gap:12px;align-items:flex-start;">
-                    <div>
-                        <div style="font-weight:800;font-size:14px;color:var(--text-main);margin-bottom:4px;">最新公告</div>
-                        <div style="font-size:13px;color:var(--text-body);" id="homeAnnounceText"></div>
+            <!-- 左列：导航面板 + 最新文章 -->
+            <div class="home-v2-left">
+                <aside class="home-v2-nav v3-enter">
+                    <div class="home-v2-user">
+                        <img src="chise-avatar.gif" class="home-v2-avatar">
+                        <div class="home-v2-user-info">
+                            <div class="home-v2-username">QISH</div>
+                            <div class="home-v2-status">(开发中)</div>
+                        </div>
                     </div>
+                    <div class="home-v2-nav-label">GENERAL</div>
+                    <nav class="home-v2-nav-list">
+                        <a href="announce.html" class="home-v2-nav-item active">
+                            <span class="home-v2-nav-icon">📄</span>近期文章
+                        </a>
+                        <a href="projects.html" class="home-v2-nav-item">
+                            <span class="home-v2-nav-icon">▦</span>我的项目
+                        </a>
+                        <a href="about.html" class="home-v2-nav-item">
+                            <span class="home-v2-nav-icon">ⓘ</span>关于网站
+                        </a>
+                        <a href="diary.html" class="home-v2-nav-item">
+                            <span class="home-v2-nav-icon">☆</span>推荐分享
+                        </a>
+                        <a href="friends.html" class="home-v2-nav-item">
+                            <span class="home-v2-nav-icon">🌐</span>优秀博客
+                        </a>
+                    </nav>
+                </aside>
+
+                <!-- 最新文章小卡片 -->
+                <div class="home-v2-latest-card v3-enter">
+                    <div class="home-v2-latest-label">最新文章</div>
+                    <div class="home-v2-latest-body">
+                        <img src="chise-avatar.gif" class="home-v2-latest-thumb">
+                        <div class="home-v2-latest-info">
+                            <div class="home-v2-latest-title">公告</div>
+                            <div class="home-v2-latest-desc">该用户正在搭建中</div>
+                            <div class="home-v2-latest-date">2026/8/25</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 中列：主内容 -->
+            <div class="home-v2-content">
+                <!-- 大图片卡 -->
+                <div class="home-v2-hero-card v3-enter" id="heroCard">
+                    <img src="right-photo.png" class="home-v2-hero-img" id="heroImage" alt="横幅">
+                    <div class="hero-edit-hint">
+                        <span class="hero-edit-icon">📷</span>
+                        <span class="hero-edit-text">点击更换 · 双击恢复默认</span>
+                    </div>
+                </div>
+                <input type="file" id="heroImageInput" accept="image/*" style="display:none;">
+
+                <!-- 欢迎卡 -->
+                <div class="home-v2-welcome-card v3-enter">
+                    <div class="home-v2-welcome-avatar-wrap">
+                        <img src="chise-avatar.gif" class="home-v2-welcome-avatar">
+                    </div>
+                    <div class="home-v2-welcome-greeting" id="heroGreeting">Good Afternoon</div>
+                    <div class="home-v2-welcome-text">I'm <span class="home-v2-welcome-name">QISH</span> , Nice to meet you!</div>
+                </div>
+
+                <!-- 底部：番剧 + 音乐条 并排 -->
+                <div class="home-v2-bottom-row">
+                    <!-- 番剧卡 -->
+                    <a href="anime.html" class="home-v2-recommend-card v3-enter" style="text-decoration:none;color:inherit;display:block;">
+                        <div class="home-v2-recommend-label">番剧</div>
+                        <div class="home-v2-recommend-body">
+                            <div class="home-v2-recommend-cover" style="background:linear-gradient(135deg,#667eea,#764ba2);"></div>
+                            <div class="home-v2-recommend-info">
+                                <div class="home-v2-recommend-title">追番列表</div>
+                                <div class="home-v2-recommend-desc">正在追的番剧、评分与观后感</div>
+                                <div class="home-v2-recommend-meta">点击查看全部 →</div>
+                            </div>
+                        </div>
+                    </a>
+
+                    <!-- 胶囊形音乐条 -->
+                    <div class="home-v2-music-bar v3-enter" id="musicPlayBtn" onclick="openMusicModal()">
+                        <span class="home-v2-music-icon bubble-music-cover">♪</span>
+                        <span class="home-v2-music-title bubble-music-title">Close To You</span>
+                        <div class="home-v2-music-progress"><div class="home-v2-music-progress-bar"></div></div>
+                        <span class="home-v2-music-play">►</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右列：小部件 -->
+            <div class="home-v2-widgets">
+                <!-- 写文章按钮 -->
+                <a href="diary.html" class="home-v2-write-btn v3-enter v3-ripple">
+                    <span class="home-v2-write-icon">✎</span>写文章
+                </a>
+
+                <!-- 时钟（灰色背景） -->
+                <div class="home-v2-clock v3-enter" onclick="openTimeModal()">
+                    <div class="home-v2-clock-time" id="clockDisplay">--:--</div>
+                </div>
+
+                <!-- 日历（完整月视图） -->
+                <div class="home-v2-calendar v3-enter">
+                    <div class="home-v2-calendar-title" id="calTitle">2026/8/25 周二</div>
+                    <div class="home-v2-calendar-weekdays">
+                        <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+                    </div>
+                    <div class="home-v2-calendar-grid" id="calendarGrid"></div>
+                    <script>
+                    (function() {
+                        var now = new Date();
+                        var year = now.getFullYear();
+                        var month = now.getMonth();
+                        var today = now.getDate();
+                        var weekdays = ['周日','周一','周二','周三','周四','周五','周六'];
+                        document.getElementById('calTitle').textContent =
+                            year + '/' + (month+1) + '/' + today + ' ' + weekdays[now.getDay()];
+                        var firstDay = new Date(year, month, 1).getDay();
+                        var daysInMonth = new Date(year, month+1, 0).getDate();
+                        var html = '';
+                        var offset = firstDay === 0 ? 6 : firstDay - 1;
+                        for (var i = 0; i < offset; i++) {
+                            html += '<span class="empty"></span>';
+                        }
+                        for (var d = 1; d <= daysInMonth; d++) {
+                            html += '<span class="' + (d === today ? 'today' : '') + '">' + d + '</span>';
+                        }
+                        document.getElementById('calendarGrid').innerHTML = html;
+                    })();
+                    </script>
+                </div>
+
+                <!-- 社交按钮 -->
+                <div class="home-v2-social v3-enter">
+                    <a href="https://github.com/elibertoandres49-oss/QISH.github.io" target="_blank" class="home-v2-social-btn social-github">
+                        <span class="home-v2-social-icon">⌬</span><span>GitHub</span>
+                    </a>
+                    <a href="https://space.bilibili.com/594604605?spm_id_from=333.1365.0.0" target="_blank" class="home-v2-social-btn social-bilibili">
+                        <span class="home-v2-social-icon">📺</span><span>bilibili</span>
+                    </a>
+                    <a href="mailto:qish@example.com" class="home-v2-social-btn social-email">
+                        <span>✉</span>
+                    </a>
                 </div>
             </div>
 
         </div>
 
-        <footer>
+        <footer class="home-v2-footer">
             <p>© 2026 QISH 小站 · Made with ♥</p>
         </footer>
     </main>
 
     <!-- 右侧角色立绘 -->
 
-
-    <!-- 页面间箭头：主页 → 聊天室 -->
-    <div class="page-nav-arrow left" id="homeToDashboard" onclick="navigateWithSlide('dashboard.html','right')" title="数据看板" style="cursor:pointer;">
-        ←
-        <span class="arrow-label">数据看板</span>
-    </div>
-    <div class="page-nav-arrow" id="homeToChat" onclick="navigateWithSlide('chat.html','left')" title="前往聊天室" style="cursor:pointer;">
-        <span class="arrow-label">聊天室</span>
-        →
-    </div>
 
     <!-- 详情模态框 -->
     <div class="detail-modal-overlay" id="musicModal">
@@ -248,7 +310,8 @@ function updateClock() {
     const m = String(now.getMinutes()).padStart(2, '0');
     document.getElementById('clockDisplay').textContent = h + ':' + m;
     const weekdays = ['周日','周一','周二','周三','周四','周五','周六'];
-    document.getElementById('clockDate').textContent =
+    const clockDateEl = document.getElementById('clockDate');
+    if (clockDateEl) clockDateEl.textContent =
         now.getFullYear() + '/' + (now.getMonth()+1) + '/' + now.getDate() + ' ' + weekdays[now.getDay()];
     const hour = now.getHours();
     let greet = 'Good Evening';
@@ -260,28 +323,6 @@ function updateClock() {
 }
 updateClock();
 setInterval(updateClock, 1000);
-
-// ========== 日历（迷你周视图）==========
-function renderCalendar() {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    const today = now.getDate();
-    const dayOfWeek = now.getDay(); // 0=周日
-    document.getElementById('calTitle').textContent = (month+1) + '月' + today + '日';
-    // 计算本周一到周日
-    const monday = new Date(now);
-    monday.setDate(today - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
-    let html = '';
-    ['一','二','三','四','五','六','日'].forEach((label, i) => {
-        const d = new Date(monday);
-        d.setDate(monday.getDate() + i);
-        const isToday = d.getDate() === today && d.getMonth() === month;
-        html += '<span class="' + (isToday ? 'today' : '') + '">' + d.getDate() + '</span>';
-    });
-    document.getElementById('calendarGrid').innerHTML = html;
-}
-renderCalendar();
 
 // ========== 详情模态框 ==========
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
@@ -336,7 +377,8 @@ function openVisitModal() {
         const firstVisit = localStorage.getItem('qish_first_visit') || new Date().toLocaleDateString('zh-CN');
         document.getElementById('vmTotal').textContent = total;
         document.getElementById('vmToday').textContent = today || '1';
-        document.getElementById('vmOnline').textContent = online;
+        const vmOnlineEl = document.getElementById('vmOnline');
+        if (vmOnlineEl) vmOnlineEl.textContent = online;
         document.getElementById('vmFirst').textContent = firstVisit;
     }
     openModal('visitModal');
@@ -482,315 +524,443 @@ setTimeout(function () {
     });
 }, 1800);
 
-// ========== 自定义 UI 编辑模式 ==========
-var UI_EDIT_KEY = 'qish_custom_ui_v1';
-var uiEditMode = false;
-var uiSelectedBubble = null;
-var uiDragState = null;
-var uiOriginalConfig = null;
+</script>
 
-// 给气泡分配编辑ID
-function assignBubbleIds() {
-    var bubbles = document.querySelectorAll('.bubble-circle');
-    bubbles.forEach(function (b, i) {
-        if (!b.dataset.uiId) b.dataset.uiId = 'bubble_' + i;
+<script>
+// ========== 自定义 UI 编辑模式（三列布局版）==========
+window.UI_EDIT_KEY = 'qish_custom_ui_v2';
+window.uiEditMode = false;
+window.uiSelectedEl = null;
+window.uiOriginalConfig = null;
+window.UI_EDITABLE_SELECTOR = '.home-v2-nav, .home-v2-latest-card, .home-v2-hero-card, .home-v2-welcome-card, .home-v2-recommend-card, .home-v2-music-bar, .home-v2-write-btn, .home-v2-clock, .home-v2-calendar, .home-v2-social';
+
+// 默认UI布局（自由卡片布局，容器宽820px）
+window.DEFAULT_UI_CONFIG = {
+    "card_nav_0":           { x: 0,   y: 170, w: 180 },
+    "card_latest-card_1":   { x: 0,   y: 560, w: 180 },
+    "card_hero-card_2":     { x: 200, y: 0,   w: 290 },
+    "card_welcome-card_3":  { x: 200, y: 180, w: 290 },
+    "card_recommend-card_4":{ x: 200, y: 630, w: 230 },
+    "card_music-bar_5":     { x: 450, y: 690, w: 200 },
+    "card_write-btn_6":     { x: 510, y: 110, w: 110 },
+    "card_clock_7":         { x: 510, y: 215, w: 200 },
+    "card_calendar_8":      { x: 510, y: 320, w: 200 },
+    "card_social_9":        { x: 200, y: 560, w: 230 }
+};
+
+// 给可编辑元素分配ID
+function assignEditableIds() {
+    document.querySelectorAll(UI_EDITABLE_SELECTOR).forEach(function(el, i) {
+        if (!el.dataset.uiId) {
+            var className = el.className.split(' ')[0].replace('home-v2-', '');
+            el.dataset.uiId = 'card_' + className + '_' + i;
+        }
     });
 }
-assignBubbleIds();
+
+// 应用配置
+function applyEditableConfig(cfg) {
+    var container = document.querySelector('.home-v2-container');
+    var hasPosition = false;
+    // 第一遍：预测量将被绝对定位但未自定义宽度的卡片当前宽度
+    // （必须在改 position 之前测量，否则 width:100% 会相对容器错乱）
+    var measuredW = {};
+    document.querySelectorAll(UI_EDITABLE_SELECTOR).forEach(function(el) {
+        var id = el.dataset.uiId;
+        if (!id || !cfg[id] || cfg[id].hidden) return;
+        var c = cfg[id];
+        if (c.x !== undefined && c.y !== undefined && c.w === undefined) {
+            measuredW[id] = el.offsetWidth;
+        }
+    });
+    // 第二遍：应用配置
+    document.querySelectorAll(UI_EDITABLE_SELECTOR).forEach(function(el) {
+        var id = el.dataset.uiId;
+        if (!id || !cfg[id]) return;
+        var c = cfg[id];
+        if (c.hidden) { el.style.display = 'none'; return; }
+        if (c.r !== undefined) el.style.borderRadius = c.r + 'px';
+        if (c.opacity !== undefined) el.style.opacity = c.opacity;
+        if (c.fs !== undefined) applyCardFontSize(el, c.fs);
+        if (c.w !== undefined) el.style.width = c.w + 'px';
+        if (c.h !== undefined) el.style.height = c.h + 'px';
+        // 应用位置
+        if (c.x !== undefined && c.y !== undefined) {
+            hasPosition = true;
+            if (container) container.style.position = 'relative';
+            // 未自定义宽度时使用预测量的宽度，防止绝对定位下 width:100% 错乱
+            if (c.w === undefined && measuredW[id] > 0) {
+                el.style.width = measuredW[id] + 'px';
+            }
+            el.style.position = 'absolute';
+            el.style.left = c.x + 'px';
+            el.style.top = c.y + 'px';
+            el.style.margin = '0';
+        }
+    });
+    // 如果有位置配置，给容器设置最小高度
+    if (hasPosition && container) {
+        setTimeout(function() {
+            var maxBottom = 0;
+            document.querySelectorAll(UI_EDITABLE_SELECTOR).forEach(function(el) {
+                if (el.style.position === 'absolute') {
+                    var bottom = parseFloat(el.style.top) + el.offsetHeight;
+                    if (bottom > maxBottom) maxBottom = bottom;
+                }
+            });
+            if (maxBottom > 0) container.style.minHeight = (maxBottom + 40) + 'px';
+        }, 50);
+    }
+}
 
 // 加载保存的配置
 function loadCustomUI() {
     try {
-        var cfg = JSON.parse(localStorage.getItem(UI_EDIT_KEY) || '{}');
-        var hasPosition = false;
-        // 先恢复自定义气泡（在 assignBubbleIds 之前）
-        if (cfg._customBubbles && Array.isArray(cfg._customBubbles)) {
-            cfg._customBubbles.forEach(function (cb) {
-                if (!cb || typeof cb !== 'object') return;
-                createCustomBubble(cb, false);
-            });
+        var saved = localStorage.getItem(UI_EDIT_KEY);
+        var cfg = saved ? JSON.parse(saved) : null;
+        assignEditableIds();
+        // 没有保存的自定义配置时，使用默认自由布局
+        if (!cfg || Object.keys(cfg).length === 0) cfg = DEFAULT_UI_CONFIG;
+        applyEditableConfig(cfg);
+    } catch(e) { console.warn('加载自定义UI失败', e); }
+}
+
+// 收集配置
+function collectEditableConfig() {
+    var cfg = {};
+    document.querySelectorAll(UI_EDITABLE_SELECTOR).forEach(function(el) {
+        var id = el.dataset.uiId;
+        if (!id) return;
+        if (el.style.display === 'none') { cfg[id] = { hidden: true }; return; }
+        var entry = {};
+        if (el.style.borderRadius) entry.r = parseInt(el.style.borderRadius) || 0;
+        if (el.style.opacity) entry.opacity = parseFloat(el.style.opacity);
+        if (el.style.fontSize) entry.fs = parseInt(el.style.fontSize) || 0;
+        // 宽高（仅当与原始值不同时保存）
+        if (el.style.width && el.dataset.origWidth !== undefined) {
+            var curW = parseInt(el.style.width) || 0;
+            var origW = parseFloat(el.dataset.origWidth) || 0;
+            if (Math.abs(curW - origW) > 1) entry.w = Math.round(curW);
         }
-        assignBubbleIds();
-        var bubbles = document.querySelectorAll('.bubble-circle');
-        bubbles.forEach(function (b) {
-            var id = b.dataset.uiId;
-            if (cfg[id]) {
-                if (cfg[id].hidden) {
-                    b.style.display = 'none';
-                    return;
-                }
-                if (cfg[id].w) b.style.width = cfg[id].w + 'px';
-                if (cfg[id].h) b.style.height = cfg[id].h + 'px';
-                if (cfg[id].r !== undefined) b.style.borderRadius = cfg[id].r + '%';
-                if (cfg[id].x !== undefined && cfg[id].y !== undefined) {
-                    b.style.left = cfg[id].x + 'px';
-                    b.style.top = cfg[id].y + 'px';
-                    b.style.marginTop = '0';
-                    hasPosition = true;
-                }
+        if (el.style.height && el.dataset.origHeight !== undefined) {
+            var curH = parseInt(el.style.height) || 0;
+            var origH = parseFloat(el.dataset.origHeight) || 0;
+            if (Math.abs(curH - origH) > 1) entry.h = Math.round(curH);
+        }
+        // 位置信息（仅当与初始位置不同时保存）
+        if (el.style.position === 'absolute' && el.dataset.origLeft !== undefined) {
+            var curLeft = parseFloat(el.style.left) || 0;
+            var curTop = parseFloat(el.style.top) || 0;
+            var origLeft = parseFloat(el.dataset.origLeft) || 0;
+            var origTop = parseFloat(el.dataset.origTop) || 0;
+            if (Math.abs(curLeft - origLeft) > 2 || Math.abs(curTop - origTop) > 2) {
+                entry.x = Math.round(curLeft);
+                entry.y = Math.round(curTop);
             }
-        });
-        if (hasPosition) {
-            document.body.classList.add('ui-custom');
         }
-    } catch (e) { console.warn('加载自定义UI失败', e); }
+        cfg[id] = entry;
+    });
+    return cfg;
 }
-
-// 创建自定义气泡 - 和原生气泡完全相同的类名和结构
-function createCustomBubble(data, animate) {
-    var cluster = document.getElementById('customBubbleCluster') || document.querySelector('.bubble-cluster');
-    if (!cluster) return null;
-    var size = data.w || data.h || 100;
-    var fontSize = data.fontSize || Math.max(10, Math.round(size * 0.13));
-    var hrefAttr = data.href ? 'href="' + data.href + '"' : '';
-    var targetAttr = data.target ? 'target="' + data.target + '"' : '';
-    // 和原生气泡完全相同的类名，额外用 data-custom 识别
-    var styleAttr = 'width:' + size + 'px;height:' + size + 'px;animation-delay:0s;';
-    if (data.x !== undefined && data.y !== undefined) {
-        styleAttr += 'left:' + data.x + 'px;top:' + data.y + 'px;';
-    }
-    var html = '<a class="bubble-circle bubble-sm bubble-in" ' + hrefAttr + ' ' + targetAttr +
-        ' style="' + styleAttr + '" data-custom="1" data-label="' + (data.label || '新气泡') + '" data-href="' + (data.href || '') + '">' +
-        '<div class="bubble-label" style="font-size:' + fontSize + 'px;font-weight:600;">' + (data.label || '新气泡') + '</div>' +
-        '</a>';
-    cluster.insertAdjacentHTML('beforeend', html);
-    var newBubble = cluster.lastElementChild;
-    return newBubble;
-}
-
-loadCustomUI();
 
 // 进入编辑模式
 function enterEditMode() {
-    assignBubbleIds();
+    assignEditableIds();
     uiEditMode = true;
     document.body.classList.add('ui-edit-mode');
-    // 记录原始配置
-    uiOriginalConfig = collectBubbleConfig();
-    // 转为绝对定位
-    var page = document.querySelector('.bubble-page');
-    var pageRect = page.getBoundingClientRect();
-    document.querySelectorAll('.bubble-circle').forEach(function (b) {
-        var rect = b.getBoundingClientRect();
-        b.style.left = (rect.left - pageRect.left) + 'px';
-        b.style.top = (rect.top - pageRect.top) + 'px';
-        b.style.marginTop = '0';
-        b.style.marginLeft = '0';
-        // 绑定拖拽
-        b.addEventListener('mousedown', startBubbleDrag);
-        // 拦截点击跳转（编辑模式下不跳转）
-        b.addEventListener('click', uiBlockClick, true);
+    // 直接从 localStorage 读取上次保存的配置作为取消时的恢复基准
+    // （不能用 collectEditableConfig，因为此时 dataset.origLeft 尚未设置，位置信息会丢失）
+    // 没有保存的配置时，使用默认自由布局作为基准
+    try {
+        var saved = localStorage.getItem(UI_EDIT_KEY);
+        uiOriginalConfig = saved ? JSON.parse(saved) : DEFAULT_UI_CONFIG;
+        if (!uiOriginalConfig || Object.keys(uiOriginalConfig).length === 0) uiOriginalConfig = DEFAULT_UI_CONFIG;
+    } catch(e) { uiOriginalConfig = DEFAULT_UI_CONFIG; }
+    // 容器设为相对定位，记录原始高度
+    var container = document.querySelector('.home-v2-container');
+    if (container) {
+        container.style.position = 'relative';
+        container.style.minHeight = container.offsetHeight + 'px';
+    }
+    var containerRect = container ? container.getBoundingClientRect() : {left:0, top:0};
+    // 第一步：先记录所有卡片的原始位置（此时还未改绝对定位）
+    var positions = [];
+    document.querySelectorAll(UI_EDITABLE_SELECTOR).forEach(function(el) {
+        var rect = el.getBoundingClientRect();
+        positions.push({
+            el: el,
+            left: rect.left - containerRect.left,
+            top: rect.top - containerRect.top,
+            width: rect.width,
+            height: rect.height
+        });
     });
-    // 显示工具栏
+    // 第二步：统一改成绝对定位并应用记录的位置
+    positions.forEach(function(p) {
+        var el = p.el;
+        if (el.style.display === 'none') el.style.display = '';
+        el.classList.add('ui-editable');
+        el.dataset.origLeft = p.left;
+        el.dataset.origTop = p.top;
+        el.dataset.origWidth = p.width;
+        el.dataset.origHeight = p.height;
+        el.style.position = 'absolute';
+        el.style.left = p.left + 'px';
+        el.style.top = p.top + 'px';
+        el.style.width = p.width + 'px';
+        el.style.margin = '0';
+        el.style.cursor = 'move';
+        el.addEventListener('mousedown', startEditableDrag);
+        el.addEventListener('click', uiEditableClick, true);
+    });
     showEditToolbar();
-    showEditHint('拖拽移动气泡 · 点击选中调节大小和圆角');
+    showEditHint('拖拽移动 · 点击调节宽高/圆角/透明度 · 可隐藏卡片');
 }
 
-// 编辑模式下拦截气泡点击
-function uiBlockClick(e) {
-    if (uiEditMode) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
+// 拖拽
+var uiDragState = null;
+function startEditableDrag(e) {
+    if (!uiEditMode) return;
+    e.preventDefault();
+    var el = e.currentTarget;
+    selectEditable(el);
+    var rect = el.getBoundingClientRect();
+    uiDragState = {
+        el: el,
+        startX: e.clientX,
+        startY: e.clientY,
+        origLeft: parseFloat(el.style.left) || 0,
+        origTop: parseFloat(el.style.top) || 0
+    };
+    document.addEventListener('mousemove', onEditableDrag);
+    document.addEventListener('mouseup', stopEditableDrag);
+}
+function onEditableDrag(e) {
+    if (!uiDragState) return;
+    var dx = e.clientX - uiDragState.startX;
+    var dy = e.clientY - uiDragState.startY;
+    uiDragState.el.style.left = (uiDragState.origLeft + dx) + 'px';
+    uiDragState.el.style.top = (uiDragState.origTop + dy) + 'px';
+}
+function stopEditableDrag() {
+    uiDragState = null;
+    document.removeEventListener('mousemove', onEditableDrag);
+    document.removeEventListener('mouseup', stopEditableDrag);
+}
+
+// 编辑模式下点击卡片
+function uiEditableClick(e) {
+    if (!uiEditMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    selectEditable(e.currentTarget);
+}
+
+// 选中元素
+function selectEditable(el) {
+    document.querySelectorAll('.ui-editable.selected').forEach(function(e) { e.classList.remove('selected'); });
+    el.classList.add('selected');
+    uiSelectedEl = el;
+    showEditablePanel(el);
+}
+
+// 记录卡片内所有文字元素的原始字号
+function recordCardFontSizes(el) {
+    if (el.dataset.fsRecorded) return;
+    el.dataset.baseFs = parseInt(getComputedStyle(el).fontSize) || 14;
+    el.querySelectorAll('*').forEach(function(child) {
+        var fs = getComputedStyle(child).fontSize;
+        if (fs) child.dataset.origFs = parseFloat(fs);
+    });
+    el.dataset.fsRecorded = '1';
+}
+
+// 应用字号缩放（按比例缩放卡片内所有文字）
+function applyCardFontSize(el, fs) {
+    recordCardFontSizes(el);
+    var baseFs = parseInt(el.dataset.baseFs) || 14;
+    var scale = fs / baseFs;
+    el.style.fontSize = fs + 'px';
+    el.querySelectorAll('*').forEach(function(child) {
+        if (child.dataset.origFs) {
+            child.style.fontSize = (parseFloat(child.dataset.origFs) * scale) + 'px';
+        }
+    });
+}
+
+// 恢复卡片原始字号
+function restoreCardFontSize(el) {
+    el.style.fontSize = '';
+    el.querySelectorAll('*').forEach(function(child) {
+        if (child.dataset.origFs) {
+            child.style.fontSize = '';
+            delete child.dataset.origFs;
+        }
+    });
+    delete el.dataset.baseFs;
+    delete el.dataset.fsRecorded;
+}
+
+// 显示控制面板
+function showEditablePanel(el) {
+    removeEditablePanel();
+    var panel = document.createElement('div');
+    panel.className = 'ui-bubble-panel';
+    panel.id = 'uiBubblePanel';
+    var r = 16;
+    if (el.style.borderRadius) r = parseInt(el.style.borderRadius) || 16;
+    var opacity = el.style.opacity ? parseFloat(el.style.opacity) : 1;
+    var curW = parseInt(el.style.width) || el.offsetWidth || 200;
+    var curH = parseInt(el.style.height) || el.offsetHeight || 100;
+    recordCardFontSizes(el);
+    var curFS = parseInt(el.style.fontSize) || parseInt(el.dataset.baseFs) || 14;
+    panel.innerHTML =
+        '<div style="font-weight:700;margin-bottom:10px;color:var(--text-main);">调节卡片</div>' +
+        '<label>宽度 <span class="panel-val" id="uiValW">' + curW + 'px</span></label>' +
+        '<input type="range" id="uiRangeW" min="60" max="600" value="' + curW + '">' +
+        '<label>高度 <span class="panel-val" id="uiValH">' + curH + 'px</span></label>' +
+        '<input type="range" id="uiRangeH" min="30" max="500" value="' + curH + '">' +
+        '<label>字号 <span class="panel-val" id="uiValFS">' + curFS + 'px</span></label>' +
+        '<input type="range" id="uiRangeFS" min="10" max="28" value="' + curFS + '">' +
+        '<label>圆角 <span class="panel-val" id="uiValR">' + r + 'px</span></label>' +
+        '<input type="range" id="uiRangeR" min="0" max="40" value="' + r + '">' +
+        '<label>透明度 <span class="panel-val" id="uiValO">' + Math.round(opacity * 100) + '%</span></label>' +
+        '<input type="range" id="uiRangeO" min="30" max="100" value="' + Math.round(opacity * 100) + '">' +
+        '<button class="ui-bubble-delete" id="uiHideBtn" style="margin-top:12px;width:100%;padding:8px;border:none;border-radius:8px;background:#ef4444;color:#fff;font-size:13px;cursor:pointer;font-weight:600;">隐藏此卡片</button>';
+    document.body.appendChild(panel);
+    var rect = el.getBoundingClientRect();
+    panel.style.left = Math.min(rect.right + 12, window.innerWidth - 220) + 'px';
+    panel.style.top = Math.max(rect.top, 80) + 'px';
+    panel.querySelector('#uiRangeW').addEventListener('input', function(e) {
+        el.style.width = e.target.value + 'px';
+        panel.querySelector('#uiValW').textContent = e.target.value + 'px';
+    });
+    panel.querySelector('#uiRangeH').addEventListener('input', function(e) {
+        el.style.height = e.target.value + 'px';
+        panel.querySelector('#uiValH').textContent = e.target.value + 'px';
+    });
+    panel.querySelector('#uiRangeFS').addEventListener('input', function(e) {
+        applyCardFontSize(el, parseInt(e.target.value));
+        panel.querySelector('#uiValFS').textContent = e.target.value + 'px';
+    });
+    panel.querySelector('#uiRangeR').addEventListener('input', function(e) {
+        el.style.borderRadius = e.target.value + 'px';
+        panel.querySelector('#uiValR').textContent = e.target.value + 'px';
+    });
+    panel.querySelector('#uiRangeO').addEventListener('input', function(e) {
+        el.style.opacity = e.target.value / 100;
+        panel.querySelector('#uiValO').textContent = e.target.value + '%';
+    });
+    panel.querySelector('#uiHideBtn').addEventListener('click', function() {
+        el.style.display = 'none';
+        removeEditablePanel();
+        uiSelectedEl = null;
+        showEditHint('卡片已隐藏，保存后生效');
+    });
+}
+function removeEditablePanel() {
+    var p = document.getElementById('uiBubblePanel');
+    if (p) p.remove();
 }
 
 // 退出编辑模式
 function exitEditMode(save) {
     if (save) {
-        var cfg = collectBubbleConfig();
+        var cfg = collectEditableConfig();
         localStorage.setItem(UI_EDIT_KEY, JSON.stringify(cfg));
-        // 检查是否有自定义位置
-        var hasPos = false;
-        for (var k in cfg) { if (cfg[k].x !== undefined) { hasPos = true; break; } }
-        if (hasPos) document.body.classList.add('ui-custom');
-        else document.body.classList.remove('ui-custom');
     } else {
-        // 取消：恢复原始布局
-        document.body.classList.remove('ui-custom');
-        // 移除本次编辑添加的自定义气泡
-        document.querySelectorAll('[data-custom="1"]').forEach(function (b) { b.remove(); });
-        // 恢复所有被隐藏的气泡
-        document.querySelectorAll('.bubble-circle').forEach(function (b) {
-            b.style.display = '';
+        // 第一步：完全清除所有编辑模式内联样式，让卡片和容器回到正常流默认状态
+        // （这样后续 applyEditableConfig 的测量逻辑与页面加载时完全一致）
+        document.querySelectorAll(UI_EDITABLE_SELECTOR).forEach(function(el) {
+            el.style.display = '';
+            el.style.position = '';
+            el.style.left = '';
+            el.style.top = '';
+            el.style.width = '';
+            el.style.height = '';
+            el.style.fontSize = '';
+            el.style.margin = '';
+            el.style.cursor = '';
+            el.style.borderRadius = '';
+            el.style.opacity = '';
+            restoreCardFontSize(el);
         });
-        if (uiOriginalConfig) applyBubbleConfig(uiOriginalConfig);
-        document.querySelectorAll('.bubble-circle').forEach(function (b) {
-            b.style.left = '';
-            b.style.top = '';
-            b.style.marginTop = '';
-        });
+        var _container = document.querySelector('.home-v2-container');
+        if (_container) {
+            _container.style.position = '';
+            _container.style.minHeight = '';
+        }
+        // 第二步：重新应用上次保存的完整配置
+        if (uiOriginalConfig) applyEditableConfig(uiOriginalConfig);
     }
     uiEditMode = false;
     document.body.classList.remove('ui-edit-mode');
-    document.querySelectorAll('.bubble-circle').forEach(function (b) {
-        b.removeEventListener('mousedown', startBubbleDrag);
-        b.removeEventListener('click', uiBlockClick, true);
-        b.classList.remove('selected');
+    document.querySelectorAll('.ui-editable').forEach(function(el) {
+        el.classList.remove('ui-editable', 'selected');
+        el.removeEventListener('click', uiEditableClick, true);
+        el.removeEventListener('mousedown', startEditableDrag);
     });
     removeEditToolbar();
-    removeBubblePanel();
+    removeEditablePanel();
     removeEditHint();
-    uiSelectedBubble = null;
-}
-
-// 收集气泡配置
-function collectBubbleConfig() {
-    var cfg = {};
-    var customBubbles = [];
-    document.querySelectorAll('.bubble-circle').forEach(function (b) {
-        var id = b.dataset.uiId;
-        if (!id) return;
-        // 检查是否被隐藏
-        if (b.style.display === 'none') {
-            cfg[id] = { hidden: true };
-            return;
-        }
-        // 收集自定义气泡
-        if (b.dataset.custom === '1') {
-            customBubbles.push({
-                label: b.dataset.label || '',
-                href: b.dataset.href || '',
-                w: parseInt(b.style.width) || b.offsetWidth,
-                h: parseInt(b.style.height) || b.offsetHeight,
-                x: b.style.left ? parseInt(b.style.left) : undefined,
-                y: b.style.top ? parseInt(b.style.top) : undefined
-            });
-        }
-        var w = parseInt(b.style.width) || b.offsetWidth;
-        var h = parseInt(b.style.height) || b.offsetHeight;
-        var r = 50;
-        if (b.style.borderRadius) {
-            r = parseInt(b.style.borderRadius) || 50;
-        }
-        var entry = { w: w, h: h, r: r };
-        // 保存位置（仅在有 left/top 时）
-        if (b.style.left && b.style.top) {
-            entry.x = parseInt(b.style.left);
-            entry.y = parseInt(b.style.top);
-        }
-        cfg[id] = entry;
-    });
-    if (customBubbles.length > 0) {
-        cfg._customBubbles = customBubbles;
-    }
-    return cfg;
-}
-
-// 应用配置
-function applyBubbleConfig(cfg) {
-    document.querySelectorAll('.bubble-circle').forEach(function (b) {
-        var id = b.dataset.uiId;
-        if (cfg[id]) {
-            if (cfg[id].w) b.style.width = cfg[id].w + 'px';
-            if (cfg[id].h) b.style.height = cfg[id].h + 'px';
-            if (cfg[id].r !== undefined) b.style.borderRadius = cfg[id].r + '%';
-            if (cfg[id].x !== undefined && cfg[id].y !== undefined) {
-                b.style.left = cfg[id].x + 'px';
-                b.style.top = cfg[id].y + 'px';
-            }
-        }
-    });
-}
-
-// 拖拽
-function startBubbleDrag(e) {
-    if (!uiEditMode) return;
-    e.preventDefault();
-    var b = e.currentTarget;
-    selectBubble(b);
-    var rect = b.getBoundingClientRect();
-    uiDragState = {
-        el: b,
-        startX: e.clientX,
-        startY: e.clientY,
-        origLeft: rect.left,
-        origTop: rect.top
-    };
-    document.addEventListener('mousemove', onBubbleDrag);
-    document.addEventListener('mouseup', stopBubbleDrag);
-}
-function onBubbleDrag(e) {
-    if (!uiDragState) return;
-    var dx = e.clientX - uiDragState.startX;
-    var dy = e.clientY - uiDragState.startY;
-    var page = document.querySelector('.bubble-page');
-    var pageRect = page.getBoundingClientRect();
-    uiDragState.el.style.left = (uiDragState.origLeft - pageRect.left + dx) + 'px';
-    uiDragState.el.style.top = (uiDragState.origTop - pageRect.top + dy) + 'px';
-}
-function stopBubbleDrag() {
+    uiSelectedEl = null;
     uiDragState = null;
-    document.removeEventListener('mousemove', onBubbleDrag);
-    document.removeEventListener('mouseup', stopBubbleDrag);
 }
 
-// 选中气泡并显示控制面板
-function selectBubble(b) {
-    document.querySelectorAll('.bubble-circle.selected').forEach(function (el) {
-        el.classList.remove('selected');
+// 恢复默认
+function resetCustomUI() {
+    if (!confirm('确定恢复默认布局？所有自定义修改将被清除。')) return;
+    localStorage.removeItem(UI_EDIT_KEY);
+    uiOriginalConfig = DEFAULT_UI_CONFIG;
+    // 第一步：完全清除所有内联样式，卡片回到正常流
+    document.querySelectorAll(UI_EDITABLE_SELECTOR).forEach(function(el) {
+        el.style.display = '';
+        restoreCardFontSize(el);
+        el.style.borderRadius = '';
+        el.style.opacity = '';
+        el.style.position = '';
+        el.style.left = '';
+        el.style.top = '';
+        el.style.width = '';
+        el.style.height = '';
+        el.style.fontSize = '';
+        el.style.margin = '';
+        el.style.cursor = '';
+        el.classList.remove('ui-editable', 'selected');
+        el.removeEventListener('mousedown', startEditableDrag);
+        el.removeEventListener('click', uiEditableClick, true);
     });
-    b.classList.add('selected');
-    uiSelectedBubble = b;
-    showBubblePanel(b);
-}
-
-// 气泡控制面板
-function showBubblePanel(b) {
-    removeBubblePanel();
-    var panel = document.createElement('div');
-    panel.className = 'ui-bubble-panel';
-    panel.id = 'uiBubblePanel';
-    var w = parseInt(b.style.width) || b.offsetWidth;
-    var h = parseInt(b.style.height) || b.offsetHeight;
-    var r = 50;
-    if (b.style.borderRadius) r = parseInt(b.style.borderRadius) || 50;
-    var isCustom = b.dataset.custom === '1';
-    panel.innerHTML =
-        '<div style="font-weight:700;margin-bottom:10px;color:var(--text-main);">调节气泡</div>' +
-        '<label>宽度 <span class="panel-val" id="uiValW">' + w + '</span></label>' +
-        '<input type="range" id="uiRangeW" min="40" max="320" value="' + w + '">' +
-        '<label>高度 <span class="panel-val" id="uiValH">' + h + '</span></label>' +
-        '<input type="range" id="uiRangeH" min="40" max="320" value="' + h + '">' +
-        '<label>圆角 <span class="panel-val" id="uiValR">' + r + '%</span></label>' +
-        '<input type="range" id="uiRangeR" min="0" max="50" value="' + r + '">' +
-        '<button class="ui-bubble-delete" id="uiDeleteBtn" style="margin-top:12px;width:100%;padding:8px;border:none;border-radius:8px;background:#ef4444;color:#fff;font-size:13px;cursor:pointer;font-weight:600;">' + (isCustom ? '删除此气泡' : '隐藏此气泡') + '</button>';
-    document.body.appendChild(panel);
-    // 定位到气泡旁边
-    var rect = b.getBoundingClientRect();
-    panel.style.left = Math.min(rect.right + 12, window.innerWidth - 220) + 'px';
-    panel.style.top = Math.max(rect.top, 80) + 'px';
-    // 绑定滑块
-    panel.querySelector('#uiRangeW').addEventListener('input', function (e) {
-        b.style.width = e.target.value + 'px';
-        panel.querySelector('#uiValW').textContent = e.target.value;
-    });
-    panel.querySelector('#uiRangeH').addEventListener('input', function (e) {
-        b.style.height = e.target.value + 'px';
-        panel.querySelector('#uiValH').textContent = e.target.value;
-    });
-    panel.querySelector('#uiRangeR').addEventListener('input', function (e) {
-        b.style.borderRadius = e.target.value + '%';
-        panel.querySelector('#uiValR').textContent = e.target.value + '%';
-    });
-    // 删除/隐藏按钮
-    var delBtn = panel.querySelector('#uiDeleteBtn');
-    if (delBtn) {
-        delBtn.addEventListener('click', function () {
-            var wasCustom = b.dataset.custom === '1';
-            if (wasCustom) {
-                b.remove();
-            } else {
-                b.style.display = 'none';
-            }
-            removeBubblePanel();
-            uiSelectedBubble = null;
-            showEditHint('气泡已' + (wasCustom ? '删除' : '隐藏') + '，保存后生效');
-        });
+    var container = document.querySelector('.home-v2-container');
+    if (container) {
+        container.style.position = '';
+        container.style.minHeight = '';
     }
-}
-function removeBubblePanel() {
-    var p = document.getElementById('uiBubblePanel');
-    if (p) p.remove();
+    removeEditablePanel();
+    uiSelectedEl = null;
+    // 第二步：应用默认自由布局（此时卡片在正常流，测量准确）
+    applyEditableConfig(DEFAULT_UI_CONFIG);
+    // 第三步：重新建立编辑模式的绝对定位状态（基于默认布局的当前位置）
+    setTimeout(function() {
+        var cont = document.querySelector('.home-v2-container');
+        var contRect = cont ? cont.getBoundingClientRect() : {left:0, top:0};
+        document.querySelectorAll(UI_EDITABLE_SELECTOR).forEach(function(el) {
+            var rect = el.getBoundingClientRect();
+            el.classList.add('ui-editable');
+            el.dataset.origLeft = rect.left - contRect.left;
+            el.dataset.origTop = rect.top - contRect.top;
+            el.dataset.origWidth = rect.width;
+            el.dataset.origHeight = rect.height;
+            el.style.position = 'absolute';
+            el.style.left = (rect.left - contRect.left) + 'px';
+            el.style.top = (rect.top - contRect.top) + 'px';
+            el.style.width = rect.width + 'px';
+            el.style.margin = '0';
+            el.style.cursor = 'move';
+            el.addEventListener('mousedown', startEditableDrag);
+            el.addEventListener('click', uiEditableClick, true);
+        });
+    }, 60);
+    showEditHint('已恢复默认布局');
 }
 
 // 编辑工具栏
@@ -801,7 +971,6 @@ function showEditToolbar() {
     bar.id = 'uiEditToolbar';
     bar.innerHTML =
         '<span style="color:var(--text-sub);">自定义UI模式</span>' +
-        '<button class="ui-edit-add" onclick="showAddBubbleModal()" style="background:#22c55e;color:#fff;">+ 添加气泡</button>' +
         '<button class="ui-edit-reset" onclick="resetCustomUI()">恢复默认</button>' +
         '<button class="ui-edit-cancel" onclick="exitEditMode(false)">取消</button>' +
         '<button class="ui-edit-save" onclick="exitEditMode(true)">保存</button>';
@@ -825,130 +994,104 @@ function removeEditHint() {
     if (h) h.remove();
 }
 
-// 添加气泡弹窗
-function showAddBubbleModal() {
-    hideAddBubbleModal();
-    var mask = document.createElement('div');
-    mask.className = 'ui-add-mask';
-    mask.id = 'uiAddMask';
-    mask.style.cssText = 'position:fixed;inset:0;z-index:100001;background:rgba(0,0,0,0.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;';
-    mask.onclick = function (e) { if (e.target === mask) hideAddBubbleModal(); };
-    var box = document.createElement('div');
-    box.style.cssText = 'background:var(--card-bg,#fff);border-radius:16px;padding:24px;width:90%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,0.3);';
-    box.innerHTML =
-        '<div style="font-weight:700;font-size:16px;margin-bottom:16px;color:var(--text-main);">添加新气泡</div>' +
-        '<label style="display:block;font-size:13px;color:var(--text-sub);margin-bottom:6px;">选择页面（快速填充）</label>' +
-        '<select id="uiAddPage" style="width:100%;padding:10px 12px;border:1px solid var(--card-border,rgba(0,0,0,0.1));border-radius:8px;margin-bottom:14px;font-size:14px;box-sizing:border-box;background:var(--input-bg,#f8fafc);color:var(--text-main);">' +
-        '<option value="">-- 自定义 --</option>' +
-        '<option value="index.html|首页">首页</option>' +
-        '<option value="about.html|关于我">关于我</option>' +
-        '<option value="timeline.html|个人历程">个人历程</option>' +
-        '<option value="projects.html|我的项目">我的项目</option>' +
-        '<option value="announce.html|公告">公告</option>' +
-        '<option value="character.html|角色">角色</option>' +
-        '<option value="chat.html|聊天室">聊天室</option>' +
-        '<option value="album.html|成员相册">成员相册</option>' +
-        '<option value="friends.html|友链">友链</option>' +
-        '<option value="diary.html|动态">动态</option>' +
-        '<option value="userlist.html|用户列表">用户列表</option>' +
-        '<option value="profile.html|个人资料">个人资料</option>' +
-        '<option value="dashboard.html|数据看板">数据看板</option>' +
-        '<option value="anime.html|追番表">追番表</option>' +
-        '<option value="rhythm4k.html|音游">音游</option>' +
-        '<option value="maimai.html|Maimai">Maimai</option>' +
-        '<option value="game-watermelon.html|合成大千世">合成大千世</option>' +
-        '<option value="auth.html|登录">登录/注册</option>' +
-        '</select>' +
-        '<label style="display:block;font-size:13px;color:var(--text-sub);margin-bottom:6px;">显示文字</label>' +
-        '<input type="text" id="uiAddLabel" placeholder="例如：博客" style="width:100%;padding:10px 12px;border:1px solid var(--card-border,rgba(0,0,0,0.1));border-radius:8px;margin-bottom:14px;font-size:14px;box-sizing:border-box;background:var(--input-bg,#f8fafc);color:var(--text-main);">' +
-        '<label style="display:block;font-size:13px;color:var(--text-sub);margin-bottom:6px;">跳转链接（可选）</label>' +
-        '<input type="text" id="uiAddHref" placeholder="例如：blog.html 或 https://..." style="width:100%;padding:10px 12px;border:1px solid var(--card-border,rgba(0,0,0,0.1));border-radius:8px;margin-bottom:14px;font-size:14px;box-sizing:border-box;background:var(--input-bg,#f8fafc);color:var(--text-main);">' +
-        '<label style="display:block;font-size:13px;color:var(--text-sub);margin-bottom:6px;">大小：<span id="uiAddSizeVal">100</span>px</label>' +
-        '<input type="range" id="uiAddSize" min="60" max="200" value="100" style="width:100%;margin-bottom:20px;">' +
-        '<div style="display:flex;gap:10px;">' +
-        '<button onclick="hideAddBubbleModal()" style="flex:1;padding:10px;border:none;border-radius:8px;background:var(--accent-soft,rgba(0,0,0,0.06));color:var(--text-sub);font-size:14px;cursor:pointer;font-weight:600;">取消</button>' +
-        '<button onclick="confirmAddBubble()" style="flex:1;padding:10px;border:none;border-radius:8px;background:var(--accent,#60a5fa);color:#fff;font-size:14px;cursor:pointer;font-weight:600;">添加</button>' +
-        '</div>';
-    mask.appendChild(box);
-    document.body.appendChild(mask);
-    // 页面选择下拉框联动
-    var pageSelect = mask.querySelector('#uiAddPage');
-    var labelInput = mask.querySelector('#uiAddLabel');
-    var hrefInput = mask.querySelector('#uiAddHref');
-    pageSelect.addEventListener('change', function () {
-        if (pageSelect.value) {
-            var parts = pageSelect.value.split('|');
-            hrefInput.value = parts[0];
-            labelInput.value = parts[1];
+// ========== 横幅图片自定义 ==========
+(function initHeroImageCustomizer() {
+    var STORAGE_KEY = 'qish-hero-image';
+    var DEFAULT_SRC = 'right-photo.png';
+    var heroImg = document.getElementById('heroImage');
+    var heroCard = document.getElementById('heroCard');
+    var fileInput = document.getElementById('heroImageInput');
+    if (!heroImg || !heroCard || !fileInput) return;
+
+    // 加载已保存的图片
+    try {
+        var saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) heroImg.src = saved;
+    } catch (e) { console.warn('加载横幅图片失败', e); }
+
+    // 点击触发文件选择（编辑模式下不触发）
+    heroCard.addEventListener('click', function (e) {
+        if (document.body.classList.contains('ui-edit-mode')) return;
+        fileInput.click();
+    });
+
+    // 双击恢复默认
+    heroCard.addEventListener('dblclick', function (e) {
+        if (document.body.classList.contains('ui-edit-mode')) return;
+        e.preventDefault();
+        if (!confirm('恢复默认横幅图片？')) return;
+        try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+        heroImg.src = DEFAULT_SRC;
+    });
+
+    // 文件选择处理
+    fileInput.addEventListener('change', function (e) {
+        var file = e.target.files[0];
+        if (!file) return;
+        if (!file.type.startsWith('image/')) {
+            alert('请选择图片文件');
+            return;
         }
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+            var img = new Image();
+            img.onload = function () {
+                // 压缩图片：最大宽度 1920px，JPEG 质量 0.85
+                var canvas = document.createElement('canvas');
+                var maxW = 1920;
+                var w = img.width;
+                var h = img.height;
+                if (w > maxW) {
+                    h = Math.round(h * maxW / w);
+                    w = maxW;
+                }
+                canvas.width = w;
+                canvas.height = h;
+                var ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, w, h);
+                var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                // 检查大小（localStorage 限制约 5MB）
+                if (dataUrl.length > 4500000) {
+                    alert('图片压缩后仍过大，请选择分辨率更低的图片');
+                    return;
+                }
+                // 保存并应用
+                try {
+                    localStorage.setItem(STORAGE_KEY, dataUrl);
+                } catch (err) {
+                    alert('保存失败，存储空间不足');
+                    return;
+                }
+                heroImg.src = dataUrl;
+            };
+            img.onerror = function () {
+                alert('图片加载失败');
+            };
+            img.src = ev.target.result;
+        };
+        reader.onerror = function () {
+            alert('文件读取失败');
+        };
+        reader.readAsDataURL(file);
+        fileInput.value = '';
     });
-    var sizeSlider = mask.querySelector('#uiAddSize');
-    var sizeVal = mask.querySelector('#uiAddSizeVal');
-    sizeSlider.addEventListener('input', function () { sizeVal.textContent = sizeSlider.value; });
-    setTimeout(function () { mask.querySelector('#uiAddLabel').focus(); }, 100);
-}
-function hideAddBubbleModal() {
-    var m = document.getElementById('uiAddMask');
-    if (m) m.remove();
-}
-function confirmAddBubble() {
-    var label = document.getElementById('uiAddLabel').value.trim();
-    var href = document.getElementById('uiAddHref').value.trim();
-    var size = parseInt(document.getElementById('uiAddSize').value);
-    if (!label) { alert('请输入显示文字'); return; }
-    var newBubble = createCustomBubble({
-        label: label,
-        href: href || '',
-        w: size,
-        h: size
-    }, true);
-    if (newBubble) {
-        assignBubbleIds();
-        var page = document.querySelector('.bubble-page');
-        var pageRect = page.getBoundingClientRect();
-        var rect = newBubble.getBoundingClientRect();
-        newBubble.style.left = (rect.left - pageRect.left) + 'px';
-        newBubble.style.top = (rect.top - pageRect.top) + 'px';
-        newBubble.style.marginTop = '0';
-        newBubble.addEventListener('mousedown', startBubbleDrag);
-        newBubble.addEventListener('click', uiBlockClick, true);
-        showEditHint('气泡已添加，可以拖拽移动位置');
-    }
-    hideAddBubbleModal();
-}
-function resetCustomUI() {
-    if (!confirm('确定恢复默认布局？所有自定义修改（包括隐藏和添加的气泡）将被清除。')) return;
-    localStorage.removeItem(UI_EDIT_KEY);
-    // 移除自定义气泡
-    document.querySelectorAll('[data-custom="1"]').forEach(function (b) { b.remove(); });
-    // 恢复所有被隐藏的气泡
-    document.querySelectorAll('.bubble-circle').forEach(function (b) {
-        b.style.display = '';
-        b.style.width = '';
-        b.style.height = '';
-        b.style.borderRadius = '';
-        b.style.left = '';
-        b.style.top = '';
-        b.style.marginTop = '';
-    });
-    document.body.classList.remove('ui-custom');
-    // 重新进入编辑模式以刷新状态
-    exitEditMode(false);
-    setTimeout(enterEditMode, 100);
-    showEditHint('已恢复默认布局');
-}
+})();
+
+loadCustomUI();
+
 // 暴露给下拉菜单调用
 window.enterEditMode = enterEditMode;
 window.exitEditMode = exitEditMode;
 </script>
 
-<!-- 右下角Q版小人 -->
-<div class="char-wrap char-drifting" id="rightImage" style="position:fixed;right:90px;bottom:90px;z-index:8000;cursor:pointer;">
-  <img src="chise-char.gif" id="rightCharImg" style="width:110px;height:110px;display:block;">
-  <div class="char-bubble" id="charBubble">
-    <div class="char-bubble-text"></div>
-  </div>
-</div>
-
+<!-- 页面翻页箭头 -->
+<a href="dashboard.html" class="page-nav-arrow left v3-ripple" onclick="event.preventDefault();navigateWithSlide('dashboard.html','right')" aria-label="上一页：仪表盘">
+    <span class="page-nav-arrow-chevron">‹</span>
+    <span class="arrow-label">仪表盘</span>
+</a>
+<a href="chat.html" class="page-nav-arrow right v3-ripple" onclick="event.preventDefault();navigateWithSlide('chat.html','left')" aria-label="下一页：聊天室">
+    <span class="page-nav-arrow-chevron">›</span>
+    <span class="arrow-label">聊天室</span>
+</a>
 </body>
 </html>

@@ -116,7 +116,6 @@
       { label: "个人历程", href: "timeline.html" },
       { label: "我的项目", href: "projects.html" },
       { label: "公告", href: "announce.html" },
-      { label: "角色", href: "character.html" },
       { label: "聊天室", href: "chat.html" },
       { label: "成员相册", href: "album.html" },
       { label: "友链", href: "friends.html" },
@@ -215,7 +214,7 @@
 
   // ---------- 页面滑动导航 ----------
   function navigateWithSlide(url, direction) {
-    var main = document.querySelector(".main-content") || document.querySelector(".dash-main");
+    var main = document.querySelector(".main-content") || document.querySelector(".dash-main") || document.querySelector(".home-v2-main");
     if (!main) { window.location.href = url; return; }
     // direction: "left" = 当前页向左滑出（去右侧下一页）, "right" = 当前页向右滑出（去左侧上一页）
     sessionStorage.setItem("qish_slide_dir", direction === "left" ? "from-right" : "from-left");
@@ -229,10 +228,90 @@
     var dir = sessionStorage.getItem("qish_slide_dir");
     if (!dir) return;
     sessionStorage.removeItem("qish_slide_dir");
-    var main = document.querySelector(".main-content");
+    var main = document.querySelector(".main-content") || document.querySelector(".home-v2-main");
     if (main) {
       main.classList.add(dir === "from-right" ? "slide-in-from-right" : "slide-in-from-left");
     }
+  }
+
+  // ---------- 左右翻页箭头 ----------
+  var PAGE_ORDER = [
+    { file: "index.html",    label: "首页" },
+    { file: "about.html",    label: "关于我" },
+    { file: "timeline.html", label: "个人历程" },
+    { file: "projects.html", label: "我的项目" },
+    { file: "announce.html", label: "公告" },
+    { file: "diary.html",    label: "动态" },
+    { file: "album.html",    label: "成员相册" },
+    { file: "friends.html",  label: "友链" },
+    { file: "chat.html",     label: "聊天室" },
+    { file: "userlist.html", label: "用户列表" },
+    { file: "profile.html",  label: "个人资料" }
+  ];
+
+  function getCurrentPageIndex() {
+    var page = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+    for (var i = 0; i < PAGE_ORDER.length; i++) {
+      if (PAGE_ORDER[i].file === page) return i;
+    }
+    return -1;
+  }
+
+  function initPageNavArrows() {
+    // 登录页、游戏页等特殊页面不显示箭头
+    var page = (location.pathname.split("/").pop() || "").toLowerCase();
+    if (page === "auth.html" || page === "game-watermelon.html" || page === "rhythm4k.html" || page === "dashboard.html") return;
+
+    // 绑定键盘左右翻页（无论箭头是硬编码还是动态创建）
+    if (!window.__qishPageNavKeyBound) {
+      window.__qishPageNavKeyBound = true;
+      document.addEventListener("keydown", function (e) {
+        var tag = (e.target && e.target.tagName) || "";
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || e.target.isContentEditable) return;
+        if (e.key === "ArrowLeft") {
+          var l = document.querySelector(".page-nav-arrow.left");
+          if (l) { e.preventDefault(); l.click(); }
+        } else if (e.key === "ArrowRight") {
+          var r = document.querySelector(".page-nav-arrow:not(.left)");
+          if (r) { e.preventDefault(); r.click(); }
+        }
+      });
+    }
+
+    // 已有硬编码箭头的页面（index.html、album.html、chat.html 等）跳过动态创建
+    if (document.querySelector(".page-nav-arrow")) return;
+    if (document.getElementById("qishPageNavLeft")) return; // 防重复
+
+    var curIdx = getCurrentPageIndex();
+    if (curIdx < 0) return;
+
+    var prevIdx = (curIdx - 1 + PAGE_ORDER.length) % PAGE_ORDER.length;
+    var nextIdx = (curIdx + 1) % PAGE_ORDER.length;
+    var prev = PAGE_ORDER[prevIdx];
+    var next = PAGE_ORDER[nextIdx];
+
+    function makeArrow(side, target, label) {
+      var a = document.createElement("a");
+      a.href = target.file;
+      a.id = "qishPageNav" + (side === "left" ? "Left" : "Right");
+      a.className = "page-nav-arrow v3-ripple " + side;
+      a.setAttribute("aria-label", (side === "left" ? "上一页：" : "下一页：") + label);
+      a.innerHTML =
+        '<span class="page-nav-arrow-chevron">' + (side === "left" ? "‹" : "›") + '</span>' +
+        '<span class="arrow-label">' + label + '</span>';
+      a.addEventListener("click", function (e) {
+        e.preventDefault();
+        if (typeof navigateWithSlide === "function") {
+          navigateWithSlide(target.file, side === "left" ? "right" : "left");
+        } else {
+          window.location.href = target.file;
+        }
+      });
+      document.body.appendChild(a);
+    }
+
+    makeArrow("left", prev, prev.label);
+    makeArrow("right", next, next.label);
   }
 
   // ---------- 鼠标弹性光效 ----------
@@ -847,7 +926,7 @@
   function ensureAudio() {
     if (audioEl) return audioEl;
     audioEl = new Audio();
-    audioEl.preload = "metadata";
+    audioEl.preload = "auto";
     audioEl.volume = musicState.volume;
     audioEl.addEventListener("timeupdate", onTimeUpdate);
     audioEl.addEventListener("ended", onEnded);
@@ -2370,17 +2449,25 @@ body.album-page .qm-empty{color:#64748b}
       const a = ensureAudio();
       a.src = currentTrack().url;
       a.volume = musicState.volume;
+      // 立即尝试 seek，不等待 loadedmetadata，减少页面切换后的中断时间
+      try { a.currentTime = musicState.currentTime || 0; } catch (_) {}
+      if (musicState.playing) {
+        a.play().then(() => updatePlayerUI()).catch(() => {
+          // 自动播放被浏览器策略阻止，等用户交互后再播
+          musicState.playing = false;
+          updatePlayerUI();
+        });
+      }
+      // loadedmetadata 后修正 seek 位置（部分浏览器在元数据加载前无法准确 seek）
       a.addEventListener("loadedmetadata", () => {
-        try { a.currentTime = musicState.currentTime || 0; } catch (_) {}
-        if (musicState.playing) {
-          a.play().then(() => updatePlayerUI()).catch(() => {
-            musicState.playing = false;
-            updatePlayerUI();
-          });
-        }
+        try {
+          const target = musicState.currentTime || 0;
+          if (Math.abs(a.currentTime - target) > 2) {
+            a.currentTime = target;
+          }
+        } catch (_) {}
         updatePlayerUI();
       }, { once: true });
-      a.load();
     }
 
     // 离开页面前保存进度
@@ -2849,19 +2936,9 @@ body.album-page .qm-empty{color:#64748b}
     document.body.appendChild(el);
   }
 
-  function applyTheme(name) {
+  function applyTheme(name, silent) {
     if (!THEMES.includes(name)) name = "aqua";
-    // 切换前：添加淡入遮罩防止闪屏
-    var flash = document.getElementById("qishThemeFlash");
-    if (!flash) {
-      flash = document.createElement("div");
-      flash.id = "qishThemeFlash";
-      flash.style.cssText = "position:fixed;inset:0;z-index:99999;background:var(--bg-gradient,#fff);opacity:0;pointer-events:none;transition:opacity 0.25s ease;";
-      document.body.appendChild(flash);
-    }
-    flash.style.opacity = "1";
-    // 等一帧让遮罩淡入，再切换主题
-    requestAnimationFrame(function () {
+    var doApply = function () {
       document.documentElement.setAttribute("data-theme", name);
       try {
         localStorage.setItem(THEME_KEY, name);
@@ -2902,6 +2979,23 @@ body.album-page .qm-empty{color:#64748b}
       const discVars = discThemes[name] || discThemes.aqua;
       Object.keys(discVars).forEach(k => document.documentElement.style.setProperty(k, discVars[k]));
       applyAlbumTheme(name);
+    };
+    if (silent) {
+      doApply();
+      return;
+    }
+    // 切换前：添加淡入遮罩防止闪屏
+    var flash = document.getElementById("qishThemeFlash");
+    if (!flash) {
+      flash = document.createElement("div");
+      flash.id = "qishThemeFlash";
+      flash.style.cssText = "position:fixed;inset:0;z-index:99999;background:var(--bg-gradient,#fff);opacity:0;pointer-events:none;transition:opacity 0.25s ease;";
+      document.body.appendChild(flash);
+    }
+    flash.style.opacity = "1";
+    // 等一帧让遮罩淡入，再切换主题
+    requestAnimationFrame(function () {
+      doApply();
       // 主题应用完成后，遮罩淡出
       requestAnimationFrame(function () {
         flash.style.opacity = "0";
@@ -2978,7 +3072,6 @@ body.album-page .qm-empty{color:#64748b}
 
 
   function initThemeSwitcher() {
-    applyTheme(getSavedTheme());
     if (document.getElementById("themeSwitcher")) return;
 
     // 相册等未引入 style.css 的页面也能用主题切换器
@@ -3131,7 +3224,7 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
       wrap.classList.remove("open");
     });
     document.addEventListener("click", () => wrap.classList.remove("open"));
-    applyTheme(getSavedTheme());
+    applyTheme(getSavedTheme(), true);
   }
 
 
@@ -3973,6 +4066,143 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
     fetchVisitStats,
   };
 
+  // ========== V3 动画增强 ==========
+
+  // 滚动显现（IntersectionObserver）
+  function initV3Reveal() {
+    var els = document.querySelectorAll(".reveal");
+    if (!els.length) return;
+    if (!("IntersectionObserver" in window)) {
+      els.forEach(function (el) { el.classList.add("visible"); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("visible");
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
+    els.forEach(function (el) { io.observe(el); });
+  }
+
+  // 按钮涟漪效果
+  function initV3Ripple() {
+    document.addEventListener("click", function (e) {
+      var target = e.target.closest(".v3-ripple");
+      if (!target) return;
+      var rect = target.getBoundingClientRect();
+      var size = Math.max(rect.width, rect.height);
+      var ripple = document.createElement("span");
+      ripple.className = "v3-ripple-effect";
+      ripple.style.width = ripple.style.height = size + "px";
+      ripple.style.left = (e.clientX - rect.left - size / 2) + "px";
+      ripple.style.top = (e.clientY - rect.top - size / 2) + "px";
+      target.appendChild(ripple);
+      setTimeout(function () { ripple.remove(); }, 650);
+    });
+  }
+
+  // 数字滚动动画
+  function animateV3Number(el, target, duration) {
+    duration = duration || 1200;
+    var start = 0;
+    var startTime = null;
+    function step(ts) {
+      if (!startTime) startTime = ts;
+      var progress = Math.min((ts - startTime) / duration, 1);
+      var eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.floor(eased * target).toLocaleString();
+      if (progress < 1) requestAnimationFrame(step);
+      else el.textContent = target.toLocaleString();
+    }
+    requestAnimationFrame(step);
+  }
+
+  function initV3Counters() {
+    var counters = document.querySelectorAll(".v3-counter[data-target]");
+    if (!counters.length) return;
+    if (!("IntersectionObserver" in window)) {
+      counters.forEach(function (el) {
+        animateV3Number(el, parseInt(el.dataset.target, 10) || 0);
+      });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          var el = entry.target;
+          animateV3Number(el, parseInt(el.dataset.target, 10) || 0);
+          io.unobserve(el);
+        }
+      });
+    }, { threshold: 0.5 });
+    counters.forEach(function (el) { io.observe(el); });
+  }
+
+  // 卡片鼠标视差（轻微跟随）
+  function initV3Parallax() {
+    if (window.matchMedia("(hover: none)").matches) return;
+    var cards = document.querySelectorAll(".v3-parallax");
+    if (!cards.length) return;
+    cards.forEach(function (card) {
+      card.addEventListener("mousemove", function (e) {
+        var rect = card.getBoundingClientRect();
+        var x = (e.clientX - rect.left) / rect.width - 0.5;
+        var y = (e.clientY - rect.top) / rect.height - 0.5;
+        card.style.transform = "translateY(-4px) perspective(800px) rotateX(" + (-y * 3) + "deg) rotateY(" + (x * 3) + "deg)";
+      });
+      card.addEventListener("mouseleave", function () {
+        card.style.transform = "";
+      });
+    });
+  }
+
+  // ---------- V4: 入场动画结束后清理合成层 ----------
+  function initV4EnterCleanup() {
+    var cards = document.querySelectorAll(".v3-enter");
+    if (!cards.length) return;
+    cards.forEach(function (card) {
+      card.addEventListener("animationend", function handler(e) {
+        if (e.animationName === "v4FadeUp" || e.animationName === "v3FadeUp") {
+          card.classList.add("v4-enter-done");
+          card.removeEventListener("animationend", handler);
+        }
+      });
+    });
+    // 兜底：1.5秒后强制清理（防止 animationend 未触发）
+    setTimeout(function () {
+      cards.forEach(function (card) {
+        if (!card.classList.contains("v4-enter-done")) {
+          card.classList.add("v4-enter-done");
+        }
+      });
+    }, 1500);
+  }
+
+  // ---------- V4: 页面切换后平滑滚动到顶部 ----------
+  function initV4SmoothScroll() {
+    var dir = sessionStorage.getItem("qish_slide_dir");
+    if (dir) {
+      // 来自滑动切换的页面，立即滚动到顶部（无动画，避免和滑入冲突）
+      window.scrollTo(0, 0);
+    }
+    // 给所有内部链接添加平滑滚动（锚点跳转）
+    document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+      a.addEventListener("click", function (e) {
+        var id = this.getAttribute("href");
+        if (id.length > 1) {
+          var target = document.querySelector(id);
+          if (target) {
+            e.preventDefault();
+            target.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }
+      });
+    });
+  }
+
   // 自动初始化光效、侧栏、音乐播放器
   function boot() {
     initMouseGlow();
@@ -4006,7 +4236,17 @@ html[data-theme="dark"] .theme-opt:hover{background:#2a3344}
     try { initNewMsgNotifier(); } catch (e) { console.warn(e); }
     try { initPWA(); } catch (e) { console.warn(e); }
     try { initThemeSwitcher(); } catch (e) { console.warn(e); }
-    try { initCharDialogue(); } catch (e) { console.warn(e); }
+    // try { initCharDialogue(); } catch (e) { console.warn(e); }
+    // V3 动画增强
+    try { initV3Reveal(); } catch (e) { console.warn("[V3] reveal", e); }
+    try { initV3Ripple(); } catch (e) { console.warn("[V3] ripple", e); }
+    try { initV3Counters(); } catch (e) { console.warn("[V3] counters", e); }
+    try { initV3Parallax(); } catch (e) { console.warn("[V3] parallax", e); }
+    // V4 动画优化
+    try { initV4EnterCleanup(); } catch (e) { console.warn("[V4] enterCleanup", e); }
+    try { initV4SmoothScroll(); } catch (e) { console.warn("[V4] smoothScroll", e); }
+    // 左右翻页箭头
+    try { initPageNavArrows(); } catch (e) { console.warn("[QISH] pageNavArrows", e); }
   }
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", boot);

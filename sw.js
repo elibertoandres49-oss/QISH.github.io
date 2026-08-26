@@ -18,7 +18,6 @@ const PRECACHE = [
   "./rhythm4k.html",
   "./announce.html",
   "./timeline.html",
-  "./character.html",
   "./char-25d.png",
   "./char-eye.png"
 ];
